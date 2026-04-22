@@ -6,51 +6,66 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- HOME ROUTE FIX ---
-// এই অংশটি নিশ্চিত করবে যে হোমপেজে গেলে index.html দেখা যাবে
+// --- HOME ROUTE ---
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// --- USER SYSTEM ---
+// --- SIGNUP API ---
 app.post('/api/signup', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { fullName, email, phone, password } = req.body;
     try {
-        await db.execute('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, password]);
+        await db.execute(
+            'INSERT INTO users (full_name, email_address, phone_number, password) VALUES (?, ?, ?, ?)', 
+            [fullName, email, phone, password]
+        );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({ error: err.message }); 
+    }
 });
 
+// --- LOGIN API ---
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
-        const [rows] = await db.execute('SELECT * FROM users WHERE email = ? AND password = ?', [email, password]);
-        if (rows.length > 0) res.json({ success: true, user: rows[0] });
-        else res.status(401).json({ message: "Invalid credentials" });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        const [rows] = await db.execute(
+            'SELECT * FROM users WHERE email_address = ? AND password = ?', 
+            [email, password]
+        );
+        if (rows.length > 0) {
+            res.json({ success: true, user: rows[0] });
+        } else {
+            res.status(401).json({ message: "ইমেইল বা পাসওয়ার্ড ভুল" });
+        }
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
 });
 
-// --- PRODUCT SYSTEM ---
+// --- PRODUCT API ---
 app.get('/api/products', async (req, res) => {
     try {
-        const [rows] = await db.execute('SELECT * FROM products');
+        const [rows] = await db.execute('SELECT * FROM products ORDER BY created_at DESC');
         res.json(rows);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
+// Admin product upload
 app.post('/api/admin/add-product', async (req, res) => {
     const { name, price, description, image_url } = req.body;
     try {
-        await db.execute('INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)', 
-        [name, price, description, image_url]);
+        await db.execute(
+            'INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)', 
+            [name, price, description, image_url]
+        );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// Vercel এর জন্য পোর্ট লিসেনিং (লোকাল টেস্টের সুবিধার্থে)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = app;
