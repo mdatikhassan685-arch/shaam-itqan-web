@@ -21,11 +21,20 @@
       "destination": "/public/index.html"
     },
     {
+      "source": "/login",
+      "destination": "/public/login.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/public/signup.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/public/admin.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/$1"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
