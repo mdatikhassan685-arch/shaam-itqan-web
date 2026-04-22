@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHAAM ITQAN | Luxury E-commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-gray-900">
+    <nav class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-2xl font-serif tracking-widest text-yellow-500">SHAAM ITQAN</h1>
+        <div class="space-x-4">
+            <a href="/login.html" class="hover:text-yellow-500">Account</a>
+            <span id="cart-count" class="bg-yellow-600 px-2 rounded-full text-xs">0</span>
+        </div>
+    </nav>
+
+    <header class="h-64 bg-gray-100 flex flex-col justify-center items-center text-center p-6 border-b-4 border-yellow-500">
+        <h2 class="text-4xl font-light uppercase tracking-tighter">Excellence in Every Detail</h2>
+        <input type="text" placeholder="Search premium collection..." class="mt-4 p-2 w-full max-w-md border border-gray-300 rounded">
+    </header>
+
+    <main class="p-6">
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            </div>
+    </main>
+
+    <script>
+        async function loadProducts() {
+            const res = await fetch('/api/products');
+            const products = await res.json();
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => `
+                <div class="border p-4 hover:shadow-xl transition group">
+                    <div class="h-48 bg-gray-200 mb-4 overflow-hidden">
+                        <img src="${p.image_url || 'https://via.placeholder.com/200'}" class="object-cover w-full h-full group-hover:scale-105 transition">
+                    </div>
+                    <h3 class="font-bold uppercase text-sm">${p.name}</h3>
+                    <p class="text-yellow-700 font-bold">$${p.price}</p>
+                    <button onclick="addToCart(${p.id})" class="mt-2 w-full bg-black text-white py-2 text-xs hover:bg-yellow-600 transition">ADD TO CART</button>
+                </div>
+            `).join('');
+        }
+        loadProducts();
+    </script>
+</body>
+</html>
