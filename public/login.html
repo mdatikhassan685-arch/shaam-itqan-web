@@ -5,20 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000; }
+        .serif { font-family: 'Playfair Display', serif; }
+    </style>
 </head>
-<body class="bg-black flex items-center justify-center min-h-screen p-4">
+<body class="flex items-center justify-center min-h-screen p-4">
+
     <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-serif tracking-widest text-black">SHAAM ITQAN</h1>
-            <p class="text-[10px] uppercase tracking-widest text-gray-400 mt-2">Member Login</p>
+            <h1 class="serif text-3xl tracking-widest text-black">SHAAM ITQAN</h1>
+            <p class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Member Authentication</p>
         </div>
+
         <div class="space-y-5">
-            <input id="email" type="email" placeholder="Email Address" class="w-full border-b p-2 outline-none focus:border-yellow-600 transition">
-            <input id="pass" type="password" placeholder="Password" class="w-full border-b p-2 outline-none focus:border-yellow-600 transition">
-            <button onclick="login()" class="w-full bg-black text-white py-4 mt-4 font-bold tracking-widest hover:bg-yellow-600 transition">LOG IN</button>
+            <div>
+                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Email Address</label>
+                <input id="email" type="email" placeholder="Enter your email" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Password</label>
+                <input id="pass" type="password" placeholder="••••••••" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
+            </div>
+
+            <button onclick="login()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition-all duration-300">
+                LOG IN TO SHOP
+            </button>
         </div>
+
         <div class="mt-8 text-center border-t pt-6">
-            <p class="text-xs text-gray-500">Don't have an account? <a href="/signup.html" class="text-black font-bold underline">Sign Up</a></p>
+            <p class="text-xs text-gray-500">Don't have an account? <a href="/signup.html" class="text-black font-bold hover:text-yellow-600 underline transition">Sign Up</a></p>
             <a href="/" class="text-[10px] uppercase tracking-widest text-gray-400 mt-4 inline-block hover:text-black">← Back to Shop</a>
         </div>
     </div>
@@ -28,7 +47,10 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('pass').value;
 
-            if(!email || !password) return alert("ইমেইল এবং পাসওয়ার্ড দিন");
+            if(!email || !password) {
+                Swal.fire({ icon: 'warning', title: 'Required', text: 'ইমেইল এবং পাসওয়ার্ড দিন' });
+                return;
+            }
 
             try {
                 const res = await fetch('/api/login', {
@@ -40,13 +62,18 @@
                 const data = await res.json();
                 if(res.ok) {
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    alert("Login Successful!");
-                    window.location.href = '/';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Welcome Back!',
+                        text: 'Login Successful',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => { window.location.href = '/'; });
                 } else {
-                    alert(data.message || "Invalid Credentials");
+                    Swal.fire({ icon: 'error', title: 'Login Failed', text: data.message || 'ইমেইল বা পাসওয়ার্ড ভুল' });
                 }
             } catch (err) {
-                alert("Server error. Please try again later.");
+                Swal.fire({ icon: 'error', title: 'Error', text: 'সার্ভারে কানেক্ট করা যাচ্ছে না' });
             }
         }
     </script>
