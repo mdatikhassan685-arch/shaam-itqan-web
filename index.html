@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHAAM ITQAN | Minimalist Apparel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+
+    <nav class="flex justify-between items-center px-6 py-6 border-b border-gray-100">
+        <h1 class="text-2xl font-bold tracking-tighter uppercase">SHAAM ITQAN</h1>
+        <div class="space-x-6 text-sm font-medium uppercase tracking-widest">
+            <a href="#" class="hover:text-gray-500">Shop</a>
+            <a href="#" class="hover:text-gray-500">Cart (0)</a>
+        </div>
+    </nav>
+
+    <header class="py-20 px-6 text-center">
+        <h2 class="text-4xl md:text-6xl font-light mb-4">সরলতায় সৌন্দর্য।</h2>
+        <p class="text-gray-500 tracking-widest uppercase text-xs">Minimalist Bengali Typography Collection</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 pb-20">
+        <div id="product-list" class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div class="animate-pulse bg-gray-100 h-64 rounded-lg"></div>
+            <div class="animate-pulse bg-gray-100 h-64 rounded-lg"></div>
+            <div class="animate-pulse bg-gray-100 h-64 rounded-lg"></div>
+        </div>
+    </main>
+
+    <script>
+        // ব্যাকএন্ড থেকে প্রোডাক্ট ডাটা আনার ফাংশন
+        async function fetchProducts() {
+            try {
+                // আপনার ব্যাকএন্ড URL লাইভ হলে এখানে বসবে
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                
+                const list = document.getElementById('product-list');
+                list.innerHTML = products.map(item => `
+                    <div class="group">
+                        <div class="bg-gray-100 aspect-[3/4] mb-4 overflow-hidden flex items-center justify-center">
+                             <span class="text-gray-300 italic uppercase text-xs tracking-widest">Minimal Design</span>
+                        </div>
+                        <h3 class="text-lg font-medium">${item.name}</h3>
+                        <p class="text-gray-500 mt-1">৳ ${item.price}</p>
+                        <button class="mt-4 w-full border border-black py-2 text-xs uppercase tracking-widest hover:bg-black hover:text-white transition">Add to Cart</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.log("প্রোডাক্ট লোড হতে সমস্যা হচ্ছে।");
+            }
+        }
+        fetchProducts();
+    </script>
+
+</body>
+</html>
