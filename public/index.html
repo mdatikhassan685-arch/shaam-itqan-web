@@ -3,45 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHAAM ITQAN | Luxury E-commerce</title>
+    <title>SHAAM ITQAN | Luxury Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white text-gray-900">
+<body class="bg-white">
     <nav class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-2xl font-serif tracking-widest text-yellow-500">SHAAM ITQAN</h1>
-        <div class="space-x-4">
-            <a href="/login.html" class="hover:text-yellow-500">Account</a>
-            <span id="cart-count" class="bg-yellow-600 px-2 rounded-full text-xs">0</span>
+        <h1 class="text-2xl font-serif text-yellow-500 tracking-tighter">SHAAM ITQAN</h1>
+        <div class="flex items-center space-x-6">
+            <a href="/login.html" id="user-status" class="text-sm hover:text-yellow-500 transition">LOGIN</a>
+            <div class="relative cursor-pointer" onclick="toggleCart()">
+                <span class="text-xl">🛒</span>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-yellow-600 text-[10px] px-1.5 rounded-full">0</span>
+            </div>
         </div>
     </nav>
 
-    <header class="h-64 bg-gray-100 flex flex-col justify-center items-center text-center p-6 border-b-4 border-yellow-500">
-        <h2 class="text-4xl font-light uppercase tracking-tighter">Excellence in Every Detail</h2>
-        <input type="text" placeholder="Search premium collection..." class="mt-4 p-2 w-full max-w-md border border-gray-300 rounded">
-    </header>
-
     <main class="p-6">
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            </div>
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
     </main>
 
+    <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform z-[100] p-6 border-l">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">Your Cart</h2>
+            <button onclick="toggleCart()" class="text-2xl">&times;</button>
+        </div>
+        <div id="cart-items" class="space-y-4 h-[70vh] overflow-y-auto"></div>
+        <div class="border-t pt-4 mt-4">
+            <button onclick="proceedToOrder()" class="w-full bg-black text-white py-4 font-bold hover:bg-yellow-600">PLACE ORDER</button>
+        </div>
+    </div>
+
     <script>
+        let cart = JSON.parse(localStorage.getItem('itqan_cart')) || [];
+
+        // ইউজার লগইন করা আছে কি না চেক করা
+        const user = JSON.parse(localStorage.getItem('user'));
+        if(user) {
+            document.getElementById('user-status').innerText = user.name.toUpperCase();
+            document.getElementById('user-status').href = "#"; 
+        }
+
         async function loadProducts() {
             const res = await fetch('/api/products');
             const products = await res.json();
             const grid = document.getElementById('product-grid');
             grid.innerHTML = products.map(p => `
-                <div class="border p-4 hover:shadow-xl transition group">
-                    <div class="h-48 bg-gray-200 mb-4 overflow-hidden">
-                        <img src="${p.image_url || 'https://via.placeholder.com/200'}" class="object-cover w-full h-full group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold uppercase text-sm">${p.name}</h3>
-                    <p class="text-yellow-700 font-bold">$${p.price}</p>
-                    <button onclick="addToCart(${p.id})" class="mt-2 w-full bg-black text-white py-2 text-xs hover:bg-yellow-600 transition">ADD TO CART</button>
+                <div class="border p-4 hover:shadow-lg transition">
+                    <img src="${p.image_url}" class="w-full h-48 object-cover mb-4">
+                    <h3 class="text-sm font-bold uppercase">${p.name}</h3>
+                    <p class="text-yellow-700">$${p.price}</p>
+                    <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})" class="mt-2 w-full bg-black text-white py-2 text-xs">ADD TO CART</button>
                 </div>
             `).join('');
         }
+
+        function addToCart(id, name, price) {
+            cart.push({id, name, price});
+            localStorage.setItem('itqan_cart', JSON.stringify(cart));
+            updateCartUI();
+            alert("Added to cart!");
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const itemsDiv = document.getElementById('cart-items');
+            itemsDiv.innerHTML = cart.map((item, index) => `
+                <div class="flex justify-between border-b pb-2 text-sm">
+                    <span>${item.name}</span>
+                    <span>$${item.price}</span>
+                </div>
+            `).join('');
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            sidebar.classList.toggle('translate-x-full');
+        }
+
+        function proceedToOrder() {
+            const loggedInUser = localStorage.getItem('user');
+            if(!loggedInUser) {
+                alert("Please Login or Signup first to place an order!");
+                window.location.href = "/login.html";
+            } else {
+                alert("Order Placed Successfully! (Backend connectivity pending)");
+                // এখানে আপনি অর্ডার সেভ করার API কল করতে পারেন
+                cart = [];
+                localStorage.removeItem('itqan_cart');
+                updateCartUI();
+                toggleCart();
+            }
+        }
+
         loadProducts();
+        updateCartUI();
     </script>
 </body>
 </html>
