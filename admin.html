@@ -28,6 +28,12 @@
     </div>
 
     <script>
+    // এই কোডটি ফাইলের একদম উপরে script ট্যাগ এর ভেতর বসান
+    const pass = prompt("অ্যাডমিন পাসওয়ার্ড দিন:");
+    if (pass !== "shaam123") { // এখানে আপনার নিজের পাসওয়ার্ড দিন
+        alert("ভুল পাসওয়ার্ড!");
+        window.location.href = "/";
+    }
         document.getElementById('productForm').onsubmit = async (e) => {
             e.preventDefault();
             const data = {
