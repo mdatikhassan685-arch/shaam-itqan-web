@@ -3,40 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup | SHAAM ITQAN</title>
+    <title>Join SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black flex items-center justify-center min-h-screen text-white">
-    <div class="bg-white text-black p-8 rounded-lg shadow-2xl w-full max-w-sm mx-4">
-        <h2 class="text-3xl font-serif mb-6 text-center text-yellow-600">Join ITQAN</h2>
-        <div class="space-y-4">
-            <input id="name" type="text" placeholder="Full Name" class="w-full border p-3 rounded focus:outline-none focus:border-yellow-500">
-            <input id="email" type="email" placeholder="Email Address" class="w-full border p-3 rounded focus:outline-none focus:border-yellow-500">
-            <input id="pass" type="password" placeholder="Password" class="w-full border p-3 rounded focus:outline-none focus:border-yellow-500">
-            <button onclick="signup()" class="w-full bg-black text-white py-3 font-bold tracking-widest hover:bg-yellow-600 transition">CREATE ACCOUNT</button>
+<body class="bg-black flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-serif tracking-widest text-black">SHAAM ITQAN</h1>
+            <p class="text-[10px] uppercase tracking-widest text-gray-400 mt-2">Registration</p>
         </div>
-        <p class="text-xs mt-6 text-center text-gray-500">Already have an account? <a href="/login.html" class="text-yellow-600 font-bold underline">Login</a></p>
+        <div class="space-y-4">
+            <input id="fullName" type="text" placeholder="Full Name" class="w-full border-b p-2 outline-none focus:border-yellow-600 transition">
+            <input id="email" type="email" placeholder="Email Address" class="w-full border-b p-2 outline-none focus:border-yellow-600 transition">
+            <input id="phone" type="text" placeholder="Phone Number" class="w-full border-b p-2 outline-none focus:border-yellow-600 transition">
+            <input id="pass" type="password" placeholder="Password" class="w-full border-b p-2 outline-none focus:border-yellow-600 transition">
+            <button onclick="signup()" class="w-full bg-black text-white py-4 mt-4 font-bold tracking-widest hover:bg-yellow-600 transition">CREATE ACCOUNT</button>
+        </div>
+        <p class="text-xs mt-6 text-center text-gray-500">Already a member? <a href="/login.html" class="text-black font-bold underline">Login</a></p>
     </div>
 
     <script>
         async function signup() {
-            const name = document.getElementById('name').value;
+            const fullName = document.getElementById('fullName').value;
             const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
 
-            if(!name || !email || !password) return alert("Please fill all fields");
+            if(!fullName || !email || !phone || !password) return alert("সবগুলো ঘর পূরণ করুন");
 
             const res = await fetch('/api/signup', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name, email, password})
+                body: JSON.stringify({ fullName, email, phone, password })
             });
 
-            const data = await res.json();
-            if(data.success) {
-                alert("Signup Successful! Please Login.");
+            if(res.ok) {
+                alert("Account Created Successfully!");
                 window.location.href = '/login.html';
             } else {
+                const data = await res.json();
                 alert("Error: " + data.error);
             }
         }
