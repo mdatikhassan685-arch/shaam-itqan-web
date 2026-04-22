@@ -4,7 +4,13 @@ const db = require('./db');
 const app = express();
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- HOME ROUTE FIX ---
+// এই অংশটি নিশ্চিত করবে যে হোমপেজে গেলে index.html দেখা যাবে
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // --- USER SYSTEM ---
 app.post('/api/signup', async (req, res) => {
@@ -26,8 +32,10 @@ app.post('/api/login', async (req, res) => {
 
 // --- PRODUCT SYSTEM ---
 app.get('/api/products', async (req, res) => {
-    const [rows] = await db.execute('SELECT * FROM products');
-    res.json(rows);
+    try {
+        const [rows] = await db.execute('SELECT * FROM products');
+        res.json(rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/add-product', async (req, res) => {
@@ -37,6 +45,12 @@ app.post('/api/admin/add-product', async (req, res) => {
         [name, price, description, image_url]);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Vercel এর জন্য পোর্ট লিসেনিং (লোকাল টেস্টের সুবিধার্থে)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
 module.exports = app;
