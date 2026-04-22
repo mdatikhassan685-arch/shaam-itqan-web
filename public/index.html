@@ -3,91 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHAAM ITQAN | Luxury Store</title>
+    <title>SHAAM ITQAN | Luxury Apparel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .serif { font-family: 'Playfair Display', serif; }
+    </style>
 </head>
-<body class="bg-white">
-    <nav class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-2xl font-serif text-yellow-500 tracking-tighter">SHAAM ITQAN</h1>
-        <div class="flex items-center space-x-6">
-            <a href="/login.html" id="user-status" class="text-sm hover:text-yellow-500 transition">LOGIN</a>
+<body class="bg-white text-black">
+
+    <nav class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50 border-b border-yellow-900/30">
+        <h1 class="serif text-xl md:text-2xl text-yellow-500 tracking-widest">SHAAM ITQAN</h1>
+        <div class="flex items-center space-x-5">
+            <a href="/login.html" id="user-status" class="text-[10px] tracking-widest hover:text-yellow-500 transition">LOGIN</a>
             <div class="relative cursor-pointer" onclick="toggleCart()">
-                <span class="text-xl">🛒</span>
-                <span id="cart-count" class="absolute -top-2 -right-2 bg-yellow-600 text-[10px] px-1.5 rounded-full">0</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-yellow-600 text-[9px] px-1.5 rounded-full font-bold">0</span>
             </div>
         </div>
     </nav>
 
-    <main class="p-6">
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
+    <main class="max-w-7xl mx-auto p-6">
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 py-10">
+            </div>
     </main>
 
-    <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform z-[100] p-6 border-l">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold">Your Cart</h2>
-            <button onclick="toggleCart()" class="text-2xl">&times;</button>
+    <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-[100] p-6 border-l border-gray-100">
+        <div class="flex justify-between items-center mb-8 border-b pb-4">
+            <h2 class="serif text-xl uppercase tracking-widest">Your Bag</h2>
+            <button onclick="toggleCart()" class="text-3xl font-light hover:text-yellow-600 transition">&times;</button>
         </div>
-        <div id="cart-items" class="space-y-4 h-[70vh] overflow-y-auto"></div>
-        <div class="border-t pt-4 mt-4">
-            <button onclick="proceedToOrder()" class="w-full bg-black text-white py-4 font-bold hover:bg-yellow-600">PLACE ORDER</button>
+        <div id="cart-items" class="space-y-6 h-[65vh] overflow-y-auto pr-2">
+            </div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 bg-white border-t">
+            <div class="flex justify-between mb-4 font-bold tracking-widest text-sm">
+                <span>TOTAL</span>
+                <span id="total-price">$0.00</span>
+            </div>
+            <button onclick="proceedToOrder()" class="w-full bg-black text-white py-4 font-bold tracking-[0.3em] hover:bg-yellow-600 transition-all duration-500">PLACE ORDER</button>
         </div>
     </div>
 
     <script>
         let cart = JSON.parse(localStorage.getItem('itqan_cart')) || [];
 
-        // ইউজার লগইন করা আছে কি না চেক করা
+        // Check Login Status
         const user = JSON.parse(localStorage.getItem('user'));
         if(user) {
-            document.getElementById('user-status').innerText = user.name.toUpperCase();
+            document.getElementById('user-status').innerText = user.full_name.toUpperCase();
             document.getElementById('user-status').href = "#"; 
         }
 
         async function loadProducts() {
-            const res = await fetch('/api/products');
-            const products = await res.json();
             const grid = document.getElementById('product-grid');
-            grid.innerHTML = products.map(p => `
-                <div class="border p-4 hover:shadow-lg transition">
-                    <img src="${p.image_url}" class="w-full h-48 object-cover mb-4">
-                    <h3 class="text-sm font-bold uppercase">${p.name}</h3>
-                    <p class="text-yellow-700">$${p.price}</p>
-                    <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})" class="mt-2 w-full bg-black text-white py-2 text-xs">ADD TO CART</button>
-                </div>
-            `).join('');
+            grid.innerHTML = '<p class="col-span-full text-center py-20 text-gray-400 tracking-widest">LOADING LUXURY ITEMS...</p>';
+            
+            try {
+                const res = await fetch('/api/products');
+                const products = await res.json();
+                
+                if(products.length === 0) {
+                    grid.innerHTML = '<p class="col-span-full text-center py-20 font-serif text-gray-400">NO PRODUCTS AVAILABLE IN STORE YET.</p>';
+                    return;
+                }
+
+                grid.innerHTML = products.map(p => `
+                    <div class="group relative">
+                        <div class="aspect-[3/4] overflow-hidden bg-gray-50 border border-gray-100">
+                            <img src="${p.image_url}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                            <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})" class="absolute bottom-0 left-0 right-0 bg-black text-white py-4 translate-y-full group-hover:translate-y-0 transition-transform text-[10px] tracking-[0.2em] font-bold">ADD TO BAG</button>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <h3 class="text-[10px] tracking-[0.2em] text-gray-400 uppercase font-semibold mb-1">${p.name}</h3>
+                            <p class="text-sm font-medium tracking-widest text-yellow-700">$${p.price}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                grid.innerHTML = '<p class="col-span-full text-center text-red-400">DATABASE CONNECTION ERROR</p>';
+            }
         }
 
         function addToCart(id, name, price) {
             cart.push({id, name, price});
             localStorage.setItem('itqan_cart', JSON.stringify(cart));
             updateCartUI();
-            alert("Added to cart!");
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Added to Bag',
+                showConfirmButton: false,
+                timer: 1500,
+                background: '#000',
+                color: '#fff'
+            });
         }
 
         function updateCartUI() {
             document.getElementById('cart-count').innerText = cart.length;
             const itemsDiv = document.getElementById('cart-items');
+            const totalSpan = document.getElementById('total-price');
+            
             itemsDiv.innerHTML = cart.map((item, index) => `
-                <div class="flex justify-between border-b pb-2 text-sm">
-                    <span>${item.name}</span>
-                    <span>$${item.price}</span>
+                <div class="flex justify-between items-center bg-gray-50 p-3">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest">${item.name}</p>
+                        <p class="text-xs text-yellow-700">$${item.price}</p>
+                    </div>
+                    <button onclick="removeFromCart(${index})" class="text-gray-400 hover:text-black">&times;</button>
                 </div>
             `).join('');
+
+            const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
+            totalSpan.innerText = `$${total.toFixed(2)}`;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('itqan_cart', JSON.stringify(cart));
+            updateCartUI();
         }
 
         function toggleCart() {
-            const sidebar = document.getElementById('cart-sidebar');
-            sidebar.classList.toggle('translate-x-full');
+            document.getElementById('cart-sidebar').classList.toggle('translate-x-full');
         }
 
         function proceedToOrder() {
             const loggedInUser = localStorage.getItem('user');
             if(!loggedInUser) {
-                alert("Please Login or Signup first to place an order!");
-                window.location.href = "/login.html";
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Login Required',
+                    text: 'Please sign in to complete your purchase.',
+                    confirmButtonColor: '#000'
+                }).then(() => window.location.href = "/login.html");
             } else {
-                alert("Order Placed Successfully! (Backend connectivity pending)");
-                // এখানে আপনি অর্ডার সেভ করার API কল করতে পারেন
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thank You!',
+                    text: 'Your order has been received.',
+                    confirmButtonColor: '#000'
+                });
                 cart = [];
                 localStorage.removeItem('itqan_cart');
                 updateCartUI();
