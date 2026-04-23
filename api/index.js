@@ -1,66 +1,39 @@
-const express = require('express');
-const mysql = require('mysql2/promise');
-const app = express();
+import mysql from 'mysql2/promise';
 
-app.use(express.json());
+export default async function handler(req, res) {
+    // ডাটাবেস কানেকশন
+    const connection = await mysql.createConnection({
+        host: process.env.TIDB_HOST,
+        user: process.env.TIDB_USER,
+        password: process.env.TIDB_PASSWORD,
+        database: process.env.TIDB_DB,
+        port: 4000,
+        ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+    });
 
-const dbConfig = {
-    host: process.env.TIDB_HOST,
-    user: process.env.TIDB_USER,
-    password: process.env.TIDB_PASSWORD,
-    database: process.env.TIDB_DB,
-    port: 4000,
-    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
-};
-
-// ১. প্রোডাক্ট লোড (এটা আপনার ঠিক হয়ে গেছে)
-app.get('/api/products', async (req, res) => {
-    let conn;
     try {
-        conn = await mysql.createConnection(dbConfig);
-        const [rows] = await conn.execute('SELECT * FROM products ORDER BY id DESC');
-        res.status(200).json(rows);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to load products" });
-    } finally { if(conn) await conn.end(); }
-});
+        // লগইন রুট (POST /api/index)
+        if (req.method === 'POST') {
+            const { email, password } = req.body;
+            
+            // ইমেইল ও পাসওয়ার্ড চেক
+            const [rows] = await connection.execute(
+                'SELECT * FROM users WHERE email_address = ? AND password = ?', 
+                [email, password]
+            );
 
-// ২. সাইনআপ API ফিক্স
-app.post('/api/signup', async (req, res) => {
-    let conn;
-    const { fullName, email, phone, password } = req.body;
-    try {
-        conn = await mysql.createConnection(dbConfig);
-        // কলামের নাম আপনার টেবিল অনুযায়ী চেক করে নিন
-        await conn.execute(
-            'INSERT INTO users (full_name, email_address, phone_number, password) VALUES (?, ?, ?, ?)',
-            [fullName, email, phone, password]
-        );
-        res.status(200).json({ success: true });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Sign up failed! কলামের নাম চেক করুন।" });
-    } finally { if(conn) await conn.end(); }
-});
-
-// ৩. লগইন API ফিক্স
-app.post('/api/login', async (req, res) => {
-    let conn;
-    const { email, password } = req.body;
-    try {
-        conn = await mysql.createConnection(dbConfig);
-        const [rows] = await conn.execute(
-            'SELECT * FROM users WHERE email_address = ? AND password = ?',
-            [email, password]
-        );
-        if (rows.length > 0) {
-            res.status(200).json({ success: true, user: rows[0] });
-        } else {
-            res.status(401).json({ message: "ইমেইল বা পাসওয়ার্ড ভুল!" });
+            if (rows.length > 0) {
+                return res.status(200).json({ success: true, user: rows[0] });
+            } else {
+                return res.status(401).json({ success: false, message: 'ভুল ইমেইল বা পাসওয়ার্ড' });
+            }
         }
-    } catch (err) {
-        res.status(500).json({ message: "Login failed!" });
-    } finally { if(conn) await conn.end(); }
-});
 
-module.exports = app;
+        return res.status(405).json({ error: 'Method not allowed' });
+    } catch (error) {
+        console.error("Auth Error:", error.message);
+        return res.status(500).json({ error: error.message });
+    } finally {
+        await connection.end();
+    }
+}
