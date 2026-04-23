@@ -3,54 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login | SHAAM ITQAN</title>
+    <title>Admin Access | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-6">
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-6">
 
-    <div class="bg-white w-full max-w-sm p-8 shadow-xl border-t-4 border-red-600">
-        <h2 class="text-xl font-serif tracking-[0.2em] text-center mb-8 uppercase text-red-600">Admin Access</h2>
+    <div class="bg-white w-full max-w-sm p-8 shadow-2xl border-t-4 border-yellow-600">
+        <div class="text-center mb-8">
+            <h2 class="text-xl font-serif tracking-[0.3em] uppercase text-gray-800">Admin Login</h2>
+            <p class="text-[9px] uppercase tracking-widest text-gray-400 mt-2">SHAAM ITQAN Official</p>
+        </div>
 
         <div class="space-y-6">
             <div>
-                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Admin Pin / Password</label>
-                <input type="password" id="admin-pin" class="w-full border-b border-gray-200 py-2 focus:border-red-600 outline-none transition text-center text-lg tracking-widest">
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Secure Pin</label>
+                <input type="password" id="admin-pin" placeholder="••••••••" class="w-full border-b border-gray-200 py-3 focus:border-yellow-600 outline-none transition text-center text-xl tracking-[0.5em]">
             </div>
 
-            <button onclick="checkAdmin()" class="w-full bg-red-600 text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black transition duration-300">
+            <button onclick="verifyAdmin()" class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-yellow-700 transition duration-300">
                 Verify Identity
             </button>
         </div>
     </div>
 
     <script>
-        function checkAdmin() {
+        function verifyAdmin() {
             const pin = document.getElementById('admin-pin').value;
             
-            // ভাই, এখানে আপনার পছন্দমতো পাসওয়ার্ড সেট করুন
-            // আমি আপাতত 'shaam-admin-2026' সেট করে দিলাম
-            if (pin === 'shaam-admin-2026') {
-                localStorage.setItem('isAdmin', 'true');
+            // আপনার দেওয়া পাসওয়ার্ড চেক
+            if (pin === '01823869644') {
+                // আপনার দেওয়া সেই গোপন টোকেন
+                const secretToken = "SHAAM ITQAN 007";
+                localStorage.setItem('admin_auth_token', secretToken);
+                
                 Swal.fire({
                     title: 'Access Granted',
-                    text: 'স্বাগতম অ্যাডমিন!',
+                    text: 'টোকেন জেনারেট হয়েছে। আপনাকে ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...',
                     icon: 'success',
-                    timer: 1000,
+                    timer: 1500,
                     showConfirmButton: false
                 });
+
                 setTimeout(() => {
                     window.location.href = '/admin.html'; 
-                }, 1000);
+                }, 1500);
             } else {
                 Swal.fire({
                     title: 'Access Denied',
-                    text: 'ভুল পিন দিয়েছেন!',
+                    text: 'ভুল পিন দিয়েছেন! আবার চেষ্টা করুন।',
                     icon: 'error',
-                    confirmButtonColor: '#e11d48'
+                    confirmButtonColor: '#000'
                 });
             }
         }
+
+        // এন্টার চাপলে লগইন হবে
+        document.getElementById('admin-pin').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') verifyAdmin();
+        });
     </script>
 </body>
 </html>
