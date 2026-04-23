@@ -56,3 +56,36 @@ app.post('/api/signup', async (req, res) => {
         res.status(500).json({ error: "ইমেইলটি ইতিমধ্যে ব্যবহার করা হয়েছে অথবা ডাটাবেস এরর" }); 
     }
 });
+
+// --- PRODUCT API (সবাই দেখতে পারবে) ---
+app.get('/api/products', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM products ORDER BY id DESC');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- ADMIN ADD PRODUCT API (নিরাপদ রাউট) ---
+app.post('/api/admin/add-product', async (req, res) => {
+    const { name, price, description, image_url, role } = req.body;
+    
+    // সার্ভার সাইড সিকিউরিটি চেক
+    if (role !== 'admin') {
+        return res.status(403).json({ message: "অনুমতি নেই" });
+    }
+
+    try {
+        await db.execute(
+            'INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)', 
+            [name, price, description, image_url]
+        );
+        res.json({ success: true, message: "Product Added!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Vercel এর জন্য এক্সপোর্ট
+module.exports = app;
