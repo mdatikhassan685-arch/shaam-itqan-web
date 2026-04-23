@@ -6,8 +6,22 @@
     <title>Login | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* গোপন টাচ এরিয়া */
+        #admin-trigger {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            z-index: 999;
+            cursor: default;
+        }
+    </style>
 </head>
-<body class="bg-black flex items-center justify-center min-h-screen p-6">
+<body class="bg-black flex items-center justify-center min-h-screen p-6 relative">
+
+    <div id="admin-trigger"></div>
 
     <div class="bg-white w-full max-w-md p-8 shadow-2xl border-t-4 border-yellow-600">
         <h2 class="text-2xl font-serif tracking-[0.3em] text-center mb-10 uppercase">Login</h2>
@@ -27,7 +41,7 @@
                 <a href="#" onclick="forgotPassword()" class="text-[9px] uppercase tracking-widest text-gray-400 hover:text-black transition">Forgot Password?</a>
             </div>
 
-            <button type="submit" class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-yellow-700 transition duration-300 shadow-lg">
+            <button type="submit" class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-yellow-700 transition duration-300">
                 Log In
             </button>
         </form>
@@ -41,6 +55,7 @@
     </div>
 
     <script>
+        // ১. সাধারণ ইউজার লগইন লজিক
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -56,8 +71,8 @@
 
                 if (data.success) {
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    Swal.fire({ title: 'Welcome!', text: 'লগইন সফল হয়েছে।', icon: 'success', timer: 1500, showConfirmButton: false });
-                    setTimeout(() => window.location.href = '/', 1500);
+                    Swal.fire({ title: 'Welcome!', text: 'লগইন সফল হয়েছে।', icon: 'success', timer: 1000, showConfirmButton: false });
+                    setTimeout(() => window.location.href = '/', 1000);
                 } else {
                     Swal.fire({ title: 'Error', text: data.message, icon: 'error' });
                 }
@@ -66,10 +81,33 @@
             }
         });
 
+        // ২. আপনার সেই গোপন অ্যাডমিন ট্রিক (৩ বার চাপ)
+        let clickCount = 0;
+        document.getElementById('admin-trigger').addEventListener('click', () => {
+            clickCount++;
+            if (clickCount === 3) {
+                clickCount = 0;
+                Swal.fire({
+                    title: 'Admin Panel',
+                    text: 'অ্যাডমিন লগইন পেজে যেতে চান?',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Go',
+                    confirmButtonColor: '#000'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/admin-login.html';
+                    }
+                });
+            }
+            // ৩ সেকেন্ড পর কাউন্টার অটো রিসেট হবে
+            setTimeout(() => { clickCount = 0; }, 3000);
+        });
+
         function forgotPassword() {
             Swal.fire({
                 title: 'Forgot Password?',
-                text: 'পাসওয়ার্ড রিসেট করতে আপনার ইমেইল দিয়ে আমাদের সাথে যোগাযোগ করুন। শীঘ্রই অটোমেটিক সিস্টেম চালু হচ্ছে!',
+                text: 'পাসওয়ার্ড রিসেট করতে আমাদের সাথে যোগাযোগ করুন।',
                 icon: 'info',
                 confirmButtonColor: '#000'
             });
