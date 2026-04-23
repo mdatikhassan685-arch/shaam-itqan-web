@@ -3,40 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join SHAAM ITQAN | Luxury Store</title>
+    <title>Signup | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #000; }
-        .serif { font-family: 'Playfair Display', serif; }
-    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-
+<body class="bg-black flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
-        <div class="text-center mb-8">
-            <h1 class="serif text-3xl tracking-widest text-black">SHAAM ITQAN</h1>
-            <p class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Create New Account</p>
-        </div>
-
+        <h2 class="text-2xl font-serif mb-6 text-center tracking-widest">REGISTRATION</h2>
         <div class="space-y-4">
-            <input id="fullName" type="text" placeholder="Full Name" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
-            <input id="email" type="email" placeholder="Email Address" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
-            <input id="phone" type="text" placeholder="Phone Number" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
-            <input id="pass" type="password" placeholder="Password" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
-            
-            <button onclick="signup()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition-all duration-300">
-                REGISTER NOW
-            </button>
-        </div>
-
-        <div class="mt-8 text-center border-t pt-6">
-            <p class="text-xs text-gray-500">Already have an account? <a href="/login.html" class="text-black font-bold hover:text-yellow-600 underline transition">Login</a></p>
-            <a href="/" class="text-[10px] uppercase tracking-widest text-gray-400 mt-4 inline-block hover:text-black">← Back to Shop</a>
+            <input id="fullName" type="text" placeholder="Full Name" class="w-full border-b p-2 outline-none">
+            <input id="email" type="email" placeholder="Email Address" class="w-full border-b p-2 outline-none">
+            <input id="phone" type="text" placeholder="Phone Number" class="w-full border-b p-2 outline-none">
+            <input id="pass" type="password" placeholder="Password" class="w-full border-b p-2 outline-none">
+            <button onclick="signup()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">CREATE ACCOUNT</button>
         </div>
     </div>
-
     <script>
         async function signup() {
             const fullName = document.getElementById('fullName').value;
@@ -44,26 +25,17 @@
             const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
 
-            if(!fullName || !email || !phone || !password) {
-                Swal.fire({ icon: 'warning', title: 'Missing Info', text: 'সবগুলো ঘর পূরণ করুন', confirmButtonColor: '#000' });
-                return;
-            }
+            if(!fullName || !email || !phone || !password) return Swal.fire('Error', 'সবগুলো ঘর পূরণ করুন', 'error');
 
-            try {
-                const res = await fetch('/api/signup', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ fullName, email, phone, password })
-                });
-
-                if(res.ok) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Account Created!',
-                        text: 'আপনি এখন লগইন করতে পারেন',
-                        showConfirmButton: false,
-                        timer: 2000
-                    }).then(() => { window.location.href = '/login.html'; });
-                } else {
-                    const data = await res.json();
-                    Swal.fire({ icon: 'error', title: 'Signup Failed
+            const res = await fetch('/api/signup', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ fullName, email, phone, password })
+            });
+            if(res.ok) {
+                Swal.fire('Success', 'Account Created!', 'success').then(() => window.location.href='/login.html');
+            } else { Swal.fire('Error', 'Signup failed!', 'error'); }
+        }
+    </script>
+</body>
+</html>
