@@ -3,43 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Access | SHAAM ITQAN</title>
+    <title>Admin Verification | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-gray-900 flex items-center justify-center min-h-screen p-6">
+<body class="bg-[#0a0a0b] flex items-center justify-center min-h-screen p-6">
 
-    <div class="bg-white w-full max-w-sm p-8 shadow-2xl border-t-4 border-yellow-600">
-        <div class="text-center mb-8">
-            <h2 class="text-xl font-serif tracking-[0.3em] uppercase text-gray-800">Admin Login</h2>
-            <p class="text-[9px] uppercase tracking-widest text-gray-400 mt-2">SHAAM ITQAN Official</p>
+    <div class="bg-white w-full max-w-md p-8 shadow-2xl border-t-4 border-[#9a6a12]">
+        <div class="text-center mb-10">
+            <h2 class="text-2xl font-serif tracking-[0.3em] uppercase text-gray-800">Admin Login</h2>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400 mt-2">Shaam Itqan Official Security</p>
         </div>
 
         <div class="space-y-6">
             <div>
-                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Secure Pin</label>
-                <input type="password" id="admin-pin" placeholder="••••••••" class="w-full border-b border-gray-200 py-3 focus:border-yellow-600 outline-none transition text-center text-xl tracking-[0.5em]">
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Admin Token</label>
+                <input type="text" id="admin-token-input" placeholder="Enter Token" class="w-full border-b border-gray-200 py-3 focus:border-[#9a6a12] outline-none transition text-sm tracking-widest">
             </div>
 
-            <button onclick="verifyAdmin()" class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-yellow-700 transition duration-300">
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Secure Password</label>
+                <input type="password" id="admin-password-input" placeholder="••••••••" class="w-full border-b border-gray-200 py-3 focus:border-[#9a6a12] outline-none transition text-lg tracking-widest">
+            </div>
+
+            <button onclick="verifyAccess()" class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[#9a6a12] transition duration-500 shadow-xl">
                 Verify Identity
             </button>
         </div>
     </div>
 
     <script>
-        function verifyAdmin() {
-            const pin = document.getElementById('admin-pin').value;
+        function verifyAccess() {
+            const inputToken = document.getElementById('admin-token-input').value;
+            const inputPassword = document.getElementById('admin-password-input').value;
             
-            // আপনার দেওয়া পাসওয়ার্ড চেক
-            if (pin === '01823869644') {
-                // আপনার দেওয়া সেই গোপন টোকেন
-                const secretToken = "SHAAM ITQAN 007";
-                localStorage.setItem('admin_auth_token', secretToken);
+            const correctToken = "SHAAM ITQAN 007";
+            const correctPassword = "01823869644";
+
+            // টোকেন এবং পাসওয়ার্ড দুটোই চেক করা হচ্ছে
+            if (inputToken === correctToken && inputPassword === correctPassword) {
+                // ব্রাউজারে টোকেন সেভ করে রাখা হচ্ছে যাতে admin.html এ ঢুকতে দেয়
+                localStorage.setItem('admin_auth_token', correctToken);
                 
                 Swal.fire({
                     title: 'Access Granted',
-                    text: 'টোকেন জেনারেট হয়েছে। আপনাকে ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...',
+                    text: 'Boss, আপনাকে ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...',
                     icon: 'success',
                     timer: 1500,
                     showConfirmButton: false
@@ -50,17 +58,17 @@
                 }, 1500);
             } else {
                 Swal.fire({
-                    title: 'Access Denied',
-                    text: 'ভুল পিন দিয়েছেন! আবার চেষ্টা করুন।',
+                    title: 'Verification Failed',
+                    text: 'টোকেন অথবা পাসওয়ার্ড ভুল! সঠিক তথ্য দিন।',
                     icon: 'error',
                     confirmButtonColor: '#000'
                 });
             }
         }
 
-        // এন্টার চাপলে লগইন হবে
-        document.getElementById('admin-pin').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') verifyAdmin();
+        // এন্টার চাপলে ভেরিফাই হবে
+        window.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyAccess();
         });
     </script>
 </body>
