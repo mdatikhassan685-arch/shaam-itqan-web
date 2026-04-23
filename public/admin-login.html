@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | SHAAM ITQAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-6">
+
+    <div class="bg-white w-full max-w-sm p-8 shadow-xl border-t-4 border-red-600">
+        <h2 class="text-xl font-serif tracking-[0.2em] text-center mb-8 uppercase text-red-600">Admin Access</h2>
+
+        <div class="space-y-6">
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Admin Pin / Password</label>
+                <input type="password" id="admin-pin" class="w-full border-b border-gray-200 py-2 focus:border-red-600 outline-none transition text-center text-lg tracking-widest">
+            </div>
+
+            <button onclick="checkAdmin()" class="w-full bg-red-600 text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black transition duration-300">
+                Verify Identity
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function checkAdmin() {
+            const pin = document.getElementById('admin-pin').value;
+            
+            // ভাই, এখানে আপনার পছন্দমতো পাসওয়ার্ড সেট করুন
+            // আমি আপাতত 'shaam-admin-2026' সেট করে দিলাম
+            if (pin === 'shaam-admin-2026') {
+                localStorage.setItem('isAdmin', 'true');
+                Swal.fire({
+                    title: 'Access Granted',
+                    text: 'স্বাগতম অ্যাডমিন!',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+                setTimeout(() => {
+                    window.location.href = '/admin.html'; 
+                }, 1000);
+            } else {
+                Swal.fire({
+                    title: 'Access Denied',
+                    text: 'ভুল পিন দিয়েছেন!',
+                    icon: 'error',
+                    confirmButtonColor: '#e11d48'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
