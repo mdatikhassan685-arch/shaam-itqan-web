@@ -8,55 +8,37 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-black flex items-center justify-center min-h-screen relative p-4">
-
-    <div onclick="adminTrigger()" class="absolute top-0 right-0 w-16 h-16 cursor-default opacity-0"></div>
+    <div onclick="adminTrigger()" class="absolute top-0 right-0 w-20 h-20 opacity-0"></div>
 
     <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
-        <div class="text-center mb-8">
-            <h1 id="brand-name" class="text-3xl font-serif tracking-widest text-black">SHAAM ITQAN</h1>
-            <p id="page-type" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Member Authentication</p>
+        <h2 id="title" class="text-2xl font-serif mb-6 text-center tracking-widest uppercase">Member Login</h2>
+        <div class="space-y-4">
+            <div id="email-box">
+                <input id="email" type="email" placeholder="Email Address" class="w-full border-b p-2 outline-none">
+            </div>
+            <div id="phone-box" class="hidden">
+                <input id="phone" type="text" placeholder="Admin Phone Number" class="w-full border-b p-2 outline-none bg-yellow-50">
+            </div>
+            <input id="pass" type="password" placeholder="Password" class="w-full border-b p-2 outline-none">
+            <button onclick="login()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">LOG IN</button>
         </div>
-
-        <div class="space-y-5">
-            <div id="user-fields">
-                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Email Address</label>
-                <input id="email" type="email" class="w-full border-b p-2 focus:outline-none focus:border-yellow-600 mb-4">
-            </div>
-
-            <div id="admin-fields" class="hidden">
-                <label class="text-[10px] uppercase tracking-widest text-yellow-600 mb-1 block font-bold">Admin Phone Number</label>
-                <input id="phone" type="text" class="w-full border-b p-2 focus:outline-none focus:border-yellow-600 mb-4 bg-yellow-50">
-            </div>
-
-            <div>
-                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Password</label>
-                <input id="pass" type="password" class="w-full border-b p-2 focus:outline-none focus:border-yellow-600">
-            </div>
-
-            <button id="login-btn" onclick="handleLogin()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition">LOG IN</button>
-        </div>
-        
-        <p id="signup-note" class="text-center mt-6 text-xs text-gray-400">New here? <a href="/signup.html" class="text-black underline">Create Account</a></p>
+        <p class="mt-4 text-center text-xs"><a href="/signup.html" class="underline">Create Account</a></p>
     </div>
 
     <script>
-        let isAdmin = false;
-        let counter = 0;
-
+        let isAdmin = false; let count = 0;
         function adminTrigger() {
-            counter++;
-            if(counter === 3) { // ৩ বার ক্লিক করলে
+            count++;
+            if(count === 3) {
                 isAdmin = true;
-                document.getElementById('user-fields').classList.add('hidden');
-                document.getElementById('admin-fields').classList.remove('hidden');
-                document.getElementById('page-type').innerText = "ADMIN ACCESS ONLY";
-                document.getElementById('brand-name').classList.add('text-yellow-600');
-                document.getElementById('signup-note').classList.add('hidden');
-                Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Admin Mode Active', showConfirmButton: false, timer: 1500 });
+                document.getElementById('email-box').classList.add('hidden');
+                document.getElementById('phone-box').classList.remove('hidden');
+                document.getElementById('title').innerText = "Admin Access";
+                Swal.fire({ toast: true, title: 'Admin Mode Active', icon: 'info', showConfirmButton: false, timer: 1000 });
             }
         }
 
-        async function handleLogin() {
+        async function login() {
             const email = document.getElementById('email').value;
             const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
@@ -68,15 +50,11 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-
             const data = await res.json();
             if(res.ok) {
                 localStorage.setItem('user', JSON.stringify(data.user));
-                Swal.fire({ icon: 'success', title: 'Success', showConfirmButton: false, timer: 1000 });
                 window.location.href = data.user.role === 'admin' ? '/admin.html' : '/';
-            } else {
-                Swal.fire({ icon: 'error', title: 'Login Failed', text: data.message });
-            }
+            } else { Swal.fire('Error', data.message, 'error'); }
         }
     </script>
 </body>
