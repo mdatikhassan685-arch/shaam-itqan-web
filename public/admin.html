@@ -1,51 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // সিকিউরিটি গার্ড: টোকেন না থাকলে ঢুকতে দেবে না
+        (function() {
+            const token = localStorage.getItem('admin_auth_token');
+            const masterToken = "SHAAM ITQAN 007";
+            if (!token || token !== masterToken) {
+                window.location.href = '/login.html';
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | SHAAM ITQAN</title>
+    <title>Inventory Manager | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-gray-100 p-4 md:p-10">
-    <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-serif text-black border-b-2 border-yellow-500">Inventory Manager</h1>
-            <a href="/" class="text-sm text-gray-600 underline">Back to Shop</a>
+<body class="bg-gray-50 min-h-screen p-4 md:p-10">
+
+    <div class="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-sm border-t-4 border-[#9a6a12]">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-serif border-b-2 border-[#9a6a12] pb-1 uppercase tracking-tighter">Inventory Manager</h1>
+            <button onclick="adminLogout()" class="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:underline">Logout</button>
         </div>
 
-        <div class="bg-white p-8 shadow-lg rounded-lg mb-10">
-            <h2 class="text-xl font-bold mb-6">Add New Luxury Product</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input id="p-name" placeholder="Product Name (e.g. Premium Atar)" class="border p-3 rounded">
-                <input id="p-price" placeholder="Price in USD" type="number" class="border p-3 rounded">
-                <input id="p-img" placeholder="Image URL (Direct Link)" class="border p-3 rounded md:col-span-2">
-                <textarea id="p-desc" placeholder="Product Description..." class="border p-3 rounded md:col-span-2 h-32"></textarea>
-                <button onclick="addProduct()" class="md:col-span-2 bg-black text-white py-4 font-bold hover:bg-yellow-600 transition">UPLOAD TO DATABASE</button>
+        <form id="product-form" class="space-y-6">
+            <h3 class="font-bold text-center text-gray-700 uppercase tracking-[0.2em] mb-6">Add New Luxury Product</h3>
+            
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Product Title</label>
+                <input type="text" id="p-name" placeholder="e.g. Arabic Calligraphy Tee" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
             </div>
-        </div>
+
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Price (USD)</label>
+                <input type="number" id="p-price" placeholder="e.g. 25.00" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
+            </div>
+
+            <div class="border-2 border-dashed border-gray-200 p-6 text-center bg-gray-50 rounded-sm">
+                <label class="block text-[10px] uppercase tracking-widest text-[#9a6a12] mb-3 font-bold">Product Image (Direct File)</label>
+                <input type="file" id="p-image-file" accept="image/*" required class="text-xs text-gray-500 block mx-auto
+                file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold 
+                file:bg-black file:text-white hover:file:bg-[#9a6a12] cursor-pointer">
+                <p id="upload-status" class="text-[10px] mt-4 text-blue-600 font-bold uppercase tracking-widest"></p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Description</label>
+                <textarea id="p-desc" placeholder="Details about the material, fit, etc..." rows="4" class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm"></textarea>
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full bg-black text-white py-5 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[#9a6a12] transition duration-500 shadow-xl">
+                UPLOAD TO DATABASE
+            </button>
+        </form>
     </div>
 
     <script>
-        async function addProduct() {
+        const form = document.getElementById('product-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const statusText = document.getElementById('upload-status');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const imageFile = document.getElementById('p-image-file').files[0];
             const name = document.getElementById('p-name').value;
             const price = document.getElementById('p-price').value;
-            const description = document.getElementById('p-desc').value;
-            const image_url = document.getElementById('p-img').value;
+            const desc = document.getElementById('p-desc').value;
 
-            if(!name || !price) return alert("Name and Price are required");
+            // ১. প্রসেস শুরু
+            submitBtn.disabled = true;
+            submitBtn.innerText = "UPLOADING TO IMGBB...";
+            statusText.innerText = "Please wait, uploading photo...";
 
-            const res = await fetch('/api/admin/add-product', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name, price, description, image_url})
-            });
+            try {
+                // ২. ImgBB-তে ছবি আপলোড
+                const formData = new FormData();
+                formData.append('image', imageFile);
 
-            if(res.ok) {
-                alert("Product Successfully Listed!");
-                location.reload();
-            } else {
-                alert("Failed to add product");
+                const imgbbKey = 'e742ca878696ec40b54070a2569e5d48'; 
+                const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const imgData = await imgbbResponse.json();
+
+                if (imgData.success) {
+                    const finalImageUrl = imgData.data.url;
+                    statusText.innerText = "Image Linked! Finalizing Database...";
+                    submitBtn.innerText = "SAVING TO SYSTEM...";
+
+                    // ৩. ডাটাবেসে ফাইনাল ডাটা পাঠানো
+                    const productData = {
+                        name: name,
+                        price: price,
+                        image_url: finalImageUrl, // ImgBB থেকে আসা অটো লিংক
+                        description: desc
+                    };
+
+                    const response = await fetch('/api/products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(productData)
+                    });
+
+                    if (response.ok) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'প্রোডাক্টটি সফলভাবে আপনার শপে আপলোড হয়েছে।',
+                            icon: 'success',
+                            confirmButtonColor: '#9a6a12'
+                        });
+                        form.reset();
+                        statusText.innerText = "";
+                    } else {
+                        throw new Error('Database Error');
+                    }
+                } else {
+                    throw new Error('Image Upload Failed');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'আপলোড সফল হয়নি। ইন্টারটেক চেক করে আবার চেষ্টা করুন।', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "UPLOAD TO DATABASE";
             }
+        });
+
+        function adminLogout() {
+            localStorage.removeItem('admin_auth_token');
+            window.location.href = '/login.html';
         }
     </script>
 </body>
