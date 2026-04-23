@@ -60,13 +60,50 @@
             location.reload();
         }
 
-        function placeOrder() {
-            const user = localStorage.getItem('user');
-            if(!user) return alert('Please login first to place order!');
-            alert('Order Placed Successfully! We will contact you soon.');
-            localStorage.removeItem('cart');
-            window.location.href = '/';
-        }
+        // আপনার bag.html ফাইলের placeOrder ফাংশনটি নিচের কোড দিয়ে পরিবর্তন করুন
+
+function placeOrder() {
+    const user = localStorage.getItem('user');
+    
+    if(!user) {
+        // সুন্দর কাস্টম পপ-আপ
+        Swal.fire({
+            title: 'Please Login First',
+            text: 'অর্ডার করার জন্য আপনাকে প্রথমে লগইন করতে হবে।',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#000',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '<i class="fa fa-sign-in"></i> Login Now',
+            cancelButtonText: 'Sign Up',
+            reverseButtons: true,
+            background: '#fff',
+            color: '#000',
+            customClass: {
+                title: 'font-serif tracking-widest uppercase text-sm',
+                confirmButton: 'text-[10px] tracking-widest font-bold px-6 py-3 rounded-none',
+                cancelButton: 'text-[10px] tracking-widest font-bold px-6 py-3 rounded-none'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login.html'; // লগইন পেজে নিয়ে যাবে
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.href = '/signup.html'; // সাইনআপ পেজে নিয়ে যাবে
+            }
+        });
+        return;
+    }
+
+    // ইউজার লগইন থাকলে অর্ডার সাকসেস হবে
+    Swal.fire({
+        title: 'Order Placed!',
+        text: 'আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।',
+        icon: 'success',
+        confirmButtonColor: '#b8860b'
+    });
+    localStorage.removeItem('cart');
+    setTimeout(() => window.location.href = '/', 2000);
+}
 
         renderCart();
     </script>
