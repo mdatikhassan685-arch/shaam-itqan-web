@@ -7,69 +7,72 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-black flex items-center justify-center min-h-screen relative p-4">
-    <div onclick="adminTrigger()" class="absolute top-0 right-0 w-20 h-20 opacity-0 z-50"></div>
+<body class="bg-black flex items-center justify-center min-h-screen p-6">
 
-    <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
-        <h2 id="title" class="text-2xl font-serif mb-6 text-center tracking-widest uppercase text-black">Login</h2>
-        
-        <div class="space-y-4">
-            <div id="email-group">
-                <label class="text-[10px] uppercase text-gray-400 font-bold">Email Address</label>
-                <input id="email" type="email" placeholder="email@example.com" class="w-full border-b p-2 outline-none focus:border-black">
-            </div>
+    <div class="bg-white w-full max-w-md p-8 shadow-2xl border-t-4 border-yellow-600">
+        <h2 class="text-2xl font-serif tracking-[0.3em] text-center mb-10 uppercase">Login</h2>
 
-            <div id="token-group" class="hidden">
-                <label class="text-[10px] uppercase text-yellow-600 font-bold">Admin Secret Token</label>
-                <input id="token" type="text" placeholder="Enter Admin Token" class="w-full border-b p-2 outline-none border-yellow-300 bg-yellow-50">
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Email Address</label>
+                <input type="email" id="email" required class="w-full border-b border-gray-200 py-2 focus:border-black outline-none transition text-sm">
             </div>
 
             <div>
-                <label class="text-[10px] uppercase text-gray-400 font-bold">Password</label>
-                <input id="pass" type="password" placeholder="••••••••" class="w-full border-b p-2 outline-none focus:border-black">
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Password</label>
+                <input type="password" id="password" required class="w-full border-b border-gray-200 py-2 focus:border-black outline-none transition text-sm">
             </div>
 
-            <button onclick="handleLogin()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">LOG IN</button>
+            <div class="text-right">
+                <a href="#" onclick="forgotPassword()" class="text-[9px] uppercase tracking-widest text-gray-400 hover:text-black transition">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-yellow-700 transition duration-300 shadow-lg">
+                Log In
+            </button>
+        </form>
+
+        <div class="mt-10 pt-6 border-t border-gray-100 text-center">
+            <p class="text-[10px] uppercase tracking-widest text-gray-400">Don't have an account?</p>
+            <a href="/signup.html" class="inline-block mt-2 text-[11px] font-bold uppercase tracking-widest text-black hover:text-yellow-600 transition underline underline-offset-4">
+                Create a New Account
+            </a>
         </div>
     </div>
 
     <script>
-        let isAdmin = false;
-        let count = 0;
-
-        function adminTrigger() {
-            count++;
-            if(count === 3) {
-                isAdmin = true;
-                document.getElementById('email-group').classList.add('hidden');
-                document.getElementById('token-group').classList.remove('hidden');
-                document.getElementById('title').innerText = "Admin Login";
-                document.getElementById('title').classList.add('text-yellow-600');
-                Swal.fire({ toast: true, title: 'Admin Mode Active', icon: 'info', showConfirmButton: false, timer: 1000 });
-            }
-        }
-
-        async function handleLogin() {
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const email = document.getElementById('email').value;
-            const token = document.getElementById('token').value;
-            const password = document.getElementById('pass').value;
+            const password = document.getElementById('password').value;
 
-            const payload = isAdmin ? { token, password, type: 'admin' } : { email, password, type: 'user' };
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
 
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-            if(res.ok) {
-                localStorage.setItem('user', JSON.stringify(data.user));
-                // যদি রোল 'admin' হয় তবে অ্যাডমিন পেজে যাবে
-                window.location.href = data.user.admin_token ? '/admin.html' : '/';
-            } else {
-                Swal.fire('Error', data.message, 'error');
+                if (data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    Swal.fire({ title: 'Welcome!', text: 'লগইন সফল হয়েছে।', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => window.location.href = '/', 1500);
+                } else {
+                    Swal.fire({ title: 'Error', text: data.message, icon: 'error' });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Failed', text: 'সার্ভারে সমস্যা হচ্ছে!', icon: 'error' });
             }
+        });
+
+        function forgotPassword() {
+            Swal.fire({
+                title: 'Forgot Password?',
+                text: 'পাসওয়ার্ড রিসেট করতে আপনার ইমেইল দিয়ে আমাদের সাথে যোগাযোগ করুন। শীঘ্রই অটোমেটিক সিস্টেম চালু হচ্ছে!',
+                icon: 'info',
+                confirmButtonColor: '#000'
+            });
         }
     </script>
 </body>
