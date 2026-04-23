@@ -16,14 +16,19 @@
 
     <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
         <div class="text-center mb-8">
-            <h1 class="serif text-3xl tracking-widest text-black">SHAAM ITQAN</h1>
-            <p class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Member Authentication</p>
+            <h1 onclick="activateAdminMode()" class="serif text-3xl tracking-widest text-black cursor-default select-none">SHAAM ITQAN</h1>
+            <p id="login-title" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Member Authentication</p>
         </div>
 
         <div class="space-y-5">
-            <div>
+            <div id="email-field">
                 <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Email Address</label>
                 <input id="email" type="email" placeholder="Enter your email" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
+            </div>
+
+            <div id="phone-field" class="hidden">
+                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Admin Phone Number</label>
+                <input id="phone" type="text" placeholder="013XXXXXXXX" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
             </div>
 
             <div>
@@ -31,49 +36,61 @@
                 <input id="pass" type="password" placeholder="••••••••" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
             </div>
 
-            <button onclick="login()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition-all duration-300">
+            <button id="login-btn" onclick="login()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition-all duration-300">
                 LOG IN TO SHOP
             </button>
         </div>
 
         <div class="mt-8 text-center border-t pt-6">
             <p class="text-xs text-gray-500">Don't have an account? <a href="/signup.html" class="text-black font-bold hover:text-yellow-600 underline transition">Sign Up</a></p>
-            <a href="/" class="text-[10px] uppercase tracking-widest text-gray-400 mt-4 inline-block hover:text-black">← Back to Shop</a>
         </div>
     </div>
 
     <script>
+        let isAdminLogin = false;
+        let clickCount = 0;
+
+        // ৫ বার লোগোতে ক্লিক করলে এডমিন ফিল্ড আসবে
+        function activateAdminMode() {
+            clickCount++;
+            if(clickCount === 5) {
+                isAdminLogin = true;
+                document.getElementById('email-field').classList.add('hidden');
+                document.getElementById('phone-field').classList.remove('hidden');
+                document.getElementById('login-title').innerText = "ADMIN PORTAL ACTIVE";
+                document.getElementById('login-title').classList.replace('text-gray-400', 'text-yellow-600');
+                document.getElementById('login-btn').innerText = "ADMIN LOGIN";
+                Swal.fire({ toast: true, position: 'top', title: 'Admin Mode Activated', icon: 'info', showConfirmButton: false, timer: 1000 });
+            }
+        }
+
         async function login() {
             const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
 
-            if(!email || !password) {
-                Swal.fire({ icon: 'warning', title: 'Required', text: 'ইমেইল এবং পাসওয়ার্ড দিন' });
-                return;
-            }
+            // অ্যাডমিন লগইনের জন্য আমরা আলাদা বডি পাঠাবো
+            const bodyData = isAdminLogin ? { phone, password, type: 'admin' } : { email, password, type: 'user' };
 
             try {
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify(bodyData)
                 });
 
                 const data = await res.json();
                 if(res.ok) {
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Welcome Back!',
-                        text: 'Login Successful',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => { window.location.href = '/'; });
+                    Swal.fire({ icon: 'success', title: 'Welcome!', text: 'Login Successful', showConfirmButton: false, timer: 1500 })
+                    .then(() => { 
+                        window.location.href = data.user.role === 'admin' ? '/admin.html' : '/';
+                    });
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Login Failed', text: data.message || 'ইমেইল বা পাসওয়ার্ড ভুল' });
+                    Swal.fire({ icon: 'error', title: 'Access Denied', text: data.message });
                 }
             } catch (err) {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'সার্ভারে কানেক্ট করা যাচ্ছে না' });
+                console.error(err);
             }
         }
     </script>
