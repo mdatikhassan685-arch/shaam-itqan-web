@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
         // আপনার ডাটাবেসের কলাম নাম image_url হলে নিচের লাইনে image এর বদলে image_url দিন
         const query = 'INSERT INTO products (name, price, image, description) VALUES (?, ?, ?, ?)';
-        await connection.execute(query, [name, price, image_url, description]);
+        await connection.execute(query, [name, price, image, description]);
 
         await connection.end();
         return res.status(200).json({ success: true });
