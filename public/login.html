@@ -6,91 +6,76 @@
     <title>Login | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #000; }
-        .serif { font-family: 'Playfair Display', serif; }
-    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="bg-black flex items-center justify-center min-h-screen relative p-4">
+
+    <div onclick="adminTrigger()" class="absolute top-0 right-0 w-16 h-16 cursor-default opacity-0"></div>
 
     <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
         <div class="text-center mb-8">
-            <h1 onclick="activateAdminMode()" class="serif text-3xl tracking-widest text-black cursor-default select-none">SHAAM ITQAN</h1>
-            <p id="login-title" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Member Authentication</p>
+            <h1 id="brand-name" class="text-3xl font-serif tracking-widest text-black">SHAAM ITQAN</h1>
+            <p id="page-type" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mt-2">Member Authentication</p>
         </div>
 
         <div class="space-y-5">
-            <div id="email-field">
-                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Email Address</label>
-                <input id="email" type="email" placeholder="Enter your email" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
+            <div id="user-fields">
+                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Email Address</label>
+                <input id="email" type="email" class="w-full border-b p-2 focus:outline-none focus:border-yellow-600 mb-4">
             </div>
 
-            <div id="phone-field" class="hidden">
-                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Admin Phone Number</label>
-                <input id="phone" type="text" placeholder="013XXXXXXXX" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
+            <div id="admin-fields" class="hidden">
+                <label class="text-[10px] uppercase tracking-widest text-yellow-600 mb-1 block font-bold">Admin Phone Number</label>
+                <input id="phone" type="text" class="w-full border-b p-2 focus:outline-none focus:border-yellow-600 mb-4 bg-yellow-50">
             </div>
 
             <div>
-                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block font-bold">Password</label>
-                <input id="pass" type="password" placeholder="••••••••" class="w-full border-b border-gray-300 p-2 focus:outline-none focus:border-yellow-600 transition text-sm">
+                <label class="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Password</label>
+                <input id="pass" type="password" class="w-full border-b p-2 focus:outline-none focus:border-yellow-600">
             </div>
 
-            <button id="login-btn" onclick="login()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition-all duration-300">
-                LOG IN TO SHOP
-            </button>
+            <button id="login-btn" onclick="handleLogin()" class="w-full bg-black text-white py-4 mt-4 text-[10px] font-bold tracking-[0.2em] hover:bg-yellow-600 transition">LOG IN</button>
         </div>
-
-        <div class="mt-8 text-center border-t pt-6">
-            <p class="text-xs text-gray-500">Don't have an account? <a href="/signup.html" class="text-black font-bold hover:text-yellow-600 underline transition">Sign Up</a></p>
-        </div>
+        
+        <p id="signup-note" class="text-center mt-6 text-xs text-gray-400">New here? <a href="/signup.html" class="text-black underline">Create Account</a></p>
     </div>
 
     <script>
-        let isAdminLogin = false;
-        let clickCount = 0;
+        let isAdmin = false;
+        let counter = 0;
 
-        // ৫ বার লোগোতে ক্লিক করলে এডমিন ফিল্ড আসবে
-        function activateAdminMode() {
-            clickCount++;
-            if(clickCount === 5) {
-                isAdminLogin = true;
-                document.getElementById('email-field').classList.add('hidden');
-                document.getElementById('phone-field').classList.remove('hidden');
-                document.getElementById('login-title').innerText = "ADMIN PORTAL ACTIVE";
-                document.getElementById('login-title').classList.replace('text-gray-400', 'text-yellow-600');
-                document.getElementById('login-btn').innerText = "ADMIN LOGIN";
-                Swal.fire({ toast: true, position: 'top', title: 'Admin Mode Activated', icon: 'info', showConfirmButton: false, timer: 1000 });
+        function adminTrigger() {
+            counter++;
+            if(counter === 3) { // ৩ বার ক্লিক করলে
+                isAdmin = true;
+                document.getElementById('user-fields').classList.add('hidden');
+                document.getElementById('admin-fields').classList.remove('hidden');
+                document.getElementById('page-type').innerText = "ADMIN ACCESS ONLY";
+                document.getElementById('brand-name').classList.add('text-yellow-600');
+                document.getElementById('signup-note').classList.add('hidden');
+                Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Admin Mode Active', showConfirmButton: false, timer: 1500 });
             }
         }
 
-        async function login() {
+        async function handleLogin() {
             const email = document.getElementById('email').value;
             const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
 
-            // অ্যাডমিন লগইনের জন্য আমরা আলাদা বডি পাঠাবো
-            const bodyData = isAdminLogin ? { phone, password, type: 'admin' } : { email, password, type: 'user' };
+            const payload = isAdmin ? { phone, password, type: 'admin' } : { email, password, type: 'user' };
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(bodyData)
-                });
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
 
-                const data = await res.json();
-                if(res.ok) {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    Swal.fire({ icon: 'success', title: 'Welcome!', text: 'Login Successful', showConfirmButton: false, timer: 1500 })
-                    .then(() => { 
-                        window.location.href = data.user.role === 'admin' ? '/admin.html' : '/';
-                    });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Access Denied', text: data.message });
-                }
-            } catch (err) {
-                console.error(err);
+            const data = await res.json();
+            if(res.ok) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+                Swal.fire({ icon: 'success', title: 'Success', showConfirmButton: false, timer: 1000 });
+                window.location.href = data.user.role === 'admin' ? '/admin.html' : '/';
+            } else {
+                Swal.fire({ icon: 'error', title: 'Login Failed', text: data.message });
             }
         }
     </script>
