@@ -4,50 +4,31 @@ const app = express();
 
 app.use(express.json());
 
-// TiDB Cloud / Database Connection Pool
+// ডাটাবেস কানেকশন পুল (TiDB Cloud)
 const pool = mysql.createPool({
     host: process.env.TIDB_HOST,
     user: process.env.TIDB_USER,
     password: process.env.TIDB_PASSWORD,
     database: process.env.TIDB_DB,
     port: 4000,
-    ssl: {
-        minVersion: 'TLSv1.2',
-        rejectUnauthorized: true
-    }
+    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
 });
 
-// --- ১. SIGNUP API ---
+// SIGNUP API
 app.post('/api/signup', async (req, res) => {
     const { fullName, email, phone, password } = req.body;
-
-    if (!fullName || !email || !phone || !password) {
-        return res.status(400).json({ message: "সবগুলো ঘর পূরণ করুন!" });
-    }
-
     try {
-        const [existing] = await pool.execute(
-            'SELECT * FROM users WHERE email_address = ? OR phone_number = ?',
-            [email, phone]
-        );
+        const [existing] = await pool.execute('SELECT * FROM users WHERE email_address = ? OR phone_number = ?', [email, phone]);
+        if (existing.length > 0) return res.status(400).json({ message: "ইমেইল বা ফোন আগে থেকেই আছে!" });
 
-        if (existing.length > 0) {
-            return res.status(400).json({ message: "ইমেইল বা ফোন নম্বরটি আগে থেকেই আছে!" });
-        }
-
-        await pool.execute(
-            'INSERT INTO users (full_name, email_address, phone_number, password, role) VALUES (?, ?, ?, ?, "user")',
-            [fullName, email, phone, password]
-        );
-
-        res.status(200).json({ success: true, message: "রেজিস্ট্রেশন সফল হয়েছে!" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "ডাটাবেস কানেকশন এরর!" });
+        await pool.execute('INSERT INTO users (full_name, email_address, phone_number, password, role) VALUES (?, ?, ?, ?, "user")', [fullName, email, phone, password]);
+        res.status(200).json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: "সার্ভার এরর!" });
     }
 });
 
-// --- ২. LOGIN API ---
+// LOGIN API
 app.post('/api/login', async (req, res) => {
     const { email, token, password, type } = req.body;
     try {
@@ -59,25 +40,21 @@ app.post('/api/login', async (req, res) => {
             query = 'SELECT * FROM users WHERE email_address = ? AND password = ?';
             params = [email, password];
         }
-
         const [rows] = await pool.execute(query, params);
-        if (rows.length > 0) {
-            res.json({ success: true, user: rows[0] });
-        } else {
-            res.status(401).json({ message: "তথ্য সঠিক নয়!" });
-        }
+        if (rows.length > 0) res.json({ success: true, user: rows[0] });
+        else res.status(401).json({ message: "তথ্য ভুল!" });
     } catch (err) {
-        res.status(500).json({ error: "সার্ভার এরর" });
+        res.status(500).json({ error: "সার্ভার সমস্যা" });
     }
 });
 
-// --- ৩. GET PRODUCTS ---
+// GET PRODUCTS
 app.get('/api/products', async (req, res) => {
     try {
         const [rows] = await pool.execute('SELECT * FROM products ORDER BY id DESC');
         res.json(rows);
     } catch (err) {
-        res.status(500).json({ error: "প্রোডাক্ট লোড করা যাচ্ছে না" });
+        res.status(500).json({ error: "লোড করা যাচ্ছে না" });
     }
 });
 
