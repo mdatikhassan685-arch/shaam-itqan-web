@@ -8,16 +8,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- LOGIN API ---
 app.post('/api/login', async (req, res) => {
-    const { email, phone, password, type } = req.body;
+    const { email, token, password, type } = req.body;
+    
     try {
         let query, params;
         
         if (type === 'admin') {
-            // অ্যাডমিন লগইনের জন্য ইমেইল, ফোন এবং পাসওয়ার্ড ৩টিই মিলতে হবে
-            query = 'SELECT * FROM users WHERE email_address = ? AND phone_number = ? AND password = ? AND role = "admin"';
-            params = [email, phone, password];
+            // শুধুমাত্র টোকেন এবং পাসওয়ার্ড দিয়ে অ্যাডমিন লগইন
+            query = 'SELECT * FROM users WHERE admin_token = ? AND password = ?';
+            params = [token, password];
         } else {
-            // সাধারণ ইউজার লগইন শুধুমাত্র ইমেইল এবং পাসওয়ার্ড দিয়ে
+            // সাধারণ ইউজারের জন্য ইমেইল এবং পাসওয়ার্ড
             query = 'SELECT * FROM users WHERE email_address = ? AND password = ?';
             params = [email, password];
         }
@@ -27,16 +28,21 @@ app.post('/api/login', async (req, res) => {
         if (rows.length > 0) {
             res.json({ success: true, user: rows[0] });
         } else {
-            res.status(401).json({ 
-                message: type === 'admin' 
-                    ? "অ্যাডমিন তথ্য (ইমেইল/ফোন/পাসওয়ার্ড) ভুল!" 
-                    : "ইমেইল বা পাসওয়ার্ড সঠিক নয়" 
-            });
+            res.status(401).json({ message: "তথ্য সঠিক নয়!" });
         }
     } catch (err) {
         res.status(500).json({ error: "সার্ভারে সমস্যা হচ্ছে" });
     }
 });
 
-// অন্যান্য প্রয়োজনীয় রাউট (Products, Signup) আগের মতোই থাকবে...
+// --- GET PRODUCTS ---
+app.get('/api/products', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM products ORDER BY id DESC');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = app;
