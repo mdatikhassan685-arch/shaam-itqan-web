@@ -17,7 +17,7 @@
             <input id="pass" type="password" placeholder="Password" class="w-full border-b p-2 outline-none focus:border-black">
             <button onclick="register()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">SIGN UP</button>
         </div>
-        <p class="text-center mt-6 text-xs">Already have an account? <a href="/login.html" class="underline font-bold">Login</a></p>
+        <p class="text-center mt-6 text-[10px] uppercase tracking-widest">Already have an account? <a href="/login.html" class="underline font-bold">Login</a></p>
     </div>
 
     <script>
@@ -27,16 +27,21 @@
             const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
 
+            if(!fullName || !email || !phone || !password) {
+                return Swal.fire('Error', 'সবগুলো ঘর পূরণ করুন!', 'error');
+            }
+
             const res = await fetch('/api/signup', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ fullName, email, phone, password })
             });
 
+            const data = await res.json();
             if(res.ok) {
                 Swal.fire('Success', 'Account created! Please login.', 'success').then(() => window.location.href='/login.html');
             } else {
-                Swal.fire('Error', 'Registration failed!', 'error');
+                Swal.fire('Error', data.message || 'Registration failed!', 'error');
             }
         }
     </script>
