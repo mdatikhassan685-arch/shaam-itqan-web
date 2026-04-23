@@ -8,15 +8,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- LOGIN API ---
 app.post('/api/login', async (req, res) => {
-    const { email, password, type, phone } = req.body;
+    const { email, phone, password, type } = req.body;
     try {
         let query, params;
         if (type === 'admin') {
-            // এডমিনের জন্য ফোন এবং পাসওয়ার্ড
+            // এডমিনের জন্য ফোন নম্বর ও পাসওয়ার্ড চেক
             query = 'SELECT * FROM users WHERE phone_number = ? AND password = ? AND role = "admin"';
             params = [phone, password];
         } else {
-            // সাধারণ ইউজারের জন্য ইমেইল এবং পাসওয়ার্ড
+            // সাধারণ ইউজারের জন্য ইমেইল ও পাসওয়ার্ড চেক
             query = 'SELECT * FROM users WHERE email_address = ? AND password = ?';
             params = [email, password];
         }
@@ -25,10 +25,10 @@ app.post('/api/login', async (req, res) => {
         if (rows.length > 0) {
             res.json({ success: true, user: rows[0] });
         } else {
-            res.status(401).json({ message: "তথ্য সঠিক নয়!" });
+            res.status(401).json({ message: "তথ্য সঠিক নয় অথবা আপনি নিবন্ধিত নন" });
         }
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "সার্ভার এরর" });
     }
 });
 
@@ -42,17 +42,17 @@ app.post('/api/signup', async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) { 
-        res.status(500).json({ error: "Email already exists or DB error" }); 
+        res.status(500).json({ error: "এই ইমেইল বা ফোন নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে" }); 
     }
 });
 
-// --- PRODUCT API (Fixing the grid issue) ---
+// --- PRODUCT API ---
 app.get('/api/products', async (req, res) => {
     try {
         const [rows] = await db.execute('SELECT * FROM products ORDER BY id DESC');
         res.json(rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "প্রোডাক্ট লোড করা যাচ্ছে না" });
     }
 });
 
