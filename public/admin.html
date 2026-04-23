@@ -70,7 +70,6 @@
             const price = document.getElementById('p-price').value;
             const desc = document.getElementById('p-desc').value;
 
-            // ১. প্রসেস শুরু
             submitBtn.disabled = true;
             submitBtn.innerText = "UPLOADING TO IMGBB...";
             statusText.innerText = "Please wait, uploading photo...";
@@ -90,14 +89,14 @@
 
                 if (imgData.success) {
                     const finalImageUrl = imgData.data.url;
-                    statusText.innerText = "Image Linked! Finalizing Database...";
+                    statusText.innerText = "Image Linked! Saving to TiDB...";
                     submitBtn.innerText = "SAVING TO SYSTEM...";
 
-                    // ৩. ডাটাবেসে ফাইনাল ডাটা পাঠানো
+                    // ৩. ডাটাবেসে ফাইনাল ডাটা পাঠানো (ফিক্সড করা হয়েছে)
                     const productData = {
                         name: name,
                         price: price,
-                        image_url: finalImageUrl, // ImgBB থেকে আসা অটো লিংক
+                        image: finalImageUrl, // এখানে 'image' হবে কারণ ডাটাবেসে এটাই নাম
                         description: desc
                     };
 
@@ -117,14 +116,15 @@
                         form.reset();
                         statusText.innerText = "";
                     } else {
-                        throw new Error('Database Error');
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Database Error');
                     }
                 } else {
                     throw new Error('Image Upload Failed');
                 }
             } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'আপলোড সফল হয়নি। ইন্টারটেক চেক করে আবার চেষ্টা করুন।', 'error');
+                console.error("UPLOAD_ERROR:", error);
+                Swal.fire('Error', 'আপলোড সফল হয়নি: ' + error.message, 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "UPLOAD TO DATABASE";
