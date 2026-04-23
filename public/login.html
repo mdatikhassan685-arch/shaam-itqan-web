@@ -11,27 +11,26 @@
     <div onclick="adminTrigger()" class="absolute top-0 right-0 w-20 h-20 opacity-0 z-50"></div>
 
     <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-sm border-t-4 border-yellow-600">
-        <h2 id="login-title" class="text-2xl font-serif mb-6 text-center tracking-widest uppercase">Member Login</h2>
+        <h2 id="title" class="text-2xl font-serif mb-6 text-center tracking-widest uppercase text-black">Login</h2>
         
         <div class="space-y-4">
-            <div>
-                <label class="text-[10px] uppercase text-gray-400">Email Address</label>
-                <input id="email" type="email" placeholder="mdatikhassan685@Email.com" class="w-full border-b p-2 outline-none focus:border-black">
+            <div id="email-group">
+                <label class="text-[10px] uppercase text-gray-400 font-bold">Email Address</label>
+                <input id="email" type="email" placeholder="email@example.com" class="w-full border-b p-2 outline-none focus:border-black">
             </div>
 
-            <div id="phone-field" class="hidden">
-                <label class="text-[10px] uppercase text-yellow-600 font-bold">Admin Phone Number</label>
-                <input id="phone" type="text" placeholder="01322415927" class="w-full border-b p-2 outline-none border-yellow-300 bg-yellow-50">
+            <div id="token-group" class="hidden">
+                <label class="text-[10px] uppercase text-yellow-600 font-bold">Admin Secret Token</label>
+                <input id="token" type="text" placeholder="Enter Admin Token" class="w-full border-b p-2 outline-none border-yellow-300 bg-yellow-50">
             </div>
 
             <div>
-                <label class="text-[10px] uppercase text-gray-400">Password</label>
+                <label class="text-[10px] uppercase text-gray-400 font-bold">Password</label>
                 <input id="pass" type="password" placeholder="••••••••" class="w-full border-b p-2 outline-none focus:border-black">
             </div>
 
-            <button onclick="login()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">LOG IN</button>
+            <button onclick="handleLogin()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">LOG IN</button>
         </div>
-        <p class="text-center mt-6 text-xs">New here? <a href="/signup.html" class="underline font-bold">Create Account</a></p>
     </div>
 
     <script>
@@ -42,21 +41,20 @@
             count++;
             if(count === 3) {
                 isAdmin = true;
-                document.getElementById('phone-field').classList.remove('hidden'); // ফোন নম্বর ফিল্ড দেখাবে
-                document.getElementById('login-title').innerText = "Admin Access";
-                Swal.fire({ toast: true, title: 'Admin Login Mode Active', icon: 'info', showConfirmButton: false, timer: 1500 });
+                document.getElementById('email-group').classList.add('hidden');
+                document.getElementById('token-group').classList.remove('hidden');
+                document.getElementById('title').innerText = "Admin Login";
+                document.getElementById('title').classList.add('text-yellow-600');
+                Swal.fire({ toast: true, title: 'Admin Mode Active', icon: 'info', showConfirmButton: false, timer: 1000 });
             }
         }
 
-        async function login() {
+        async function handleLogin() {
             const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
+            const token = document.getElementById('token').value;
             const password = document.getElementById('pass').value;
 
-            // অ্যাডমিন মোডে থাকলে ৩টি তথ্যই পাঠানো হবে
-            const payload = isAdmin 
-                ? { email, phone, password, type: 'admin' } 
-                : { email, password, type: 'user' };
+            const payload = isAdmin ? { token, password, type: 'admin' } : { email, password, type: 'user' };
 
             const res = await fetch('/api/login', {
                 method: 'POST',
@@ -67,9 +65,10 @@
             const data = await res.json();
             if(res.ok) {
                 localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = data.user.role === 'admin' ? '/admin.html' : '/';
+                // যদি রোল 'admin' হয় তবে অ্যাডমিন পেজে যাবে
+                window.location.href = data.user.admin_token ? '/admin.html' : '/';
             } else {
-                Swal.fire('Login Failed', data.message, 'error');
+                Swal.fire('Error', data.message, 'error');
             }
         }
     </script>
