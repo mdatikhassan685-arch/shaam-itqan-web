@@ -6,86 +6,52 @@
     <title>SHAAM ITQAN | Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .serif { font-family: 'Playfair Display', serif; }
-        .hidden { display: none; }
-    </style>
 </head>
 <body class="bg-white">
-
     <nav class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="serif text-xl md:text-2xl text-yellow-500 tracking-widest cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
-        
-        <div class="flex items-center space-x-6">
-            <div id="auth-section" class="relative">
-                <a href="/login.html" id="login-link" class="text-[10px] tracking-widest border border-yellow-700 px-3 py-1 hover:bg-yellow-700 transition">LOGIN / SIGNUP</a>
-                
-                <div id="user-profile" class="hidden cursor-pointer flex items-center space-x-2" onclick="toggleProfileMenu()">
-                    <span id="display-name" class="text-[10px] tracking-widest uppercase text-yellow-500"></span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7" /></svg>
-                </div>
-
-                <div id="profile-menu" class="hidden absolute right-0 mt-4 w-48 bg-white text-black shadow-xl border p-4 z-[110]">
-                    <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Welcome,</p>
-                    <p id="full-name" class="font-bold text-sm mb-4 border-b pb-2"></p>
-                    <button onclick="logout()" class="w-full bg-black text-white py-2 text-[10px] tracking-widest hover:bg-red-700 transition">LOGOUT</button>
-                </div>
-            </div>
-
-            <div class="relative cursor-pointer" onclick="toggleCart()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                <span id="cart-count" class="absolute -top-1 -right-1 bg-yellow-600 text-[9px] px-1.5 rounded-full font-bold">0</span>
-            </div>
+        <h1 class="font-serif text-xl text-yellow-500 tracking-widest cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
+        <div id="nav-user" class="text-[10px] tracking-widest uppercase">
+            <a href="/login.html" class="border border-yellow-600 px-3 py-1">LOGIN / SIGNUP</a>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto p-6">
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 py-10"></div>
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6 py-10">
+            </div>
     </main>
 
     <script>
-        // ইউজার স্ট্যাটাস চেক
+        // ইউজার লগইন থাকলে নাম দেখাবে
         const user = JSON.parse(localStorage.getItem('user'));
-        const authSection = document.getElementById('auth-section');
-        const loginLink = document.getElementById('login-link');
-        const userProfile = document.getElementById('user-profile');
-        const displayName = document.getElementById('display-name');
-        const fullNameText = document.getElementById('full-name');
-
         if(user) {
-            loginLink.classList.add('hidden');
-            userProfile.classList.remove('hidden');
-            displayName.innerText = user.full_name.split(' ')[0]; // শুধুমাত্র প্রথম নাম
-            fullNameText.innerText = user.full_name;
+            document.getElementById('nav-user').innerHTML = `
+                <span class="text-yellow-500 mr-4">${user.full_name.split(' ')[0]}</span>
+                <button onclick="localStorage.removeItem('user'); location.reload();" class="underline">LOGOUT</button>
+            `;
         }
 
-        function toggleProfileMenu() {
-            document.getElementById('profile-menu').classList.toggle('hidden');
-        }
-
-        function logout() {
-            localStorage.removeItem('user');
-            Swal.fire({ title: 'Logged Out', icon: 'info', timer: 1000, showConfirmButton: false });
-            setTimeout(() => window.location.reload(), 1000);
-        }
-
-        // প্রোডাক্ট লোড করা (আগের মতোই)
         async function loadProducts() {
             const grid = document.getElementById('product-grid');
             try {
                 const res = await fetch('/api/products');
                 const products = await res.json();
+                
+                if(products.length === 0) {
+                    grid.innerHTML = '<p class="col-span-full text-center py-20 text-gray-400">No products found.</p>';
+                    return;
+                }
+
                 grid.innerHTML = products.map(p => `
-                    <div class="group relative border p-2">
-                        <img src="${p.image_url}" class="w-full aspect-[3/4] object-cover mb-4">
+                    <div class="border p-2">
+                        <img src="${p.image_url}" class="w-full aspect-[3/4] object-cover mb-4 bg-gray-100">
                         <h3 class="text-[10px] tracking-widest text-gray-500 uppercase">${p.name}</h3>
-                        <p class="font-bold">$${p.price}</p>
-                        <button class="w-full bg-black text-white py-2 mt-2 text-[10px] tracking-tighter">ADD TO BAG</button>
+                        <p class="font-bold text-yellow-700">$${p.price}</p>
+                        <button class="w-full bg-black text-white py-2 mt-2 text-[10px]">ADD TO BAG</button>
                     </div>
                 `).join('');
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                grid.innerHTML = '<p class="text-red-500">Failed to load products.</p>';
+            }
         }
         loadProducts();
     </script>
