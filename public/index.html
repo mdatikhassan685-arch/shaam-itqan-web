@@ -3,15 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHAAM ITQAN | Home</title>
+    <title>SHAAM ITQAN | Premium Apparel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-white">
     <nav class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="font-serif text-xl text-yellow-500 tracking-widest cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
-        <div id="nav-user" class="text-[10px] tracking-widest uppercase">
-            <a href="/login.html" class="border border-yellow-600 px-3 py-1">LOGIN / SIGNUP</a>
+        <h1 class="font-serif text-xl text-yellow-500 tracking-[0.2em] cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
+        
+        <div class="flex items-center gap-6 text-[10px] tracking-widest uppercase">
+            <div id="auth-links">
+                <a href="/login.html" class="hover:text-yellow-500">LOGIN</a>
+                <span class="mx-2">/</span>
+                <a href="/signup.html" class="hover:text-yellow-500">SIGNUP</a>
+            </div>
+            
+            <div onclick="window.location.href='/bag.html'" class="relative cursor-pointer">
+                <i class="fa-solid fa-bag-shopping text-lg"></i>
+                <span id="bag-count" class="absolute -top-2 -right-2 bg-yellow-600 text-white text-[8px] px-1.5 rounded-full">0</span>
+            </div>
         </div>
     </nav>
 
@@ -24,12 +35,18 @@
         // ইউজার লগইন থাকলে নাম দেখাবে
         const user = JSON.parse(localStorage.getItem('user'));
         if(user) {
-            document.getElementById('nav-user').innerHTML = `
+            document.getElementById('auth-links').innerHTML = `
                 <span class="text-yellow-500 mr-4">${user.full_name.split(' ')[0]}</span>
-                <button onclick="localStorage.removeItem('user'); location.reload();" class="underline">LOGOUT</button>
+                <button onclick="logout()" class="underline">LOGOUT</button>
             `;
         }
 
+        function logout() {
+            localStorage.removeItem('user');
+            location.reload();
+        }
+
+        // প্রোডাক্ট লোড করা
         async function loadProducts() {
             const grid = document.getElementById('product-grid');
             try {
@@ -37,23 +54,51 @@
                 const products = await res.json();
                 
                 if(products.length === 0) {
-                    grid.innerHTML = '<p class="col-span-full text-center py-20 text-gray-400">No products found.</p>';
+                    grid.innerHTML = '<p class="col-span-full text-center py-20 text-gray-400">No products available.</p>';
                     return;
                 }
 
                 grid.innerHTML = products.map(p => `
-                    <div class="border p-2">
+                    <div class="group border p-2 transition hover:shadow-lg">
                         <img src="${p.image_url}" class="w-full aspect-[3/4] object-cover mb-4 bg-gray-100">
                         <h3 class="text-[10px] tracking-widest text-gray-500 uppercase">${p.name}</h3>
-                        <p class="font-bold text-yellow-700">$${p.price}</p>
-                        <button class="w-full bg-black text-white py-2 mt-2 text-[10px]">ADD TO BAG</button>
+                        <p class="font-bold text-yellow-800">$${p.price}</p>
+                        <button onclick="addToBag('${p.name}', ${p.price}, '${p.image_url}')" 
+                            class="w-full bg-black text-white py-3 mt-3 text-[10px] font-bold tracking-widest hover:bg-yellow-600 transition">
+                            ADD TO BAG
+                        </button>
                     </div>
                 `).join('');
             } catch (e) {
                 grid.innerHTML = '<p class="text-red-500">Failed to load products.</p>';
             }
         }
+
+        // ব্যাগ বা কার্ট ম্যানেজমেন্ট
+        function addToBag(name, price, img) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.push({ name, price, image_url: img });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            updateBagCount();
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Added to Bag',
+                showConfirmButton: false,
+                timer: 1000
+            });
+        }
+
+        function updateBagCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            document.getElementById('bag-count').innerText = cart.length;
+        }
+
+        // পেজ লোড হলে রান হবে
         loadProducts();
+        updateBagCount();
     </script>
 </body>
 </html>
