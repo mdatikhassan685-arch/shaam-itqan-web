@@ -6,147 +6,78 @@
     <title>Your Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen">
-
-    <nav class="bg-black text-white p-5 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="font-serif text-xl text-yellow-600 tracking-[0.3em] uppercase cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
-            <div onclick="window.location.href='/'" class="text-[10px] tracking-widest uppercase cursor-pointer hover:text-yellow-600 transition">
-                Back to Shop
-            </div>
-        </div>
+    <nav class="bg-black text-white p-5 flex justify-between items-center">
+        <h1 class="font-serif text-xl tracking-widest text-yellow-600 uppercase cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
     </nav>
 
     <div class="max-w-2xl mx-auto p-6 py-12">
-        <h2 class="text-xl font-serif mb-8 tracking-[0.2em] border-b pb-4 text-center uppercase">YOUR BAG</h2>
-        
-        <div id="cart-items" class="space-y-6">
+        <h2 class="text-xl font-serif mb-8 tracking-widest text-center uppercase border-b pb-4">YOUR BAG</h2>
+        <div id="cart-items" class="space-y-4"></div>
+        <div id="cart-footer" class="mt-12 pt-6 border-t hidden">
+            <div class="flex justify-between font-bold uppercase tracking-widest">
+                <span>Total:</span> <span id="total-price">$0.00</span>
             </div>
-
-        <div id="empty-msg" class="text-center py-20 hidden">
-            <i class="fa-solid fa-bag-shopping text-4xl text-gray-200 mb-4"></i>
-            <p class="text-gray-400 text-sm tracking-widest uppercase">Your bag is empty</p>
-            <button onclick="window.location.href='/'" class="mt-6 px-8 py-3 bg-black text-white text-[10px] font-bold tracking-widest uppercase hover:bg-yellow-600 transition">Start Shopping</button>
+            <button onclick="placeOrder()" class="w-full bg-black text-white py-5 mt-8 font-bold tracking-[0.2em] text-[10px] uppercase hover:bg-yellow-600 transition">PLACE ORDER</button>
         </div>
-
-        <div id="cart-footer" class="mt-12 border-t pt-6 hidden">
-            <div class="flex justify-between items-center text-sm font-bold tracking-widest">
-                <span class="uppercase">Total Amount:</span>
-                <span id="total-price" class="text-yellow-800">$0.00</span>
-            </div>
-            <button onclick="placeOrder()" class="w-full bg-black text-white py-5 mt-8 text-[10px] font-bold tracking-[0.3em] hover:bg-yellow-600 transition shadow-xl uppercase">
-                PLACE ORDER NOW
-            </button>
-        </div>
+        <p id="empty-msg" class="text-center py-20 text-gray-400 hidden">Your bag is empty.</p>
     </div>
 
     <script>
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // কার্ট রেন্ডার করার ফাংশন
         function renderCart() {
             const container = document.getElementById('cart-items');
-            const footer = document.getElementById('cart-footer');
-            const emptyMsg = document.getElementById('empty-msg');
-
             if (cart.length === 0) {
-                footer.classList.add('hidden');
-                emptyMsg.classList.remove('hidden');
-                container.innerHTML = '';
+                document.getElementById('empty-msg').classList.remove('hidden');
+                document.getElementById('cart-footer').classList.add('hidden');
                 return;
             }
-
-            footer.classList.remove('hidden');
-            emptyMsg.classList.add('hidden');
-
+            document.getElementById('cart-footer').classList.remove('hidden');
             let total = 0;
             container.innerHTML = cart.map((item, index) => {
                 total += parseFloat(item.price);
-                return `
-                    <div class="flex items-center justify-between bg-white p-5 border border-gray-100 shadow-sm transition hover:shadow-md">
-                        <div class="flex items-center gap-6">
-                            <img src="${item.image_url}" class="w-20 h-24 object-cover bg-gray-50">
-                            <div>
-                                <h3 class="text-[10px] font-bold tracking-widest uppercase text-black mb-1">${item.name}</h3>
-                                <p class="text-sm font-serif text-yellow-800">$${item.price}</p>
-                            </div>
-                        </div>
-                        <button onclick="removeItem(${index})" class="text-[9px] font-bold uppercase text-red-400 hover:text-red-700 tracking-widest transition">
-                            Remove
-                        </button>
+                return `<div class="flex items-center justify-between bg-white p-4 border shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <img src="${item.image_url}" class="w-16 h-20 object-cover">
+                        <div><h3 class="text-[10px] font-bold uppercase">${item.name}</h3><p class="text-sm font-serif text-yellow-800">$${item.price}</p></div>
                     </div>
-                `;
+                    <button onclick="removeItem(${index})" class="text-[10px] text-red-400 uppercase font-bold">Remove</button>
+                </div>`;
             }).join('');
-            
             document.getElementById('total-price').innerText = '$' + total.toFixed(2);
         }
 
-        // আইটেম রিমুভ ফাংশন
         function removeItem(index) {
             cart.splice(index, 1);
             localStorage.setItem('cart', JSON.stringify(cart));
-            renderCart();
+            location.reload();
         }
 
-        // অর্ডার প্লেস করার সুন্দর পপ-আপসহ ফাংশন
         function placeOrder() {
             const user = localStorage.getItem('user');
-            
             if(!user) {
-                // সুন্দর কাস্টম পপ-আপ
                 Swal.fire({
                     title: 'Authentication Required',
                     text: 'অর্ডার করার জন্য অনুগ্রহ করে প্রথমে লগইন করুন!',
                     icon: 'info',
                     showCancelButton: true,
-                    confirmButtonColor: '#000',
-                    cancelButtonColor: '#555',
                     confirmButtonText: 'LOGIN',
                     cancelButtonText: 'SIGN UP',
-                    reverseButtons: true,
-                    background: '#fff',
-                    color: '#000',
-                    customClass: {
-                        title: 'font-serif tracking-widest uppercase text-sm',
-                        confirmButton: 'text-[10px] tracking-widest font-bold px-8 py-3 rounded-none mx-2',
-                        cancelButton: 'text-[10px] tracking-widest font-bold px-8 py-3 rounded-none mx-2'
-                    }
+                    confirmButtonColor: '#000',
+                    cancelButtonColor: '#555',
+                    reverseButtons: true
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login.html';
-                    } else if (result.dismiss === Swal.DismissReason.cancel) {
-                        window.location.href = '/signup.html';
-                    }
+                    if (result.isConfirmed) window.location.href = '/login.html';
+                    else if (result.dismiss === Swal.DismissReason.cancel) window.location.href = '/signup.html';
                 });
                 return;
             }
-
-            // ইউজার লগইন থাকলে
-            Swal.fire({
-                title: 'Confirm Order?',
-                text: 'আপনি কি নিশ্চিতভাবে এই অর্ডারটি প্লেস করতে চান?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#b8860b',
-                confirmButtonText: 'YES, CONFIRM'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'অর্ডার প্লেস হয়েছে। আমরা দ্রুত যোগাযোগ করব।',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    localStorage.removeItem('cart');
-                    setTimeout(() => window.location.href = '/', 2000);
-                }
-            });
+            Swal.fire('Success', 'Order placed successfully!', 'success');
+            localStorage.removeItem('cart');
+            setTimeout(() => window.location.href = '/', 2000);
         }
-
-        // ইনিশিয়াল লোড
         renderCart();
     </script>
 </body>
