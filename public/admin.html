@@ -1,41 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-        // বডি লোড হওয়ার আগেই টোকেন চেক (অত্যন্ত জরুরি)
-        (function() {
-            const token = localStorage.getItem('admin_auth_token');
-            const masterToken = "SHAAM ITQAN 007";
-
-            if (!token || token !== masterToken) {
-                // যদি টোকেন না থাকে তবে সরাসরি বের করে দেবে
-                alert("Unauthorized Access! Admin Token Missing.");
-                window.location.href = '/login.html';
-            }
-        })();
-    </script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-black text-white p-5 flex justify-between items-center">
-        <h1 class="text-sm font-bold tracking-widest uppercase">SHAAM ITQAN ADMIN</h1>
-        <button onclick="adminLogout()" class="text-[10px] bg-red-600 px-4 py-2 uppercase font-bold">Logout</button>
-    </nav>
-
-    <div class="p-8">
-        <h2 class="text-2xl font-serif uppercase tracking-widest">Welcome, Boss!</h2>
-        <p class="text-gray-500 mt-2">আপনার ব্যবসার সব কন্ট্রোল এখন আপনার হাতে।</p>
-        
+<body class="bg-gray-100 p-4 md:p-10">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-serif text-black border-b-2 border-yellow-500">Inventory Manager</h1>
+            <a href="/" class="text-sm text-gray-600 underline">Back to Shop</a>
         </div>
 
+        <div class="bg-white p-8 shadow-lg rounded-lg mb-10">
+            <h2 class="text-xl font-bold mb-6">Add New Luxury Product</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input id="p-name" placeholder="Product Name (e.g. Premium Atar)" class="border p-3 rounded">
+                <input id="p-price" placeholder="Price in USD" type="number" class="border p-3 rounded">
+                <input id="p-img" placeholder="Image URL (Direct Link)" class="border p-3 rounded md:col-span-2">
+                <textarea id="p-desc" placeholder="Product Description..." class="border p-3 rounded md:col-span-2 h-32"></textarea>
+                <button onclick="addProduct()" class="md:col-span-2 bg-black text-white py-4 font-bold hover:bg-yellow-600 transition">UPLOAD TO DATABASE</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function adminLogout() {
-            localStorage.removeItem('admin_auth_token'); // টোকেন ডিলিট করে দেওয়া
-            window.location.href = '/login.html';
+        async function addProduct() {
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const description = document.getElementById('p-desc').value;
+            const image_url = document.getElementById('p-img').value;
+
+            if(!name || !price) return alert("Name and Price are required");
+
+            const res = await fetch('/api/admin/add-product', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, price, description, image_url})
+            });
+
+            if(res.ok) {
+                alert("Product Successfully Listed!");
+                location.reload();
+            } else {
+                alert("Failed to add product");
+            }
         }
     </script>
 </body>
