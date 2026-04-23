@@ -14,19 +14,19 @@
         <h2 id="login-title" class="text-2xl font-serif mb-6 text-center tracking-widest uppercase">Member Login</h2>
         
         <div class="space-y-4">
-            <div id="email-field">
+            <div>
                 <label class="text-[10px] uppercase text-gray-400">Email Address</label>
-                <input id="email" type="email" class="w-full border-b p-2 outline-none focus:border-black">
+                <input id="email" type="email" placeholder="mdatikhassan685@Email.com" class="w-full border-b p-2 outline-none focus:border-black">
             </div>
 
             <div id="phone-field" class="hidden">
                 <label class="text-[10px] uppercase text-yellow-600 font-bold">Admin Phone Number</label>
-                <input id="phone" type="text" class="w-full border-b p-2 outline-none border-yellow-300">
+                <input id="phone" type="text" placeholder="01322415927" class="w-full border-b p-2 outline-none border-yellow-300 bg-yellow-50">
             </div>
 
             <div>
                 <label class="text-[10px] uppercase text-gray-400">Password</label>
-                <input id="pass" type="password" class="w-full border-b p-2 outline-none focus:border-black">
+                <input id="pass" type="password" placeholder="••••••••" class="w-full border-b p-2 outline-none focus:border-black">
             </div>
 
             <button onclick="login()" class="w-full bg-black text-white py-4 font-bold tracking-widest hover:bg-yellow-600 transition">LOG IN</button>
@@ -42,10 +42,9 @@
             count++;
             if(count === 3) {
                 isAdmin = true;
-                document.getElementById('email-field').classList.add('hidden');
-                document.getElementById('phone-field').classList.remove('hidden');
+                document.getElementById('phone-field').classList.remove('hidden'); // ফোন নম্বর ফিল্ড দেখাবে
                 document.getElementById('login-title').innerText = "Admin Access";
-                Swal.fire({ toast: true, title: 'Admin Mode Active', icon: 'info', showConfirmButton: false, timer: 1000 });
+                Swal.fire({ toast: true, title: 'Admin Login Mode Active', icon: 'info', showConfirmButton: false, timer: 1500 });
             }
         }
 
@@ -54,7 +53,10 @@
             const phone = document.getElementById('phone').value;
             const password = document.getElementById('pass').value;
 
-            const payload = isAdmin ? { phone, password, type: 'admin' } : { email, password, type: 'user' };
+            // অ্যাডমিন মোডে থাকলে ৩টি তথ্যই পাঠানো হবে
+            const payload = isAdmin 
+                ? { email, phone, password, type: 'admin' } 
+                : { email, password, type: 'user' };
 
             const res = await fetch('/api/login', {
                 method: 'POST',
