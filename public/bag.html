@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Bag | SHAAM ITQAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-black text-white p-4 text-center">
+        <h1 class="font-serif text-xl tracking-widest cursor-pointer" onclick="window.location.href='/'">SHAAM ITQAN</h1>
+    </nav>
+
+    <div class="max-w-2xl mx-auto p-6">
+        <h2 class="text-xl font-bold mb-6 tracking-widest border-b pb-2">YOUR BAG</h2>
+        <div id="cart-items" class="space-y-4">
+            </div>
+        <div id="cart-footer" class="mt-8 border-t pt-4 hidden">
+            <div class="flex justify-between text-lg font-bold">
+                <span>Total:</span>
+                <span id="total-price">$0.00</span>
+            </div>
+            <button onclick="placeOrder()" class="w-full bg-black text-white py-4 mt-6 font-bold tracking-widest">PLACE ORDER</button>
+        </div>
+        <p id="empty-msg" class="text-center py-20 text-gray-400">Your bag is empty.</p>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if(cart.length === 0) return;
+
+            document.getElementById('cart-footer').classList.remove('hidden');
+            document.getElementById('empty-msg').classList.add('hidden');
+
+            let total = 0;
+            container.innerHTML = cart.map((item, index) => {
+                total += parseFloat(item.price);
+                return `
+                    <div class="flex items-center justify-between bg-white p-4 border">
+                        <div class="flex items-center gap-4">
+                            <img src="${item.image_url}" class="w-16 h-20 object-cover">
+                            <div>
+                                <h3 class="text-xs font-bold uppercase">${item.name}</h3>
+                                <p class="text-sm text-yellow-700">$${item.price}</p>
+                            </div>
+                        </div>
+                        <button onclick="removeItem(${index})" class="text-red-500 text-xs uppercase">Remove</button>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('total-price').innerText = '$' + total.toFixed(2);
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            location.reload();
+        }
+
+        function placeOrder() {
+            const user = localStorage.getItem('user');
+            if(!user) return alert('Please login first to place order!');
+            alert('Order Placed Successfully! We will contact you soon.');
+            localStorage.removeItem('cart');
+            window.location.href = '/';
+        }
+
+        renderCart();
+    </script>
+</body>
+</html>
