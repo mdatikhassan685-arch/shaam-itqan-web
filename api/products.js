@@ -14,16 +14,16 @@ export default async function handler(req, res) {
     try {
         connection = await mysql.createConnection(dbConfig);
 
-        // ১. প্রোডাক্ট দেখার জন্য (GET) - যা এখন এরর দিচ্ছে
+        // ১. ডাটাবেস থেকে প্রোডাক্ট লিস্ট পড়ার জন্য (GET)
         if (req.method === 'GET') {
             const [rows] = await connection.execute('SELECT * FROM products ORDER BY created_at DESC');
             return res.status(200).json(rows);
         }
 
-        // ২. প্রোডাক্ট সেভ করার জন্য (POST)
+        // ২. নতুন প্রোডাক্ট সেভ করার জন্য (POST)
         if (req.method === 'POST') {
             const { name, price, image, description } = req.body;
-            // আপনার ডাটাবেসের কলাম নাম 'image'
+            // কলামের নাম 'image' হিসেবেই ডাটা পাঠাতে হবে
             const query = 'INSERT INTO products (name, price, image, description) VALUES (?, ?, ?, ?)';
             const [result] = await connection.execute(query, [name, price, image, description]);
             return res.status(200).json({ success: true, id: result.insertId });
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error("SERVER ERROR:", error.message);
+        console.error("Database Error:", error.message);
         return res.status(500).json({ error: error.message });
     } finally {
         if (connection) await connection.end();
