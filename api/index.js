@@ -1,22 +1,22 @@
 import mysql from 'mysql2/promise';
 
 export default async function handler(req, res) {
-    // ডাটাবেস কানেকশন
-    const connection = await mysql.createConnection({
+    const dbConfig = {
         host: process.env.TIDB_HOST,
         user: process.env.TIDB_USER,
         password: process.env.TIDB_PASSWORD,
         database: process.env.TIDB_DB,
         port: 4000,
         ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
-    });
+    };
 
+    let connection;
     try {
-        // লগইন রুট (POST /api/index)
+        connection = await mysql.createConnection(dbConfig);
+
+        // ১. লগইন হ্যান্ডলিং (POST)
         if (req.method === 'POST') {
             const { email, password } = req.body;
-            
-            // ইমেইল ও পাসওয়ার্ড চেক
             const [rows] = await connection.execute(
                 'SELECT * FROM users WHERE email_address = ? AND password = ?', 
                 [email, password]
@@ -29,11 +29,16 @@ export default async function handler(req, res) {
             }
         }
 
+        // ২. প্রোডাক্ট লিস্ট দেখার জন্য (GET)
+        if (req.method === 'GET') {
+            const [rows] = await connection.execute('SELECT * FROM products ORDER BY id DESC');
+            return res.status(200).json(rows);
+        }
+
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error("Auth Error:", error.message);
         return res.status(500).json({ error: error.message });
     } finally {
-        await connection.end();
+        if (connection) await connection.end();
     }
 }
