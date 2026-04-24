@@ -1,8 +1,12 @@
-import mysql from 'mysql2/promise';
+const mysql = require('mysql2/promise');
 
 export default async function handler(req, res) {
   try {
-    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+    const connection = await mysql.createConnection({
+      uri: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    
     const [rows] = await connection.execute('SELECT * FROM products');
     await connection.end();
     
