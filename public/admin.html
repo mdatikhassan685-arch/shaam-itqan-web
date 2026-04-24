@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <script>
-        // সিকিউরিটি গার্ড: টোকেন না থাকলে লগইন পেজে পাঠিয়ে দেবে
         (function() {
             const token = localStorage.getItem('admin_auth_token');
             const masterToken = "SHAAM ITQAN 007";
@@ -30,28 +29,26 @@
             
             <div>
                 <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Product Title</label>
-                <input type="text" id="p-name" placeholder="e.g. Arabic Calligraphy Tee" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
+                <input type="text" id="p-name" placeholder="Arabic Calligraphy Tee" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
             </div>
 
             <div>
                 <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Price (USD)</label>
-                <input type="number" id="p-price" step="0.01" placeholder="e.g. 25.00" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
+                <input type="number" id="p-price" step="0.01" placeholder="25.00" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
             </div>
 
             <div class="border-2 border-dashed border-gray-200 p-6 text-center bg-gray-50 rounded-sm">
-                <label class="block text-[10px] uppercase tracking-widest text-[#9a6a12] mb-3 font-bold">Product Image (Direct File)</label>
-                <input type="file" id="p-image-file" accept="image/*" required class="text-xs text-gray-500 block mx-auto
-                file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold 
-                file:bg-black file:text-white hover:file:bg-[#9a6a12] cursor-pointer">
+                <label class="block text-[10px] uppercase tracking-widest text-[#9a6a12] mb-3 font-bold">Product Image</label>
+                <input type="file" id="p-image-file" accept="image/*" required class="text-xs text-gray-500 block mx-auto cursor-pointer">
                 <p id="upload-status" class="text-[10px] mt-4 text-blue-600 font-bold uppercase tracking-widest"></p>
             </div>
 
             <div>
                 <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Description</label>
-                <textarea id="p-desc" placeholder="Details about the material, fit, etc..." rows="4" class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm"></textarea>
+                <textarea id="p-desc" placeholder="Details..." rows="4" class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm"></textarea>
             </div>
 
-            <button type="submit" id="submit-btn" class="w-full bg-black text-white py-5 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[#9a6a12] transition duration-500 shadow-xl">
+            <button type="submit" id="submit-btn" class="w-full bg-black text-white py-5 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[#9a6a12] transition duration-500">
                 UPLOAD TO DATABASE
             </button>
         </form>
@@ -64,42 +61,31 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const imageFile = document.getElementById('p-image-file').files[0];
-            const name = document.getElementById('p-name').value;
-            const price = document.getElementById('p-price').value;
-            const desc = document.getElementById('p-desc').value;
-
-            // ১. আপলোড প্রসেস শুরু
+            
             submitBtn.disabled = true;
-            submitBtn.innerText = "UPLOADING TO IMGBB...";
-            statusText.innerText = "Please wait, uploading photo...";
+            submitBtn.innerText = "UPLOADING PHOTO...";
+            statusText.innerText = "Processing image...";
 
             try {
-                // ২. ImgBB-তে ছবি পাঠানো
                 const formData = new FormData();
                 formData.append('image', imageFile);
 
-                // আপনার সচল ImgBB Key
-                const imgbbKey = 'e742ca878696ec40b54070a2569e5d48'; 
-                const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                // নতুন ImgBB Key
+                const imgbbRes = await fetch('https://api.imgbb.com/1/upload?key=250ca5e91b77576f5bb44dcd1dd9ad46', {
                     method: 'POST',
                     body: formData
                 });
-
-                const imgData = await imgbbResponse.json();
+                const imgData = await imgbbRes.json();
 
                 if (imgData.success) {
-                    const finalImageUrl = imgData.data.url;
-                    statusText.innerText = "Image Linked! Saving to System...";
-                    submitBtn.innerText = "SAVING TO TiDB...";
-
-                    // ৩. ডাটাবেসে তথ্য পাঠানো (কলামের নাম 'image' রাখা হয়েছে)
+                    statusText.innerText = "Saving to Database...";
+                    
                     const productData = {
-                        name: name,
-                        price: price,
-                        image: finalImageUrl, // TiDB কলামের নাম অনুযায়ী
-                        description: desc
+                        name: document.getElementById('p-name').value,
+                        price: document.getElementById('p-price').value,
+                        image: imgData.data.url, // কলামের নাম 'image'
+                        description: document.getElementById('p-desc').value
                     };
 
                     const response = await fetch('/api/products', {
@@ -109,31 +95,20 @@
                     });
 
                     if (response.ok) {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: 'প্রোডাক্টটি সফলভাবে আপনার শপে আপলোড হয়েছে।',
-                            icon: 'success',
-                            confirmButtonColor: '#9a6a12'
-                        });
+                        Swal.fire('Success!', 'প্রোডাক্ট আপলোড হয়েছে।', 'success');
                         form.reset();
-                        statusText.innerText = "";
                     } else {
-                        const err = await response.json();
-                        throw new Error(err.error || 'Database Error');
+                        throw new Error('Database Error');
                     }
                 } else {
-                    throw new Error('Image Upload Failed to ImgBB');
+                    throw new Error('Image Upload Failed');
                 }
             } catch (error) {
-                console.error("FULL_ERROR:", error);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'আপলোড সফল হয়নি: ' + error.message,
-                    icon: 'error'
-                });
+                Swal.fire('Error', error.message, 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "UPLOAD TO DATABASE";
+                statusText.innerText = "";
             }
         });
 
