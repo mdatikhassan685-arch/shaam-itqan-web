@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bag - Shaam Itqan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+
+    <nav class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-orange-600">My Shopping Bag</h1>
+        <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded">Back to Shop</a>
+    </nav>
+
+    <div id="bag-items" class="space-y-4">
+        <!-- ব্যাগের পণ্য এখানে দেখাবে -->
+    </div>
+
+    <div id="total-section" class="mt-6 p-4 bg-white rounded shadow text-right hidden">
+        <h2 class="text-xl font-bold">Total: ৳ <span id="total-price">0</span></h2>
+        <button class="bg-green-600 text-white px-6 py-2 mt-4 rounded">Proceed to Checkout</button>
+    </div>
+
+    <script>
+        function loadBag() {
+            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
+            const bagContainer = document.getElementById('bag-items');
+            const totalSection = document.getElementById('total-section');
+            const totalElement = document.getElementById('total-price');
+
+            if (bag.length === 0) {
+                bagContainer.innerHTML = '<p class="text-center text-gray-500">Your bag is empty!</p>';
+                return;
+            }
+
+            let total = 0;
+            bagContainer.innerHTML = '';
+            bag.forEach((item, index) => {
+                total += parseFloat(item.price);
+                bagContainer.innerHTML += `
+                    <div class="bg-white p-4 rounded shadow flex justify-between items-center">
+                        <div>
+                            <h3 class="font-semibold">${item.name}</h3>
+                            <p class="text-orange-600">৳ ${item.price}</p>
+                        </div>
+                        <button onclick="removeItem(${index})" class="text-red-500">Remove</button>
+                    </div>
+                `;
+            });
+
+            totalElement.innerText = total;
+            totalSection.classList.remove('hidden');
+        }
+
+        function removeItem(index) {
+            let bag = JSON.parse(localStorage.getItem('shaam_bag'));
+            bag.splice(index, 1);
+            localStorage.setItem('shaam_bag', JSON.stringify(bag));
+            loadBag();
+        }
+
+        loadBag();
+    </script>
+</body>
+</html>
