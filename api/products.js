@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         });
 
         const { name, price, image, description } = req.body;
-        // ডাটাবেস কলাম অনুযায়ী 'image' ব্যবহার করা হয়েছে
+        
         const query = 'INSERT INTO products (name, price, image, description) VALUES (?, ?, ?, ?)';
         const [result] = await connection.execute(query, [name, price, image, description]);
 
