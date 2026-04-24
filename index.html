@@ -3,40 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shaam Itqan - Modern E-commerce</title>
-    <!-- Tailwind CSS via CDN -->
+    <title>Shaam Itqan - Official Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
+    <nav class="bg-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold text-orange-600">Shaam Itqan</h1>
-        <div class="flex items-center gap-4">
-            <button class="text-gray-600">Search</button>
-            <button class="relative">
-                🛒 <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">0</span>
-            </button>
-        </div>
+        <div class="text-2xl">🛒</div>
     </nav>
 
-    <!-- Hero Section -->
-    <header class="bg-orange-500 text-white p-8 text-center">
-        <h2 class="text-2xl font-bold mb-2">Exclusive Collections</h2>
-        <p>Get the best deals on Shaam Itqan</p>
-    </header>
-
     <!-- Product Grid -->
-    <main class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4" id="product-grid">
-        <!-- Dummy Product Cards -->
-        <div class="bg-white p-2 rounded shadow">
-            <img src="https://via.placeholder.com/150" alt="Product" class="w-full h-32 object-cover rounded">
-            <h3 class="font-semibold mt-2">Product Name</h3>
-            <p class="text-orange-600 font-bold">৳ 500</p>
-            <button class="w-full bg-orange-500 text-white py-1 mt-2 rounded">Add to Cart</button>
+    <main class="p-4">
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Loading Text -->
+            <p class="col-span-2 md:col-span-4 text-center py-10">Loading products...</p>
         </div>
-        <!-- Repeat this div for more products -->
     </main>
 
+    <script>
+        async function fetchProducts() {
+            try {
+                const response = await fetch('/api/get-products');
+                const products = await response.json();
+                
+                const grid = document.getElementById('product-grid');
+                grid.innerHTML = ''; // খালি করে নেওয়া
+
+                if (products.length === 0) {
+                    grid.innerHTML = '<p>No products found.</p>';
+                    return;
+                }
+
+                products.forEach(product => {
+                    grid.innerHTML += `
+                        <div class="bg-white p-3 rounded-lg shadow hover:shadow-lg transition">
+                            <img src="${product.image_url}" alt="${product.name}" class="w-full h-40 object-cover rounded-md">
+                            <h3 class="font-semibold mt-2 text-sm">${product.name}</h3>
+                            <p class="text-orange-600 font-bold">৳ ${product.price}</p>
+                            <button class="w-full bg-orange-600 text-white py-1.5 mt-2 rounded text-sm hover:bg-orange-700">Add to Cart</button>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('product-grid').innerHTML = '<p>Something went wrong!</p>';
+            }
+        }
+
+        fetchProducts();
+    </script>
 </body>
 </html>
