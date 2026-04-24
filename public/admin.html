@@ -25,7 +25,7 @@
         </div>
 
         <form id="product-form" class="space-y-6">
-            <h3 class="font-bold text-center text-gray-700 uppercase tracking-[0.2em] mb-6">Add New Luxury Product</h3>
+            <h3 class="font-bold text-center text-gray-700 uppercase tracking-[0.2em] mb-6">Add Product (via URL)</h3>
             
             <div>
                 <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Product Title</label>
@@ -37,19 +37,19 @@
                 <input type="number" id="p-price" step="0.01" placeholder="25.00" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
             </div>
 
-            <div class="border-2 border-dashed border-gray-200 p-6 text-center bg-gray-50 rounded-sm">
-                <label class="block text-[10px] uppercase tracking-widest text-[#9a6a12] mb-3 font-bold">Product Image</label>
-                <input type="file" id="p-image-file" accept="image/*" required class="text-xs text-gray-500 block mx-auto cursor-pointer">
-                <p id="upload-status" class="text-[10px] mt-4 text-blue-600 font-bold uppercase tracking-widest"></p>
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Image Direct URL</label>
+                <input type="url" id="p-image-url" placeholder="https://i.ibb.co/example.jpg" required class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm">
+                <p class="text-[9px] text-gray-400 mt-1 italic">*এখানে ছবির সরাসরি লিঙ্ক পেস্ট করুন।</p>
             </div>
 
             <div>
                 <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-2">Description</label>
-                <textarea id="p-desc" placeholder="Details..." rows="4" class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm"></textarea>
+                <textarea id="p-desc" placeholder="Details about the product..." rows="4" class="w-full border border-gray-200 p-4 outline-none focus:border-black text-sm"></textarea>
             </div>
 
             <button type="submit" id="submit-btn" class="w-full bg-black text-white py-5 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[#9a6a12] transition duration-500">
-                UPLOAD TO DATABASE
+                SAVE TO DATABASE
             </button>
         </form>
     </div>
@@ -57,58 +57,38 @@
     <script>
         const form = document.getElementById('product-form');
         const submitBtn = document.getElementById('submit-btn');
-        const statusText = document.getElementById('upload-status');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const imageFile = document.getElementById('p-image-file').files[0];
             
             submitBtn.disabled = true;
-            submitBtn.innerText = "UPLOADING PHOTO...";
-            statusText.innerText = "Processing image...";
+            submitBtn.innerText = "SAVING...";
+
+            const productData = {
+                name: document.getElementById('p-name').value,
+                price: document.getElementById('p-price').value,
+                image: document.getElementById('p-image-url').value, // সরাসরি লিঙ্ক
+                description: document.getElementById('p-desc').value
+            };
 
             try {
-                const formData = new FormData();
-                formData.append('image', imageFile);
-
-                // নতুন ImgBB Key
-                const imgbbRes = await fetch('https://api.imgbb.com/1/upload?key=250ca5e91b77576f5bb44dcd1dd9ad46', {
+                const response = await fetch('/api/products', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
                 });
-                const imgData = await imgbbRes.json();
 
-                if (imgData.success) {
-                    statusText.innerText = "Saving to Database...";
-                    
-                    const productData = {
-                        name: document.getElementById('p-name').value,
-                        price: document.getElementById('p-price').value,
-                        image: imgData.data.url, // কলামের নাম 'image'
-                        description: document.getElementById('p-desc').value
-                    };
-
-                    const response = await fetch('/api/products', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(productData)
-                    });
-
-                    if (response.ok) {
-                        Swal.fire('Success!', 'প্রোডাক্ট আপলোড হয়েছে।', 'success');
-                        form.reset();
-                    } else {
-                        throw new Error('Database Error');
-                    }
+                if (response.ok) {
+                    Swal.fire('Success!', 'প্রোডাক্টটি সফলভাবে সেভ হয়েছে।', 'success');
+                    form.reset();
                 } else {
-                    throw new Error('Image Upload Failed');
+                    throw new Error('Server side error');
                 }
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Swal.fire('Error', 'সেভ করা সম্ভব হয়নি: ' + error.message, 'error');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerText = "UPLOAD TO DATABASE";
-                statusText.innerText = "";
+                submitBtn.innerText = "SAVE TO DATABASE";
             }
         });
 
