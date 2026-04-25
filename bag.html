@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -9,48 +10,102 @@
         .luxury-font { font-family: 'Playfair Display', serif; }
     </style>
 </head>
-<body class="bg-[#FDF8EF] text-[#333333] font-serif p-6">
+<body class="bg-[#FDF8EF] text-[#333333] font-serif p-4">
 
-    <div class="max-w-2xl mx-auto">
-        <nav class="flex justify-between items-center mb-8 border-b border-[#C1A44E] pb-4">
-            <h1 class="text-2xl font-bold luxury-font tracking-widest">MY BAG</h1>
-            <a href="index.html" class="border border-[#333333] px-4 py-1 text-sm hover:bg-[#333333] hover:text-white transition">CONTINUE SHOPPING</a>
+    <div class="max-w-md mx-auto">
+        <nav class="flex justify-between items-center mb-6 border-b border-[#C1A44E] pb-4">
+            <h1 class="text-xl font-bold luxury-font tracking-widest">MY BAG</h1>
+            <a href="index.html" class="border border-[#333333] px-3 py-1 text-xs hover:bg-[#333333] hover:text-white transition">SHOP</a>
         </nav>
 
-        <div id="bag-items" class="space-y-4"></div>
+        <div id="bag-items" class="space-y-4">
+            <!-- Products load here -->
+        </div>
 
-        <div id="checkout-section" class="mt-8 p-6 bg-white border border-[#C1A44E]/30 hidden">
-            <h2 class="text-2xl font-bold mb-4 luxury-font">ORDER SUMMARY</h2>
-            <div class="flex justify-between mb-4 border-b pb-2">
+        <div id="checkout-section" class="mt-8 p-4 bg-white border border-[#C1A44E]/30 hidden">
+            <h2 class="text-lg font-bold mb-3 luxury-font">ORDER SUMMARY</h2>
+            <div class="flex justify-between mb-4 border-b pb-2 text-sm">
                 <span>Total Amount</span>
                 <span class="font-bold">৳ <span id="total-price">0</span></span>
             </div>
             
-            <div class="space-y-3 mt-4">
-                <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-gray-300">
-                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-3 border border-gray-300">
-                <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border border-gray-300"></textarea>
-                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase tracking-widest hover:bg-[#C1A44E] transition">Confirm Order</button>
+            <div class="space-y-3">
+                <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border border-gray-300 text-sm">
+                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-2 border border-gray-300 text-sm">
+                <textarea id="address" placeholder="Delivery Address" class="w-full p-2 border border-gray-300 text-sm"></textarea>
+                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-2 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">Confirm Order</button>
             </div>
         </div>
     </div>
+
     <script>
-        async function checkout() {
+        function loadBag() {
+            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
+            const bagContainer = document.getElementById('bag-items');
+            const checkoutSection = document.getElementById('checkout-section');
+            const totalElement = document.getElementById('total-price');
+
+            if (bag.length === 0) {
+                bagContainer.innerHTML = '<p class="text-center text-gray-500 py-10">Your bag is empty!</p>';
+                checkoutSection.classList.add('hidden');
+                return;
+            }
+
+            let total = 0;
+            bagContainer.innerHTML = '';
+            bag.forEach((item, index) => {
+                total += parseFloat(item.price);
+                bagContainer.innerHTML += `
+                    <div class="bg-white p-3 border border-gray-200 flex justify-between items-center text-sm">
+                        <div>
+                            <h3 class="font-semibold">${item.name}</h3>
+                            <p class="text-[#C1A44E] font-bold">৳ ${item.price}</p>
+                        </div>
+                        <button onclick="removeItem(${index})" class="text-red-500 text-xs uppercase underline">Remove</button>
+                    </div>
+                `;
+            });
+
+            totalElement.innerText = total.toFixed(2);
+            checkoutSection.classList.remove('hidden');
+        }
+
+        function removeItem(index) {
+            let bag = JSON.parse(localStorage.getItem('shaam_bag'));
+            bag.splice(index, 1);
+            localStorage.setItem('shaam_bag', JSON.stringify(bag));
+            loadBag();
+        }
+
+        async function submitOrder() {
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
             const bag = JSON.parse(localStorage.getItem('shaam_bag'));
-            const data = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                address: document.getElementById('address').value,
-                products: bag,
-                total: bag.reduce((sum, item) => sum + parseFloat(item.price), 0)
-            };
-            const res = await fetch('/api/orders', {
+            const total = document.getElementById('total-price').innerText;
+
+            if(!name || !phone || !address) {
+                alert("Please fill in all checkout details!");
+                return;
+            }
+
+            const orderData = { name, phone, address, products: bag, total };
+            const response = await fetch('/api/submit-order', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+                body: JSON.stringify(orderData)
             });
-            if(res.ok) { alert('Order Success!'); localStorage.removeItem('shaam_bag'); window.location.href='index.html'; }
+
+            if (response.ok) {
+                alert('Order placed successfully!');
+                localStorage.removeItem('shaam_bag');
+                window.location.href = 'index.html';
+            } else {
+                alert('Order failed.');
+            }
         }
+
+        loadBag();
     </script>
 </body>
 </html>
