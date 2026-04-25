@@ -2,105 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bag - Shaam Itqan</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4">
-
-    <!-- Header -->
-    <nav class="mb-6 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-orange-600">My Shopping Bag</h1>
-        <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded">Back to Shop</a>
-    </nav>
-
-    <!-- Bag Items Container -->
-    <div id="bag-items" class="space-y-4">
-        <!-- Products will load here -->
+<body class="p-4 bg-gray-100">
+    <h1 class="text-xl font-bold mb-4">My Bag</h1>
+    <div id="items"></div>
+    <div class="mt-4">
+        <input id="name" placeholder="Name" class="w-full border p-2 mb-1">
+        <input id="phone" placeholder="Phone" class="w-full border p-2 mb-1">
+        <textarea id="address" placeholder="Address" class="w-full border p-2 mb-1"></textarea>
+        <button onclick="checkout()" class="bg-green-600 text-white w-full p-2">Confirm Order</button>
     </div>
-
-    <!-- Total Price & Checkout Form -->
-    <div id="checkout-section" class="mt-6 p-4 bg-white rounded shadow hidden">
-        <h2 class="text-xl font-bold mb-4">Total: ৳ <span id="total-price">0</span></h2>
-        
-        <div class="border-t pt-4">
-            <h3 class="font-bold mb-2">Checkout Details</h3>
-            <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border mb-2 rounded">
-            <input type="text" id="phone" placeholder="Phone Number" class="w-full p-2 border mb-2 rounded">
-            <textarea id="address" placeholder="Delivery Address" class="w-full p-2 border mb-2 rounded"></textarea>
-            <button onclick="submitOrder()" class="bg-green-600 text-white w-full py-2 rounded font-bold hover:bg-green-700">Confirm Order</button>
-        </div>
-    </div>
-
     <script>
-        function loadBag() {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            const bagContainer = document.getElementById('bag-items');
-            const checkoutSection = document.getElementById('checkout-section');
-            const totalElement = document.getElementById('total-price');
-
-            if (bag.length === 0) {
-                bagContainer.innerHTML = '<p class="text-center text-gray-500 py-10">Your bag is empty!</p>';
-                checkoutSection.classList.add('hidden');
-                return;
-            }
-
-            let total = 0;
-            bagContainer.innerHTML = '';
-            bag.forEach((item, index) => {
-                total += parseFloat(item.price);
-                bagContainer.innerHTML += `
-                    <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-                        <div>
-                            <h3 class="font-semibold">${item.name}</h3>
-                            <p class="text-orange-600 font-bold">৳ ${item.price}</p>
-                        </div>
-                        <button onclick="removeItem(${index})" class="text-red-500 font-bold px-3 py-1 bg-red-50 rounded">Remove</button>
-                    </div>
-                `;
-            });
-
-            totalElement.innerText = total.toFixed(2);
-            checkoutSection.classList.remove('hidden');
-        }
-
-        function removeItem(index) {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag'));
-            bag.splice(index, 1);
-            localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            loadBag();
-        }
-
-        async function submitOrder() {
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const address = document.getElementById('address').value;
+        async function checkout() {
             const bag = JSON.parse(localStorage.getItem('shaam_bag'));
-            const total = document.getElementById('total-price').innerText;
-
-            if(!name || !phone || !address) {
-                alert("Please fill in all checkout details!");
-                return;
-            }
-
-            const orderData = { name, phone, address, products: bag, total };
-
-            const response = await fetch('/api/submit-order', {
+            const data = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                products: bag,
+                total: bag.reduce((sum, item) => sum + parseFloat(item.price), 0)
+            };
+            const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(orderData)
+                body: JSON.stringify(data)
             });
-
-            if (response.ok) {
-                alert('Order placed successfully!');
-                localStorage.removeItem('shaam_bag');
-                window.location.href = 'index.html';
-            } else {
-                alert('Order failed. Please try again.');
-            }
+            if(res.ok) { alert('Order Success!'); localStorage.removeItem('shaam_bag'); window.location.href='index.html'; }
         }
-
-        loadBag();
     </script>
 </body>
 </html>
