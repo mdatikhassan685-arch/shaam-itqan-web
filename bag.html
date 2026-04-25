@@ -2,117 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
-        .luxury-font { font-family: 'Playfair Display', serif; }
-    </style>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap'); .luxury-font { font-family: 'Playfair Display', serif; }</style>
 </head>
 <body class="bg-[#FDF8EF] text-[#333333] font-serif p-4">
 
     <div class="max-w-md mx-auto">
-        <!-- Header -->
         <nav class="flex justify-between items-center mb-6 border-b border-[#C1A44E] pb-4">
             <h1 class="text-xl font-bold luxury-font tracking-widest">MY BAG</h1>
             <a href="index.html" class="border border-[#333333] px-3 py-1 text-xs hover:bg-[#333333] hover:text-white transition">SHOP</a>
         </nav>
 
-        <!-- Bag Items -->
-        <div id="bag-items" class="space-y-4">
-            <p class="text-center text-gray-500">Loading your bag...</p>
-        </div>
+        <div id="bag-items" class="space-y-4"></div>
 
-        <!-- Checkout Section -->
-        <div id="checkout-section" class="mt-8 p-4 bg-white border border-[#C1A44E]/30 hidden">
-            <h2 class="text-lg font-bold mb-3 luxury-font">ORDER SUMMARY</h2>
-            <div class="flex justify-between mb-4 border-b pb-2 text-sm">
-                <span>Total Amount</span>
-                <span class="font-bold text-[#C1A44E]">৳ <span id="total-price">0</span></span>
-            </div>
-            
+        <div id="checkout-section" class="mt-8 p-6 bg-white border border-[#C1A44E]/30 shadow-lg hidden">
+            <h2 class="text-lg font-bold mb-4 luxury-font border-b pb-2">CHECKOUT DETAILS</h2>
             <div class="space-y-3">
-                <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border border-gray-300 text-sm">
-                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-2 border border-gray-300 text-sm">
-                <textarea id="address" placeholder="Delivery Address" class="w-full p-2 border border-gray-300 text-sm"></textarea>
-                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">CONFIRM ORDER</button>
+                <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-gray-300 text-sm focus:border-[#C1A44E] outline-none">
+                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-3 border border-gray-300 text-sm focus:border-[#C1A44E] outline-none">
+                <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border border-gray-300 text-sm focus:border-[#C1A44E] outline-none"></textarea>
+                <button onclick="submitOrder()" id="order-btn" class="w-full bg-[#333333] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">CONFIRM ORDER</button>
             </div>
         </div>
     </div>
 
+    <!-- Custom Alert Box -->
+    <div id="alert-box" class="fixed inset-0 flex items-center justify-center bg-black/50 hidden">
+        <div class="bg-white p-6 border-2 border-[#C1A44E] text-center w-80">
+            <h3 id="alert-msg" class="font-bold mb-4"></h3>
+            <button onclick="closeAlert()" class="bg-[#333333] text-white px-6 py-2">OK</button>
+        </div>
+    </div>
+
     <script>
+        function showAlert(msg) {
+            document.getElementById('alert-msg').innerText = msg;
+            document.getElementById('alert-box').classList.remove('hidden');
+        }
+        function closeAlert() { document.getElementById('alert-box').classList.add('hidden'); }
+
         function loadBag() {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            const bagContainer = document.getElementById('bag-items');
-            const checkoutSection = document.getElementById('checkout-section');
-            const totalElement = document.getElementById('total-price');
-
-            if (bag.length === 0) {
-                bagContainer.innerHTML = '<p class="text-center text-gray-500 py-10">Your bag is empty!</p>';
-                checkoutSection.classList.add('hidden');
-                return;
-            }
-
+            const container = document.getElementById('bag-items');
+            if (bag.length === 0) { container.innerHTML = '<p class="text-center py-10">Your bag is empty!</p>'; return; }
+            
             let total = 0;
-            bagContainer.innerHTML = '';
-            bag.forEach((item, index) => {
+            container.innerHTML = bag.map((item, i) => {
                 total += parseFloat(item.price);
-                bagContainer.innerHTML += `
-                    <div class="bg-white p-3 border border-gray-200 flex items-center gap-4">
-                        <img src="${item.image_url}" alt="${item.name}" class="w-16 h-16 object-cover border border-[#C1A44E]/30">
-                        <div class="flex-grow">
-                            <h3 class="font-semibold text-sm">${item.name}</h3>
-                            <p class="text-[#C1A44E] font-bold text-sm">৳ ${item.price}</p>
-                        </div>
-                        <button onclick="removeItem(${index})" class="text-gray-400 hover:text-red-500 text-xs uppercase">Remove</button>
+                return `<div class="bg-white p-3 border border-gray-200 flex items-center gap-4">
+                    <img src="${item.image_url}" class="w-16 h-16 object-cover border">
+                    <div class="flex-grow">
+                        <h3 class="text-sm font-semibold">${item.name}</h3>
+                        <p class="text-[#C1A44E] text-sm font-bold">৳ ${item.price}</p>
                     </div>
-                `;
-            });
-
-            totalElement.innerText = total.toFixed(2);
-            checkoutSection.classList.remove('hidden');
-        }
-
-        function removeItem(index) {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag'));
-            bag.splice(index, 1);
-            localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            loadBag();
+                    <button onclick="removeItem(${i})" class="text-xs text-gray-400">REMOVE</button>
+                </div>`;
+            }).join('');
+            document.getElementById('total-price').innerText = total.toFixed(2);
+            document.getElementById('checkout-section').classList.remove('hidden');
         }
 
         async function submitOrder() {
-            // ১. লগইন চেক
-            const user = localStorage.getItem('user_session');
-            if (!user) {
-                alert("Please login first to confirm order!");
-                window.location.href = 'login.html';
-                return;
-            }
-
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const address = document.getElementById('address').value;
-            const bag = JSON.parse(localStorage.getItem('shaam_bag'));
-            const total = document.getElementById('total-price').innerText;
-
-            if(!name || !phone || !address) return alert("Please fill all details!");
-
-            const response = await fetch('/api/orders', { // আপনার api/orders.js কে কল করবে
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name, phone, address, products: bag, total })
-            });
-
-            if (response.ok) {
-                alert('Order placed successfully!');
-                localStorage.removeItem('shaam_bag');
-                window.location.href = 'index.html';
-            } else {
-                alert('Order failed. Please try again.');
-            }
+            if(!localStorage.getItem('user_session')) { window.location.href='login.html'; return; }
+            const orderData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                products: JSON.parse(localStorage.getItem('shaam_bag')),
+                total: document.getElementById('total-price').innerText
+            };
+            const res = await fetch('/api/orders', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(orderData) });
+            if(res.ok) { localStorage.removeItem('shaam_bag'); showAlert('Order Confirmed!'); setTimeout(()=>window.location.href='index.html', 2000); }
+            else { showAlert('Order Failed! Please check your connection.'); }
         }
-
+        function removeItem(i) { let b = JSON.parse(localStorage.getItem('shaam_bag')); b.splice(i,1); localStorage.setItem('shaam_bag',JSON.stringify(b)); loadBag(); }
         loadBag();
     </script>
 </body>
