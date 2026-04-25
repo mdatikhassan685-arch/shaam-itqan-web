@@ -1,0 +1,32 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <h1 class="text-2xl font-bold mb-4">Admin Dashboard: Orders</h1>
+    <div id="order-list" class="space-y-4"></div>
+
+    <script>
+        async function fetchOrders() {
+            const res = await fetch('/api/get-orders'); // এই API টা আমরা পরে বানাবো
+            const orders = await res.json();
+            const list = document.getElementById('order-list');
+            
+            orders.forEach(order => {
+                list.innerHTML += `
+                    <div class="bg-white p-4 rounded shadow border-l-4 border-orange-600">
+                        <p><b>Name:</b> ${order.customer_name}</p>
+                        <p><b>Phone:</b> ${order.phone}</p>
+                        <p><b>Address:</b> ${order.address}</p>
+                        <p><b>Total:</b> ৳${order.total_price}</p>
+                        <p><b>Status:</b> ${order.status}</p>
+                    </div>
+                `;
+            });
+        }
+        fetchOrders();
+    </script>
+</body>
+</html>
