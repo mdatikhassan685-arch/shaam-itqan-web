@@ -13,20 +13,23 @@
 <body class="bg-[#FDF8EF] text-[#333333] font-serif p-4">
 
     <div class="max-w-md mx-auto">
+        <!-- Header -->
         <nav class="flex justify-between items-center mb-6 border-b border-[#C1A44E] pb-4">
             <h1 class="text-xl font-bold luxury-font tracking-widest">MY BAG</h1>
             <a href="index.html" class="border border-[#333333] px-3 py-1 text-xs hover:bg-[#333333] hover:text-white transition">SHOP</a>
         </nav>
 
+        <!-- Bag Items -->
         <div id="bag-items" class="space-y-4">
-            <!-- Products will load here with images -->
+            <p class="text-center text-gray-500">Loading your bag...</p>
         </div>
 
+        <!-- Checkout Section -->
         <div id="checkout-section" class="mt-8 p-4 bg-white border border-[#C1A44E]/30 hidden">
             <h2 class="text-lg font-bold mb-3 luxury-font">ORDER SUMMARY</h2>
             <div class="flex justify-between mb-4 border-b pb-2 text-sm">
                 <span>Total Amount</span>
-                <span class="font-bold">৳ <span id="total-price">0</span></span>
+                <span class="font-bold text-[#C1A44E]">৳ <span id="total-price">0</span></span>
             </div>
             
             <div class="space-y-3">
@@ -79,23 +82,23 @@
         }
 
         async function submitOrder() {
-    const user = localStorage.getItem('user_session'); // লগইন ডাটা চেক
+            // ১. লগইন চেক
+            const user = localStorage.getItem('user_session');
+            if (!user) {
+                alert("Please login first to confirm order!");
+                window.location.href = 'login.html';
+                return;
+            }
 
-    if (!user) {
-        alert("You must login to confirm your order!");
-        window.location.href = 'login.html'; // লগইন পেজে পাঠিয়ে দেবে
-        return;
-    }
-            // শুধু নিশ্চিত করুন api/submit-order আপনার সিস্টেমে ঠিকমতো আছে
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
             const bag = JSON.parse(localStorage.getItem('shaam_bag'));
             const total = document.getElementById('total-price').innerText;
 
-            if(!name || !phone || !address) return alert("Please fill details!");
+            if(!name || !phone || !address) return alert("Please fill all details!");
 
-            const response = await fetch('/api/submit-order', {
+            const response = await fetch('/api/orders', { // আপনার api/orders.js কে কল করবে
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ name, phone, address, products: bag, total })
@@ -105,6 +108,8 @@
                 alert('Order placed successfully!');
                 localStorage.removeItem('shaam_bag');
                 window.location.href = 'index.html';
+            } else {
+                alert('Order failed. Please try again.');
             }
         }
 
