@@ -8,30 +8,29 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
-        .gold-color { color: #C1A44E; }
-        .bg-gold { background-color: #C1A44E; }
     </style>
 </head>
 <body class="bg-[#FDF8EF] text-[#333333] font-serif">
-    
+
     <!-- Navbar -->
-<nav class="p-4 md:px-12 flex justify-between items-center border-b border-[#C1A44E] bg-[#FDF8EF]">
-    <!-- Logo -->
-    <div class="w-12 md:w-16">
-        <img src="https://i.ibb.co/L5QZ87h/logo.png" alt="Logo" class="h-auto w-full object-contain">
-    </div>
-    
-    <!-- Brand Name: টেক্সট সাইজ ও বোল্ডনেস বাড়ানো হয়েছে -->
-    <h1 class="text-2xl md:text-4xl font-black tracking-[0.2em] luxury-font whitespace-nowrap text-[#333333]">SHAAM ITQAN</h1>
-    
-    <!-- Bag Icon -->
-    <a href="bag.html" class="relative">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-        </svg>
-        <span id="bag-count" class="absolute -top-1 -right-1 bg-[#C1A44E] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
-    </a>
-</nav>
+    <nav class="p-4 md:px-12 flex justify-between items-center border-b border-[#C1A44E] bg-[#FDF8EF]">
+        <!-- Logo -->
+        <div class="w-12 md:w-16">
+            <img src="https://i.ibb.co/L5QZ87h/logo.png" alt="Logo" class="h-auto w-full object-contain">
+        </div>
+        
+        <!-- Brand Name -->
+        <h1 class="text-xl md:text-3xl font-bold tracking-[0.2em] luxury-font whitespace-nowrap">SHAAM ITQAN</h1>
+        
+        <!-- Bag Icon -->
+        <a href="bag.html" class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span id="bag-count" class="absolute -top-1 -right-1 bg-[#C1A44E] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
+        </a>
+    </nav>
+
     <!-- Product Grid -->
     <main class="max-w-6xl mx-auto p-6 md:py-12">
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -51,7 +50,7 @@
 
                 products.forEach(product => {
                     grid.innerHTML += `
-                        <div class="bg-white p-4 border border-[#C1A44E]/30 hover:border-[#C1A44E] transition shadow-sm">
+                        <div class="bg-white p-4 border border-[#C1A44E]/30 shadow-sm hover:shadow-lg transition">
                             <img src="${product.image_url}" alt="${product.name}" class="w-full h-56 object-cover mb-4">
                             <h3 class="font-semibold text-lg">${product.name}</h3>
                             <p class="text-[#C1A44E] font-bold mb-4">৳ ${product.price}</p>
@@ -61,6 +60,7 @@
                 });
             } catch (error) {
                 console.error(error);
+                document.getElementById('product-grid').innerHTML = '<p class="text-center col-span-4">Failed to load products.</p>';
             }
         }
 
@@ -69,7 +69,7 @@
             bag.push(product);
             localStorage.setItem('shaam_bag', JSON.stringify(bag));
             updateBagCount();
-            alert("Added to your bag!");
+            alert(product.name + " added to your bag!");
         }
 
         function updateBagCount() {
