@@ -79,7 +79,13 @@
         }
 
         async function submitOrder() {
-            // ... (আপনার আগের সাবমিট কোডটিই থাকবে)
+    const user = localStorage.getItem('user_session'); // লগইন ডাটা চেক
+
+    if (!user) {
+        alert("You must login to confirm your order!");
+        window.location.href = 'login.html'; // লগইন পেজে পাঠিয়ে দেবে
+        return;
+    }
             // শুধু নিশ্চিত করুন api/submit-order আপনার সিস্টেমে ঠিকমতো আছে
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
