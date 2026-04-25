@@ -2,16 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>My Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+    </style>
 </head>
-<body class="p-4 bg-gray-100">
-    <h1 class="text-xl font-bold mb-4">My Bag</h1>
-    <div id="items"></div>
-    <div class="mt-4">
-        <input id="name" placeholder="Name" class="w-full border p-2 mb-1">
-        <input id="phone" placeholder="Phone" class="w-full border p-2 mb-1">
-        <textarea id="address" placeholder="Address" class="w-full border p-2 mb-1"></textarea>
-        <button onclick="checkout()" class="bg-green-600 text-white w-full p-2">Confirm Order</button>
+<body class="bg-[#FDF8EF] text-[#333333] font-serif p-6">
+
+    <div class="max-w-2xl mx-auto">
+        <nav class="flex justify-between items-center mb-8 border-b border-[#C1A44E] pb-4">
+            <h1 class="text-2xl font-bold luxury-font tracking-widest">MY BAG</h1>
+            <a href="index.html" class="border border-[#333333] px-4 py-1 text-sm hover:bg-[#333333] hover:text-white transition">CONTINUE SHOPPING</a>
+        </nav>
+
+        <div id="bag-items" class="space-y-4"></div>
+
+        <div id="checkout-section" class="mt-8 p-6 bg-white border border-[#C1A44E]/30 hidden">
+            <h2 class="text-2xl font-bold mb-4 luxury-font">ORDER SUMMARY</h2>
+            <div class="flex justify-between mb-4 border-b pb-2">
+                <span>Total Amount</span>
+                <span class="font-bold">৳ <span id="total-price">0</span></span>
+            </div>
+            
+            <div class="space-y-3 mt-4">
+                <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-gray-300">
+                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-3 border border-gray-300">
+                <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border border-gray-300"></textarea>
+                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase tracking-widest hover:bg-[#C1A44E] transition">Confirm Order</button>
+            </div>
+        </div>
     </div>
     <script>
         async function checkout() {
