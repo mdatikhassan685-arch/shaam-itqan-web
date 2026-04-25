@@ -7,68 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-
-    <!-- Navbar -->
-    <nav class="bg-orange-600 p-4 text-white shadow-lg flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-bold">Shaam Itqan</h1>
-        <!-- Bag Icon with Link to bag.html -->
-        <a href="bag.html" class="relative cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <span id="bag-count" class="absolute -top-1 -right-1 bg-white text-orange-600 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
-        </a>
+    <nav class="bg-orange-600 p-4 text-white flex justify-between items-center">
+        <h1 class="font-bold">Shaam Itqan</h1>
+        <a href="bag.html">Bag (<span id="bag-count">0</span>)</a>
     </nav>
-
-    <!-- Product Grid -->
-    <main class="p-4">
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <p class="text-gray-500 col-span-2 md:col-span-4 text-center">Loading products...</p>
-        </div>
-    </main>
-
+    <div id="product-grid" class="grid grid-cols-2 p-4 gap-4"></div>
     <script>
-        // পেজ লোড হলে ব্যাগের সংখ্যা আপডেট করা
-        document.addEventListener('DOMContentLoaded', () => {
-            updateBagCount();
+        fetch('/api/product').then(r => r.json()).then(data => {
+            document.getElementById('product-grid').innerHTML = data.map(p => `
+                <div class="bg-white p-2 rounded shadow">
+                    <img src="${p.image_url}" class="w-full h-32 object-cover">
+                    <h3>${p.name}</h3><p>৳ ${p.price}</p>
+                    <button onclick='addToBag(${JSON.stringify(p)})' class="bg-orange-600 text-white w-full rounded">Add to Bag</button>
+                </div>`).join('');
         });
-
-        async function fetchProducts() {
-            try {
-                const response = await fetch('/api/get-products');
-                const products = await response.json();
-                const grid = document.getElementById('product-grid');
-                grid.innerHTML = '';
-
-                products.forEach(product => {
-                    grid.innerHTML += `
-                        <div class="bg-white p-3 rounded-lg shadow">
-                            <img src="${product.image_url}" alt="${product.name}" class="w-full h-32 object-cover rounded">
-                            <h3 class="font-semibold mt-2 text-sm">${product.name}</h3>
-                            <p class="text-orange-600 font-bold">৳ ${product.price}</p>
-                            <button onclick='addToBag(${JSON.stringify(product)})' class="w-full bg-orange-600 text-white py-1 mt-2 rounded text-sm hover:bg-orange-700">Add to Bag</button>
-                        </div>
-                    `;
-                });
-            } catch (error) {
-                document.getElementById('product-grid').innerHTML = '<p class="text-red-500 text-center">Error loading products.</p>';
-            }
+        function addToBag(p) {
+            let b = JSON.parse(localStorage.getItem('shaam_bag') || '[]');
+            b.push(p);
+            localStorage.setItem('shaam_bag', JSON.stringify(b));
+            document.getElementById('bag-count').innerText = b.length;
         }
-
-        function addToBag(product) {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            bag.push(product);
-            localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            updateBagCount();
-            alert(product.name + " added to your bag!");
-        }
-
-        function updateBagCount() {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            document.getElementById('bag-count').innerText = bag.length;
-        }
-
-        fetchProducts();
     </script>
 </body>
 </html>
