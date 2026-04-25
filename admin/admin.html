@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+        <a href="add-product.html" class="bg-blue-600 text-white px-4 py-2 rounded">Add New Product</a>
+        
+        <h2 class="text-xl font-bold mt-8 mb-4">Recent Orders</h2>
+        <div id="order-list" class="space-y-4">Loading orders...</div>
+    </div>
+
+    <script>
+        async function loadOrders() {
+            const res = await fetch('/api/get-orders');
+            const orders = await res.json();
+            const list = document.getElementById('order-list');
+            list.innerHTML = orders.map(o => `
+                <div class="bg-white p-4 rounded shadow border-l-4 border-green-500">
+                    <p><b>Customer:</b> ${o.customer_name} (${o.phone})</p>
+                    <p><b>Address:</b> ${o.address}</p>
+                    <p><b>Total:</b> ৳${o.total_price}</p>
+                </div>
+            `).join('');
+        }
+        loadOrders();
+    </script>
+</body>
+</html>
