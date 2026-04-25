@@ -1,18 +1,62 @@
 <!DOCTYPE html>
-<html>
-<head><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="p-4">
-    <h1 class="text-xl font-bold mb-4">All Orders</h1>
-    <div id="orders"></div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+        
+        <!-- Add Product Button -->
+        <a href="add-product.html" class="bg-blue-600 text-white px-4 py-2 rounded">Add New Product</a>
+        
+        <h2 class="text-xl font-bold mt-8 mb-4">Recent Orders</h2>
+        <div id="order-list" class="space-y-4">Loading orders...</div>
+    </div>
+
     <script>
-        fetch('/api/orders').then(r=>r.json()).then(data => {
-            document.getElementById('orders').innerHTML = data.map(o => `
-                <div class="border p-4 mb-2 rounded shadow">
-                    <p><b>Name:</b> ${o.customer_name}</p>
-                    <p><b>Phone:</b> ${o.phone}</p>
-                    <p><b>Total:</b> ${o.total_price} ৳</p>
-                </div>`).join('');
-        });
+        async function loadOrders() {
+            try {
+                // আপনার api/orders.js কে কল করছে
+                const res = await fetch('/api/orders');
+                const orders = await res.json();
+                const list = document.getElementById('order-list');
+                
+                if (orders.length === 0) {
+                    list.innerHTML = '<p>No orders yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = orders.map(o => `
+                    <div class="bg-white p-4 rounded shadow border-l-4 border-green-500 flex justify-between items-center">
+                        <div>
+                            <p><b>Customer:</b> ${o.customer_name} (${o.phone})</p>
+                            <p><b>Address:</b> ${o.address}</p>
+                            <p><b>Total:</b> ৳${o.total_price}</p>
+                            <p><b>Status:</b> ${o.status}</p>
+                        </div>
+                        <button onclick="confirmOrder(${o.id})" class="bg-green-600 text-white px-3 py-1 rounded">Confirm</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('order-list').innerHTML = 'Error loading orders.';
+            }
+        }
+
+        async function confirmOrder(id) {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, status: 'Confirmed' })
+            });
+            if (res.ok) {
+                alert('Order Confirmed!');
+                loadOrders(); // রিফ্রেশ লিস্ট
+            }
+        }
+        loadOrders();
     </script>
 </body>
 </html>
