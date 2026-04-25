@@ -11,60 +11,57 @@
     <div class="max-w-md mx-auto">
         <nav class="flex justify-between items-center mb-6 border-b border-[#C1A44E] pb-4">
             <h1 class="text-xl font-bold luxury-font tracking-widest">MY BAG</h1>
-            <a href="index.html" class="border border-[#333333] px-3 py-1 text-xs hover:bg-[#333333] hover:text-white transition">SHOP</a>
+            <a href="index.html" class="border border-[#333333] px-4 py-1 text-xs hover:bg-[#333333] hover:text-white transition">SHOP</a>
         </nav>
 
+        <!-- Product List -->
         <div id="bag-items" class="space-y-4"></div>
 
-        <div id="checkout-section" class="mt-8 p-6 bg-white border border-[#C1A44E]/30 shadow-lg hidden">
-            <h2 class="text-lg font-bold mb-4 luxury-font border-b pb-2">CHECKOUT DETAILS</h2>
+        <!-- Checkout Section - সব সময় থাকবে -->
+        <div id="checkout-section" class="mt-8 p-6 bg-white border border-[#C1A44E]/30 shadow-lg">
+            <h2 class="text-lg font-bold mb-4 luxury-font border-b pb-2">ORDER SUMMARY</h2>
+            <div class="flex justify-between mb-4 border-b pb-2 text-sm">
+                <span>Total Amount</span>
+                <span class="font-bold text-[#C1A44E]">৳ <span id="total-price">0</span></span>
+            </div>
+            
             <div class="space-y-3">
-                <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-gray-300 text-sm focus:border-[#C1A44E] outline-none">
-                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-3 border border-gray-300 text-sm focus:border-[#C1A44E] outline-none">
-                <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border border-gray-300 text-sm focus:border-[#C1A44E] outline-none"></textarea>
-                <button onclick="submitOrder()" id="order-btn" class="w-full bg-[#333333] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">CONFIRM ORDER</button>
+                <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-gray-300 text-sm">
+                <input type="text" id="phone" placeholder="Phone Number" class="w-full p-3 border border-gray-300 text-sm">
+                <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border border-gray-300 text-sm"></textarea>
+                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">CONFIRM ORDER</button>
             </div>
         </div>
     </div>
 
-    <!-- Custom Alert Box -->
-    <div id="alert-box" class="fixed inset-0 flex items-center justify-center bg-black/50 hidden">
-        <div class="bg-white p-6 border-2 border-[#C1A44E] text-center w-80">
-            <h3 id="alert-msg" class="font-bold mb-4"></h3>
-            <button onclick="closeAlert()" class="bg-[#333333] text-white px-6 py-2">OK</button>
-        </div>
-    </div>
-
     <script>
-        function showAlert(msg) {
-            document.getElementById('alert-msg').innerText = msg;
-            document.getElementById('alert-box').classList.remove('hidden');
-        }
-        function closeAlert() { document.getElementById('alert-box').classList.add('hidden'); }
-
         function loadBag() {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
             const container = document.getElementById('bag-items');
-            if (bag.length === 0) { container.innerHTML = '<p class="text-center py-10">Your bag is empty!</p>'; return; }
+            
+            if (bag.length === 0) {
+                container.innerHTML = '<p class="text-center py-10">Your bag is empty!</p>';
+                return;
+            }
             
             let total = 0;
             container.innerHTML = bag.map((item, i) => {
                 total += parseFloat(item.price);
-                return `<div class="bg-white p-3 border border-gray-200 flex items-center gap-4">
-                    <img src="${item.image_url}" class="w-16 h-16 object-cover border">
-                    <div class="flex-grow">
-                        <h3 class="text-sm font-semibold">${item.name}</h3>
-                        <p class="text-[#C1A44E] text-sm font-bold">৳ ${item.price}</p>
-                    </div>
-                    <button onclick="removeItem(${i})" class="text-xs text-gray-400">REMOVE</button>
-                </div>`;
+                return `
+                    <div class="bg-white p-3 border border-gray-200 flex items-center gap-4">
+                        <img src="${item.image_url}" class="w-16 h-16 object-cover border">
+                        <div class="flex-grow">
+                            <h3 class="text-sm font-semibold">${item.name}</h3>
+                            <p class="text-[#C1A44E] text-sm font-bold">৳ ${item.price}</p>
+                        </div>
+                        <button onclick="removeItem(${i})" class="text-xs text-gray-400 border px-2 py-1">REMOVE</button>
+                    </div>`;
             }).join('');
             document.getElementById('total-price').innerText = total.toFixed(2);
-            document.getElementById('checkout-section').classList.remove('hidden');
         }
 
         async function submitOrder() {
-            if(!localStorage.getItem('user_session')) { window.location.href='login.html'; return; }
+            if(!localStorage.getItem('user_session')) { alert("Login first!"); window.location.href='login.html'; return; }
             const orderData = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
@@ -73,8 +70,8 @@
                 total: document.getElementById('total-price').innerText
             };
             const res = await fetch('/api/orders', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(orderData) });
-            if(res.ok) { localStorage.removeItem('shaam_bag'); showAlert('Order Confirmed!'); setTimeout(()=>window.location.href='index.html', 2000); }
-            else { showAlert('Order Failed! Please check your connection.'); }
+            if(res.ok) { alert('Order Confirmed!'); localStorage.removeItem('shaam_bag'); window.location.href='index.html'; }
+            else { alert('Failed! Please check order.js'); }
         }
         function removeItem(i) { let b = JSON.parse(localStorage.getItem('shaam_bag')); b.splice(i,1); localStorage.setItem('shaam_bag',JSON.stringify(b)); loadBag(); }
         loadBag();
