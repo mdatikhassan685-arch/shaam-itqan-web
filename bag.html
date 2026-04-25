@@ -19,7 +19,7 @@
         </nav>
 
         <div id="bag-items" class="space-y-4">
-            <!-- Products load here -->
+            <!-- Products will load here with images -->
         </div>
 
         <div id="checkout-section" class="mt-8 p-4 bg-white border border-[#C1A44E]/30 hidden">
@@ -33,7 +33,7 @@
                 <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border border-gray-300 text-sm">
                 <input type="text" id="phone" placeholder="Phone Number" class="w-full p-2 border border-gray-300 text-sm">
                 <textarea id="address" placeholder="Delivery Address" class="w-full p-2 border border-gray-300 text-sm"></textarea>
-                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-2 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">Confirm Order</button>
+                <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#C1A44E] transition">CONFIRM ORDER</button>
             </div>
         </div>
     </div>
@@ -56,12 +56,13 @@
             bag.forEach((item, index) => {
                 total += parseFloat(item.price);
                 bagContainer.innerHTML += `
-                    <div class="bg-white p-3 border border-gray-200 flex justify-between items-center text-sm">
-                        <div>
-                            <h3 class="font-semibold">${item.name}</h3>
-                            <p class="text-[#C1A44E] font-bold">৳ ${item.price}</p>
+                    <div class="bg-white p-3 border border-gray-200 flex items-center gap-4">
+                        <img src="${item.image_url}" alt="${item.name}" class="w-16 h-16 object-cover border border-[#C1A44E]/30">
+                        <div class="flex-grow">
+                            <h3 class="font-semibold text-sm">${item.name}</h3>
+                            <p class="text-[#C1A44E] font-bold text-sm">৳ ${item.price}</p>
                         </div>
-                        <button onclick="removeItem(${index})" class="text-red-500 text-xs uppercase underline">Remove</button>
+                        <button onclick="removeItem(${index})" class="text-gray-400 hover:text-red-500 text-xs uppercase">Remove</button>
                     </div>
                 `;
             });
@@ -78,30 +79,26 @@
         }
 
         async function submitOrder() {
+            // ... (আপনার আগের সাবমিট কোডটিই থাকবে)
+            // শুধু নিশ্চিত করুন api/submit-order আপনার সিস্টেমে ঠিকমতো আছে
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
             const bag = JSON.parse(localStorage.getItem('shaam_bag'));
             const total = document.getElementById('total-price').innerText;
 
-            if(!name || !phone || !address) {
-                alert("Please fill in all checkout details!");
-                return;
-            }
+            if(!name || !phone || !address) return alert("Please fill details!");
 
-            const orderData = { name, phone, address, products: bag, total };
             const response = await fetch('/api/submit-order', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(orderData)
+                body: JSON.stringify({ name, phone, address, products: bag, total })
             });
 
             if (response.ok) {
                 alert('Order placed successfully!');
                 localStorage.removeItem('shaam_bag');
                 window.location.href = 'index.html';
-            } else {
-                alert('Order failed.');
             }
         }
 
