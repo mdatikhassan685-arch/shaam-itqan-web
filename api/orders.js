@@ -10,10 +10,16 @@ export default async function handler(req, res) {
                 'INSERT INTO orders (customer_name, phone, address, products, total_price) VALUES (?, ?, ?, ?, ?)',
                 [name, phone, address, JSON.stringify(products), total]
             );
+            await db.end();
             res.status(200).json({ message: 'Success' });
-        } catch (e) {
-            res.status(500).json({ error: e.message }); // এখন এররটি ব্রাউজারে দেখতে পাবেন
+        } catch (error) {
+            await db.end();
+            res.status(500).json({ error: error.message });
         }
+    } else {
+        // GET Request এর জন্য
+        const [rows] = await db.execute('SELECT * FROM orders ORDER BY created_at DESC');
+        await db.end();
+        res.status(200).json(rows);
     }
-    await db.end();
 }
