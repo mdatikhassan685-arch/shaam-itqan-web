@@ -55,15 +55,16 @@
             if (res.ok) {
                 if (isLogin) {
                     localStorage.setItem('user_session', JSON.stringify(data.user));
-                    alert("Welcome back!");
-                    window.location.href = 'bag.html';
-                } else {
-                    alert("Account created! Please login.");
-                    toggleMode();
-                }
-            } else {
-                alert(data.message || "Something went wrong!");
-            }
+            alert("Welcome back!");
+            // এখানে আগে bag.html ছিল, এখন index.html দিন
+            window.location.href = 'index.html'; 
+        } else {
+            alert("Signup successful! Please login.");
+            toggleMode();
+        }
+    } else {
+        alert(data.message || "Error!");
+    }
         }
     </script>
 </body>
