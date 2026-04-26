@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHAAM ITQAN | LUXURY T-SHIRT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,23 +11,13 @@
 </head>
 <body class="bg-[#FDF8EF] text-[#333333] font-serif">
 
-    <!-- Navbar -->
     <nav class="p-4 md:px-12 flex justify-between items-center border-b border-[#C1A44E] bg-[#FDF8EF]">
-        <!-- Logo with Invisible Trigger -->
-        <div class="relative w-12 md:w-16">
-            <div id="hidden-trigger" class="absolute inset-0 cursor-pointer z-50"></div>
+        <div class="w-12 md:w-16">
             <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" alt="Logo" class="h-auto w-full object-contain">
         </div>
-        
-        <!-- Brand Name -->
         <h1 class="text-xl md:text-3xl font-bold tracking-[0.2em] luxury-font whitespace-nowrap">SHAAM ITQAN</h1>
-        
-        <!-- Icons Container -->
         <div class="flex items-center gap-4">
-            <!-- Auth Link (Login/Profile) -->
             <a id="auth-link" href="login.html" class="uppercase text-xs font-bold border-b border-[#333333]">Login</a>
-            
-            <!-- Bag Icon -->
             <a href="bag.html" class="relative">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -40,38 +29,16 @@
 
     <main class="max-w-6xl mx-auto p-6 md:py-12">
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <p class="text-center col-span-2 md:col-span-4 text-gray-500">Loading exquisite collection...</p>
+            <p class="text-center col-span-2 md:col-span-4">Loading collection...</p>
         </div>
     </main>
 
     <script>
-        // 1. Initial Checks
         document.addEventListener('DOMContentLoaded', () => {
             updateBagCount();
-            checkAuth();
-        });
-
-        // 2. Auth Check: Show Login or Profile
-        function checkAuth() {
             const user = localStorage.getItem('user_session');
             const authLink = document.getElementById('auth-link');
-            if (user) {
-                authLink.href = 'profile.html'; // Profile Page link
-                authLink.innerText = 'Profile';
-            } else {
-                authLink.href = 'login.html';
-                authLink.innerText = 'Login';
-            }
-        }
-
-        // 3. Admin Trigger (3 clicks)
-        let clicks = 0;
-        let timer;
-        document.getElementById('hidden-trigger').addEventListener('click', () => {
-            clicks++;
-            clearTimeout(timer);
-            timer = setTimeout(() => { clicks = 0; }, 2000);
-            if (clicks === 3) window.location.href = 'admin/admin-login.html';
+            if (user) { authLink.href = 'profile.html'; authLink.innerText = 'Profile'; }
         });
 
         async function fetchProducts() {
@@ -83,16 +50,14 @@
                 products.forEach(product => {
                     grid.innerHTML += `
                         <div class="bg-white p-4 border border-[#C1A44E]/30 shadow-sm hover:shadow-lg transition">
-                            <img src="${product.image_url}" alt="${product.name}" class="w-full h-56 object-cover mb-4">
+                            <img src="${product.image_url}" class="w-full h-56 object-cover mb-4">
                             <h3 class="font-semibold text-lg">${product.name}</h3>
                             <p class="text-[#C1A44E] font-bold mb-4">৳ ${product.price}</p>
                             <button onclick='addToBag(${JSON.stringify(product)})' class="w-full border border-[#333333] py-2 text-sm uppercase tracking-wider hover:bg-[#333333] hover:text-white transition">Add to Bag</button>
                         </div>
                     `;
                 });
-            } catch (error) {
-                document.getElementById('product-grid').innerHTML = '<p class="text-center col-span-4">Failed to load products.</p>';
-            }
+            } catch (error) { document.getElementById('product-grid').innerHTML = '<p class="text-center">Failed to load.</p>'; }
         }
 
         function addToBag(product) {
@@ -100,12 +65,11 @@
             bag.push(product);
             localStorage.setItem('shaam_bag', JSON.stringify(bag));
             updateBagCount();
-            alert("Added to your bag!");
+            alert("Added!");
         }
 
         function updateBagCount() {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            document.getElementById('bag-count').innerText = bag.length;
+            document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
         }
 
         fetchProducts();
