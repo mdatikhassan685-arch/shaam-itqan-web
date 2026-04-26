@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SHAAM ITQAN | LUXURY T-SHIRT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
@@ -11,25 +12,25 @@
 </head>
 <body class="bg-[#FDF8EF] text-[#333333] font-serif">
 
-    <nav class="p-4 md:px-12 flex justify-between items-center border-b border-[#C1A44E] bg-[#FDF8EF]">
-        <div class="w-12 md:w-16">
-            <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" alt="Logo" class="h-auto w-full object-contain">
+    <!-- Navbar -->
+    <nav class="p-3 flex justify-between items-center border-b border-[#C1A44E] bg-[#FDF8EF]">
+        <div class="w-10">
+            <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" alt="Logo" class="w-full">
         </div>
-        <h1 class="text-xl md:text-3xl font-bold tracking-[0.2em] luxury-font whitespace-nowrap">SHAAM ITQAN</h1>
-        <div class="flex items-center gap-4">
-            <a id="auth-link" href="login.html" class="uppercase text-xs font-bold border-b border-[#333333]">Login</a>
+        <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
+        <div class="flex items-center gap-3">
+            <a id="auth-link" href="login.html" class="text-[10px] uppercase font-bold border-b border-[#333333]">Login</a>
             <a href="bag.html" class="relative">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <span id="bag-count" class="absolute -top-1 -right-1 bg-[#C1A44E] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                <span id="bag-count" class="absolute -top-1 -right-1 bg-[#C1A44E] text-white text-[9px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
             </a>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto p-6 md:py-12">
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <p class="text-center col-span-2 md:col-span-4">Loading collection...</p>
+    <!-- Product Grid (Mobile Optimized) -->
+    <main class="p-3">
+        <div id="product-grid" class="grid grid-cols-2 gap-3">
+            <p class="col-span-2 text-center text-sm py-10">Loading...</p>
         </div>
     </main>
 
@@ -37,35 +38,28 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateBagCount();
             const user = localStorage.getItem('user_session');
-            const authLink = document.getElementById('auth-link');
-            if (user) { authLink.href = 'profile.html'; authLink.innerText = 'Profile'; }
+            if (user) { document.getElementById('auth-link').href = 'profile.html'; document.getElementById('auth-link').innerText = 'Profile'; }
         });
 
         async function fetchProducts() {
-            try {
-                const response = await fetch('/api/product');
-                const products = await response.json();
-                const grid = document.getElementById('product-grid');
-                grid.innerHTML = '';
-                products.forEach(product => {
-                    grid.innerHTML += `
-                        <div class="bg-white p-4 border border-[#C1A44E]/30 shadow-sm hover:shadow-lg transition">
-                            <img src="${product.image_url}" class="w-full h-56 object-cover mb-4">
-                            <h3 class="font-semibold text-lg">${product.name}</h3>
-                            <p class="text-[#C1A44E] font-bold mb-4">৳ ${product.price}</p>
-                            <button onclick='addToBag(${JSON.stringify(product)})' class="w-full border border-[#333333] py-2 text-sm uppercase tracking-wider hover:bg-[#333333] hover:text-white transition">Add to Bag</button>
-                        </div>
-                    `;
-                });
-            } catch (error) { document.getElementById('product-grid').innerHTML = '<p class="text-center">Failed to load.</p>'; }
+            const res = await fetch('/api/product');
+            const products = await res.json();
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => `
+                <div class="bg-white p-2 border border-[#C1A44E]/30">
+                    <img src="${p.image_url}" class="w-full h-40 object-cover mb-2">
+                    <h3 class="text-xs font-semibold">${p.name}</h3>
+                    <p class="text-[#C1A44E] font-bold text-sm mb-2">৳ ${p.price}</p>
+                    <button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-[#333333] py-1 text-[10px] uppercase tracking-wider hover:bg-[#333333] hover:text-white transition">Add to Bag</button>
+                </div>
+            `).join('');
         }
 
-        function addToBag(product) {
+        function addToBag(p) {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            bag.push(product);
+            bag.push(p);
             localStorage.setItem('shaam_bag', JSON.stringify(bag));
             updateBagCount();
-            alert("Added!");
         }
 
         function updateBagCount() {
