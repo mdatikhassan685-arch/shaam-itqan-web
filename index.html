@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHAAM ITQAN | LUXURY T-SHIRT </title>
+    <title>SHAAM ITQAN | LUXURY T-SHIRT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
@@ -14,7 +14,7 @@
 
     <!-- Navbar -->
     <nav class="p-4 md:px-12 flex justify-between items-center border-b border-[#C1A44E] bg-[#FDF8EF]">
-        <!-- Logo with Hidden Trigger -->
+        <!-- Logo with Invisible Trigger -->
         <div class="relative w-12 md:w-16">
             <div id="hidden-trigger" class="absolute inset-0 cursor-pointer z-50"></div>
             <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" alt="Logo" class="h-auto w-full object-contain">
@@ -23,10 +23,10 @@
         <!-- Brand Name -->
         <h1 class="text-xl md:text-3xl font-bold tracking-[0.2em] luxury-font whitespace-nowrap">SHAAM ITQAN</h1>
         
-        <!-- Action Buttons -->
+        <!-- Icons Container -->
         <div class="flex items-center gap-4">
-            <!-- Auth Link -->
-            <a id="auth-link" href="login.html" class="text-sm border border-[#333333] px-3 py-1 hover:bg-[#333333] hover:text-white transition uppercase">Login</a>
+            <!-- Auth Link (Login/Profile) -->
+            <a id="auth-link" href="login.html" class="uppercase text-xs font-bold border-b border-[#333333]">Login</a>
             
             <!-- Bag Icon -->
             <a href="bag.html" class="relative">
@@ -38,7 +38,6 @@
         </div>
     </nav>
 
-    <!-- Product Grid -->
     <main class="max-w-6xl mx-auto p-6 md:py-12">
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <p class="text-center col-span-2 md:col-span-4 text-gray-500">Loading exquisite collection...</p>
@@ -46,25 +45,26 @@
     </main>
 
     <script>
-        // পেজ লোড হলে চেক করা
+        // 1. Initial Checks
         document.addEventListener('DOMContentLoaded', () => {
             updateBagCount();
-            checkUserStatus();
+            checkAuth();
         });
 
-        // লগইন চেক লজিক
-        function checkUserStatus() {
-            const authLink = document.getElementById('auth-link');
+        // 2. Auth Check: Show Login or Profile
+        function checkAuth() {
             const user = localStorage.getItem('user_session');
+            const authLink = document.getElementById('auth-link');
             if (user) {
-                authLink.innerText = "login";
-                authLink.onclick = null; // লিঙ্ক ডিফল্ট কাজ করবে
+                authLink.href = 'profile.html'; // Profile Page link
+                authLink.innerText = 'Profile';
             } else {
-                authLink.innerText = "Login";
+                authLink.href = 'login.html';
+                authLink.innerText = 'Login';
             }
         }
 
-        // অ্যাডমিন প্যানেল ট্রিপল ক্লিক
+        // 3. Admin Trigger (3 clicks)
         let clicks = 0;
         let timer;
         document.getElementById('hidden-trigger').addEventListener('click', () => {
@@ -80,7 +80,6 @@
                 const products = await response.json();
                 const grid = document.getElementById('product-grid');
                 grid.innerHTML = '';
-
                 products.forEach(product => {
                     grid.innerHTML += `
                         <div class="bg-white p-4 border border-[#C1A44E]/30 shadow-sm hover:shadow-lg transition">
