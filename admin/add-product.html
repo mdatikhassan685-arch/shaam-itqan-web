@@ -1,16 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Add Product</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        if (localStorage.getItem('is_admin') !== 'true') window.location.href = 'admin-login.html';
+    </script>
 </head>
-<body class="p-6 bg-gray-100">
-    <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-        <h1 class="text-xl font-bold mb-4">Add Product</h1>
-        <input type="text" id="name" placeholder="Name" class="w-full p-2 border mb-2"><br>
-        <input type="number" id="price" placeholder="Price" class="w-full p-2 border mb-2"><br>
-        <input type="number" id="stock" placeholder="Stock" class="w-full p-2 border mb-2"><br>
-        <input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2"><br>
-        <button onclick="addProduct()" class="bg-blue-600 text-white w-full py-2 rounded">Upload Product</button>
+<body class="bg-gray-100 p-4">
+    <div class="w-full max-w-[400px] mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-xl font-bold mb-5 text-center">Add Product</h1>
+        
+        <input type="text" id="name" placeholder="Product Name" class="w-full p-3 border rounded mb-3 text-sm">
+        <input type="number" id="price" placeholder="Price" class="w-full p-3 border rounded mb-3 text-sm">
+        <input type="number" id="stock" placeholder="Stock" class="w-full p-3 border rounded mb-3 text-sm">
+        <input type="text" id="img" placeholder="Image URL" class="w-full p-3 border rounded mb-5 text-sm">
+        
+        <button onclick="addProduct()" class="w-full bg-blue-600 text-white py-3 rounded font-bold text-sm hover:bg-blue-700 transition">Upload Product</button>
+        
+        <a href="admin.html" class="block text-center mt-4 text-gray-500 text-xs underline">Back to Dashboard</a>
     </div>
 
     <script>
@@ -21,12 +31,19 @@
                 stock: document.getElementById('stock').value,
                 image_url: document.getElementById('img').value
             };
+            
             const res = await fetch('/api/product', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(product)
             });
-            if(res.ok) alert('Product Added!');
+            
+            if(res.ok) {
+                alert('Product Added!');
+                window.location.href = 'admin.html';
+            } else {
+                alert('Error adding product.');
+            }
         }
     </script>
 </body>
