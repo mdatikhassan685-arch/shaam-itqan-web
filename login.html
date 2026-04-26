@@ -2,41 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Account | SHAAM ITQAN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Login | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
-        .luxury-font { font-family: 'Playfair Display', serif; }
-    </style>
 </head>
-<body class="bg-[#FDF8EF] text-[#333333] font-serif min-h-screen flex items-center justify-center p-4">
+<body class="bg-[#FDF8EF] min-h-screen flex items-center justify-center p-4">
 
-    <!-- Invisible Admin Trigger at top-left -->
-    <div id="hidden-trigger" class="fixed top-0 left-0 w-20 h-20 cursor-pointer z-[9999]"></div>
+    <!-- Invisible Admin Trigger -->
+    <div id="hidden-trigger" class="fixed top-0 left-0 w-16 h-16 z-[9999]"></div>
 
-    <div class="max-w-md w-full bg-white p-8 border border-[#C1A44E]/30 shadow-2xl">
-        <h2 id="auth-title" class="text-2xl font-bold mb-6 text-center tracking-widest uppercase">Login</h2>
-        
-        <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-gray-300 mb-4 text-sm hidden">
-        <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border border-gray-300 mb-4 text-sm">
-        <input type="password" id="pass" placeholder="Password" class="w-full p-3 border border-gray-300 mb-6 text-sm">
-        
-        <button onclick="handleAuth()" id="auth-btn" class="w-full bg-[#333333] text-white py-3 uppercase tracking-widest hover:bg-[#C1A44E]">Sign In</button>
-        
-        <p class="mt-6 text-center text-sm cursor-pointer" onclick="toggleMode()">
-            <span id="toggle-text">Don't have an account?</span> 
-            <span class="text-[#C1A44E] font-bold underline">Sign Up</span>
+    <div class="w-full max-w-[320px] bg-white p-6 border border-[#C1A44E]/30 shadow-xl">
+        <h2 id="auth-title" class="text-xl font-bold mb-5 text-center uppercase tracking-widest">Login</h2>
+        <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border mb-3 text-sm hidden">
+        <input type="email" id="email" placeholder="Email" class="w-full p-2 border mb-3 text-sm">
+        <input type="password" id="pass" placeholder="Password" class="w-full p-2 border mb-5 text-sm">
+        <button onclick="handleAuth()" id="auth-btn" class="w-full bg-[#333333] text-white py-2 text-sm uppercase tracking-widest">Sign In</button>
+        <p class="mt-4 text-center text-xs" onclick="toggleMode()">
+            <span id="toggle-text" class="cursor-pointer">Don't have an account? <b class="text-[#C1A44E]">Sign Up</b></span>
         </p>
     </div>
 
     <script>
-        // Admin Trigger Logic
         let clicks = 0;
-        let timer;
         document.getElementById('hidden-trigger').addEventListener('click', () => {
             clicks++;
-            clearTimeout(timer);
-            timer = setTimeout(() => { clicks = 0; }, 2000);
             if (clicks === 3) window.location.href = 'admin/admin-login.html';
         });
 
@@ -44,35 +33,24 @@
         function toggleMode() {
             isLogin = !isLogin;
             document.getElementById('auth-title').innerText = isLogin ? 'Login' : 'Sign Up';
-            document.getElementById('auth-btn').innerText = isLogin ? 'Sign In' : 'Sign Up';
             document.getElementById('name').classList.toggle('hidden', isLogin);
-            document.getElementById('toggle-text').innerText = isLogin ? "Don't have an account?" : "Already have an account?";
+            document.getElementById('auth-btn').innerText = isLogin ? 'Sign In' : 'Sign Up';
         }
 
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('pass').value;
             const name = document.getElementById('name').value;
-            const action = isLogin ? 'login' : 'signup';
-
             const res = await fetch('/api/auth', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action, email, password, name })
+                body: JSON.stringify({ action: isLogin ? 'login' : 'signup', email, password, name })
             });
-
             const data = await res.json();
             if (res.ok) {
-                if (isLogin) {
-                    localStorage.setItem('user_session', JSON.stringify(data.user));
-                    window.location.href = 'index.html';
-                } else {
-                    alert("Signup successful!");
-                    toggleMode();
-                }
-            } else {
-                alert(data.message || "Error!");
-            }
+                if (isLogin) { localStorage.setItem('user_session', JSON.stringify(data.user)); window.location.href = 'index.html'; }
+                else { alert("Signup Successful"); toggleMode(); }
+            } else alert(data.message);
         }
     </script>
 </body>
