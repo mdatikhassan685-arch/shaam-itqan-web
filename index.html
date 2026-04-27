@@ -30,24 +30,22 @@
 
     <!-- Slider Section -->
     <div class="px-4 py-2">
-        <div id="banner-slider" class="relative w-full h-40 bg-gray-200 rounded-lg overflow-hidden gold-border">
-            <p class="text-center mt-16 text-gray-500 text-sm">Loading Banner...</p>
+        <div id="banner-slider" class="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden gold-border">
+            <p class="text-center mt-16 text-gray-400 text-sm">Loading Banners...</p>
         </div>
     </div>
 
     <!-- Popular Categories -->
     <div class="px-4 py-4">
         <h2 class="text-sm font-bold mb-4 uppercase tracking-widest">Popular Categories</h2>
-        <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide" style="scrollbar-width: none;">
-            <div class="flex-shrink-0 text-center"><div class="w-20 h-20 bg-black rounded-full gold-border flex items-center justify-center text-white text-[10px] font-bold">DROP</div><p class="text-[10px] mt-2 font-bold tracking-widest">SHOULDER</p></div>
-            <div class="flex-shrink-0 text-center"><div class="w-20 h-20 bg-black rounded-full gold-border flex items-center justify-center text-white text-[10px] font-bold">OVERSIZE</div><p class="text-[10px] mt-2 font-bold tracking-widest">TEE</p></div>
-            <div class="flex-shrink-0 text-center"><div class="w-20 h-20 bg-black rounded-full gold-border flex items-center justify-center text-white text-[10px] font-bold">POLO</div><p class="text-[10px] mt-2 font-bold tracking-widest">SHIRT</p></div>
-            <div class="flex-shrink-0 text-center"><div class="w-20 h-20 bg-black rounded-full gold-border flex items-center justify-center text-white text-[10px] font-bold">PREMIUM</div><p class="text-[10px] mt-2 font-bold tracking-widest">COLLECTION</p></div>
+        <div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide" style="scrollbar-width: none;">
+            <p class="text-gray-400 text-xs">Loading categories...</p>
         </div>
     </div>
 
     <!-- Product Grid -->
     <main class="px-4 py-2">
+        <h2 class="text-sm font-bold mb-4 uppercase tracking-widest">New Arrivals</h2>
         <div id="product-grid" class="grid grid-cols-2 gap-4">
             <p class="col-span-2 text-center text-gray-400">Loading products...</p>
         </div>
@@ -62,67 +60,74 @@
     </div>
 
     <script>
-        // Slider Logic
-        async function loadSlider() {
-            try {
-                const res = await fetch('/api/banners');
-                const banners = await res.json();
-                const container = document.getElementById('banner-slider');
-                if(banners.length === 0) return;
-                
-                container.innerHTML = banners.map((b, i) => `
-                    <a href="${b.link_url}"><img src="${b.image_url}" class="absolute w-full h-full object-cover transition-opacity duration-1000 ${i === 0 ? 'opacity-100' : 'opacity-0'}"></a>
-                `).join('');
-                
-                let current = 0;
-                setInterval(() => {
-                    const images = container.querySelectorAll('img');
-                    if(images.length > 1) {
-                        images[current].classList.replace('opacity-100', 'opacity-0');
-                        current = (current + 1) % images.length;
-                        images[current].classList.replace('opacity-0', 'opacity-100');
-                    }
-                }, 5000);
-            } catch(e) { container.innerHTML = '<p class="text-center mt-16 text-xs">No banners</p>'; }
-        }
-
+        // Init
         document.addEventListener('DOMContentLoaded', () => {
             updateBagCount();
             loadSlider();
+            loadCategories();
+            fetchProducts();
             if(localStorage.getItem('user_session')) {
                 const link = document.getElementById('auth-link');
                 link.href = 'profile.html';
+                link.innerHTML = '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile';
             }
         });
 
+        // Trigger Admin
         let clicks = 0;
         document.getElementById('hidden-trigger').addEventListener('click', () => {
             clicks++; if(clicks === 3) window.location.href = 'admin/admin-login.html';
         });
 
-        async function fetchProducts() {
-            try {
-                const res = await fetch('/api/product');
-                const data = await res.json();
-                document.getElementById('product-grid').innerHTML = data.map(p => `
-                    <div class="p-2 border gold-border">
-                        <img src="${p.image_url}" class="w-full h-40 object-cover">
-                        <h3 class="text-xs font-semibold mt-2">${p.name}</h3>
-                        <p class="font-bold text-sm gold-text">৳ ${p.price}</p>
-                        <button onclick='addToBag(${JSON.stringify(p)})' class="w-full mt-2 border border-black py-1 text-[10px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button>
-                    </div>
-                `).join('');
-            } catch (e) { document.getElementById('product-grid').innerHTML = '<p class="col-span-2 text-center text-gray-400">Loading...</p>'; }
+        // Load Slider
+        async function loadSlider() {
+            const res = await fetch('/api/admin-data?type=banner');
+            const data = await res.json();
+            const container = document.getElementById('banner-slider');
+            if(data.length == 0) return;
+            container.innerHTML = data.map((b, i) => `<a href="${b.link_url}"><img src="${b.image_url}" class="absolute w-full h-full object-cover transition-opacity ${i==0?'opacity-100':'opacity-0'}"></a>`).join('');
+            setInterval(() => {
+                const imgs = container.querySelectorAll('a');
+                let cur = Array.from(imgs).findIndex(img => img.classList.contains('opacity-100'));
+                imgs[cur].classList.replace('opacity-100', 'opacity-0');
+                imgs[(cur + 1) % imgs.length].classList.replace('opacity-0', 'opacity-100');
+            }, 5000);
         }
+
+        // Load Categories
+        async function loadCategories() {
+            const res = await fetch('/api/admin-data?type=category');
+            const data = await res.json();
+            document.getElementById('category-grid').innerHTML = data.map(c => `
+                <a href="${c.link_url}" class="flex-shrink-0 text-center">
+                    <img src="${c.image_url}" class="w-20 h-20 rounded-full gold-border object-cover">
+                    <p class="text-[10px] mt-2 font-bold tracking-widest">${c.name.toUpperCase()}</p>
+                </a>
+            `).join('');
+        }
+
+        // Fetch Products
+        async function fetchProducts() {
+            const res = await fetch('/api/admin-data?type=product');
+            const data = await res.json();
+            document.getElementById('product-grid').innerHTML = data.map(p => `
+                <div class="p-2 border gold-border">
+                    <img src="${p.image_url}" class="w-full h-40 object-cover">
+                    <h3 class="text-xs font-semibold mt-2">${p.name}</h3>
+                    <p class="font-bold text-sm gold-text">৳ ${p.price}</p>
+                    <button onclick='addToBag(${JSON.stringify(p)})' class="w-full mt-2 border border-black py-1 text-[10px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button>
+                </div>
+            `).join('');
+        }
+
         function addToBag(p) {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
             bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            updateBagCount(); alert("Added to bag!");
+            updateBagCount(); alert("Added!");
         }
         function updateBagCount() {
             document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
         }
-        fetchProducts();
     </script>
 </body>
 </html>
