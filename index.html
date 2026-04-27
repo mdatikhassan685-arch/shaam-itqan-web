@@ -28,9 +28,12 @@
         </a>
     </nav>
 
-    <!-- Search & Banner -->
-    <div class="px-4 py-2"><input type="text" placeholder="Search..." class="w-full p-2 border border-gray-200 text-sm focus:outline-none focus:border-[#C1A44E]"></div>
-    <div class="px-4 py-2"><div class="w-full h-40 bg-[#333333] rounded-lg flex items-center justify-center text-white gold-border"><h2 class="text-xl font-bold italic">PREMIUM LUXURY COLLECTION</h2></div></div>
+    <!-- Slider Section -->
+    <div class="px-4 py-2">
+        <div id="banner-slider" class="relative w-full h-40 bg-gray-200 rounded-lg overflow-hidden gold-border">
+            <p class="text-center mt-16 text-gray-500 text-sm">Loading Banner...</p>
+        </div>
+    </div>
 
     <!-- Popular Categories -->
     <div class="px-4 py-4">
@@ -59,12 +62,36 @@
     </div>
 
     <script>
+        // Slider Logic
+        async function loadSlider() {
+            try {
+                const res = await fetch('/api/banners');
+                const banners = await res.json();
+                const container = document.getElementById('banner-slider');
+                if(banners.length === 0) return;
+                
+                container.innerHTML = banners.map((b, i) => `
+                    <a href="${b.link_url}"><img src="${b.image_url}" class="absolute w-full h-full object-cover transition-opacity duration-1000 ${i === 0 ? 'opacity-100' : 'opacity-0'}"></a>
+                `).join('');
+                
+                let current = 0;
+                setInterval(() => {
+                    const images = container.querySelectorAll('img');
+                    if(images.length > 1) {
+                        images[current].classList.replace('opacity-100', 'opacity-0');
+                        current = (current + 1) % images.length;
+                        images[current].classList.replace('opacity-0', 'opacity-100');
+                    }
+                }, 5000);
+            } catch(e) { container.innerHTML = '<p class="text-center mt-16 text-xs">No banners</p>'; }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             updateBagCount();
+            loadSlider();
             if(localStorage.getItem('user_session')) {
                 const link = document.getElementById('auth-link');
                 link.href = 'profile.html';
-                link.innerHTML = '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile';
             }
         });
 
@@ -90,8 +117,7 @@
         function addToBag(p) {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
             bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            updateBagCount();
-            alert("Added to bag!");
+            updateBagCount(); alert("Added to bag!");
         }
         function updateBagCount() {
             document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
