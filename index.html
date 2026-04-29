@@ -56,7 +56,10 @@
             try {
                 // ডাটা লোড করার জন্য Promise.all
                 const [bRes, cRes, pRes] = await Promise.all([
-                    fetch('/api/admin-data?type=banner'),
+                    fetch('/api/admin-data?type=banner')
+    .then(r => r.json())
+    .then(data => { ... })
+    .catch(err => console.log("Banner Error:", err));
                     fetch('/api/admin-data?type=category'),
                     fetch('/api/admin-data?type=product')
                 ]);
