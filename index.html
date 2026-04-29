@@ -30,8 +30,8 @@
 
     <!-- Slider Section -->
     <div class="px-4 py-2">
-        <div id="banner-slider" class="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden gold-border">
-            <p class="text-center mt-16 text-gray-400 text-sm">Loading Banners...</p>
+        <div id="banner-slider" class="relative w-full h-40 bg-gray-200 rounded-lg overflow-hidden gold-border">
+            <p class="text-center mt-16 text-gray-500 text-sm">Loading Banners...</p>
         </div>
     </div>
 
@@ -54,76 +54,56 @@
     <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around p-3 text-[9px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="flex flex-col items-center gold-text"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</a>
-        <a href="#" class="flex flex-col items-center gold-text"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>Categories</a>
-        <a href="#" class="flex flex-col items-center gold-text"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>Fav</a>
         <a href="login.html" id="auth-link" class="flex flex-col items-center gold-text"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Account</a>
     </div>
 
     <script>
-        // Init
+        // 1. Fetch Data Functions
+        async function loadData() {
+            // Fetch Banners
+            fetch('/api/admin-data?type=banner').then(r => r.json()).then(banners => {
+                const container = document.getElementById('banner-slider');
+                if(banners.length > 0) {
+                    container.innerHTML = banners.map((b, i) => `<a href="${b.link_url}"><img src="${b.image_url}" class="absolute w-full h-full object-cover transition-opacity duration-1000 ${i === 0 ? 'opacity-100' : 'opacity-0'}"></a>`).join('');
+                    let current = 0; setInterval(() => { const imgs = container.querySelectorAll('a'); imgs[current].classList.replace('opacity-100', 'opacity-0'); current = (current + 1) % imgs.length; imgs[current].classList.replace('opacity-0', 'opacity-100'); }, 5000);
+                }
+            });
+
+            // Fetch Categories
+            fetch('/api/admin-data?type=category').then(r => r.json()).then(cats => {
+                document.getElementById('category-grid').innerHTML = cats.map(c => `
+                    <a href="${c.link_url}" class="flex-shrink-0 text-center">
+                        <div class="w-20 h-20 bg-black rounded-full gold-border flex items-center justify-center overflow-hidden"><img src="${c.image_url}" class="w-full h-full object-cover"></div>
+                        <p class="text-[10px] mt-2 font-bold tracking-widest">${c.name}</p>
+                    </a>`).join('');
+            });
+
+            // Fetch Products
+            fetch('/api/admin-data?type=product').then(r => r.json()).then(data => {
+                document.getElementById('product-grid').innerHTML = data.map(p => `
+                    <div class="p-2 border gold-border">
+                        <img src="${p.image_url}" class="w-full h-40 object-cover">
+                        <h3 class="text-xs font-semibold mt-2">${p.name}</h3>
+                        <p class="font-bold text-sm gold-text">৳ ${p.price}</p>
+                        <button onclick='addToBag(${JSON.stringify(p)})' class="w-full mt-2 border border-black py-1 text-[10px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button>
+                    </div>`).join('');
+            });
+        }
+
+        // 2. Logic Functions
         document.addEventListener('DOMContentLoaded', () => {
-            updateBagCount();
-            loadSlider();
-            loadCategories();
-            fetchProducts();
-            if(localStorage.getItem('user_session')) {
-                const link = document.getElementById('auth-link');
-                link.href = 'profile.html';
-                link.innerHTML = '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile';
-            }
+            updateBagCount(); loadData();
+            if(localStorage.getItem('user_session')) document.getElementById('auth-link').href = 'profile.html';
         });
 
-        // Trigger Admin
-        let clicks = 0;
         document.getElementById('hidden-trigger').addEventListener('click', () => {
-            clicks++; if(clicks === 3) window.location.href = 'admin/admin-login.html';
-        });
-
-        // Load Slider
-        async function loadSlider() {
-            const res = await fetch('/api/admin-data?type=banner');
-            const data = await res.json();
-            const container = document.getElementById('banner-slider');
-            if(data.length == 0) return;
-            container.innerHTML = data.map((b, i) => `<a href="${b.link_url}"><img src="${b.image_url}" class="absolute w-full h-full object-cover transition-opacity ${i==0?'opacity-100':'opacity-0'}"></a>`).join('');
-            setInterval(() => {
-                const imgs = container.querySelectorAll('a');
-                let cur = Array.from(imgs).findIndex(img => img.classList.contains('opacity-100'));
-                imgs[cur].classList.replace('opacity-100', 'opacity-0');
-                imgs[(cur + 1) % imgs.length].classList.replace('opacity-0', 'opacity-100');
-            }, 5000);
-        }
-
-        // Load Categories
-        async function loadCategories() {
-            const res = await fetch('/api/admin-data?type=category');
-            const data = await res.json();
-            document.getElementById('category-grid').innerHTML = data.map(c => `
-                <a href="${c.link_url}" class="flex-shrink-0 text-center">
-                    <img src="${c.image_url}" class="w-20 h-20 rounded-full gold-border object-cover">
-                    <p class="text-[10px] mt-2 font-bold tracking-widest">${c.name.toUpperCase()}</p>
-                </a>
-            `).join('');
-        }
-
-        // Fetch Products
-        async function fetchProducts() {
-            const res = await fetch('/api/admin-data?type=product');
-            const data = await res.json();
-            document.getElementById('product-grid').innerHTML = data.map(p => `
-                <div class="p-2 border gold-border">
-                    <img src="${p.image_url}" class="w-full h-40 object-cover">
-                    <h3 class="text-xs font-semibold mt-2">${p.name}</h3>
-                    <p class="font-bold text-sm gold-text">৳ ${p.price}</p>
-                    <button onclick='addToBag(${JSON.stringify(p)})' class="w-full mt-2 border border-black py-1 text-[10px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button>
-                </div>
-            `).join('');
-        }
+            let clicks = 0; return () => { clicks++; if(clicks===3) window.location.href='admin/admin-login.html'; }
+        }()); // Closure used for click counter
 
         function addToBag(p) {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
             bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            updateBagCount(); alert("Added!");
+            updateBagCount(); alert("Added to bag!");
         }
         function updateBagCount() {
             document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
