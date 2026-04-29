@@ -2,12 +2,26 @@ import { getDb } from './db.js';
 
 export default async function handler(req, res) {
     const db = await getDb();
-    const { type } = req.query; // URL-এ /api/admin-data?type=product পাঠাবেন
+    const { type } = req.query; 
+
+    // টেবিলের নাম ঠিক করার ম্যাপিং
+    const tableMap = {
+        'product': 'products',
+        'banner': 'banners',
+        'category': 'categories'
+    };
+
+    const tableName = tableMap[type];
 
     if (req.method === 'GET') {
-        const [rows] = await db.execute(`SELECT * FROM ${type}s`);
-        await db.end();
-        res.status(200).json(rows);
+        try {
+            const [rows] = await db.execute(`SELECT * FROM ${tableName}`);
+            await db.end();
+            res.status(200).json(rows);
+        } catch (e) {
+            await db.end();
+            res.status(500).json({ error: e.message });
+        }
     } 
     else if (req.method === 'POST') {
         const body = req.body;
@@ -25,8 +39,13 @@ export default async function handler(req, res) {
             values = [body.name, body.image_url, body.link_url];
         }
 
-        await db.execute(query, values);
-        await db.end();
-        res.status(200).json({ message: "Success" });
+        try {
+            await db.execute(query, values);
+            await db.end();
+            res.status(200).json({ message: "Success" });
+        } catch (e) {
+            await db.end();
+            res.status(500).json({ error: e.message });
+        }
     }
 }
