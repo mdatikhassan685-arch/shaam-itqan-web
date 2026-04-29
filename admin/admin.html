@@ -6,63 +6,82 @@
     <title>Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Security check
         if (localStorage.getItem('is_admin') !== 'true') window.location.href = 'admin-login.html';
     </script>
 </head>
 <body class="bg-gray-100 p-4">
-    <div class="max-w-[400px] mx-auto">
-        <h1 class="text-2xl font-bold mb-6 text-center">Admin Dashboard</h1>
+    <div class="max-w-[400px] mx-auto pb-10">
+        <h1 class="text-xl font-bold mb-6 text-center">Admin Dashboard</h1>
 
-        <!-- Add Product Section -->
-        <div class="bg-white p-4 rounded shadow mb-6">
+        <!-- Add Product -->
+        <div class="bg-white p-4 rounded shadow mb-6 border border-blue-200">
             <h2 class="font-bold mb-3 border-b pb-1">Add Product</h2>
-            <input type="text" id="p_name" placeholder="Name" class="w-full p-2 border mb-2 text-sm">
-            <input type="number" id="p_price" placeholder="Price" class="w-full p-2 border mb-2 text-sm">
-            <input type="text" id="p_img" placeholder="Image URL" class="w-full p-2 border mb-3 text-sm">
-            <button onclick="save('product')" class="w-full bg-blue-600 text-white py-2 rounded text-sm">Save Product</button>
+            <input type="text" id="p_name" placeholder="Name" class="w-full p-2 border mb-2 text-sm rounded">
+            <input type="number" id="p_price" placeholder="Price" class="w-full p-2 border mb-2 text-sm rounded">
+            <input type="number" id="p_stock" placeholder="Stock" class="w-full p-2 border mb-2 text-sm rounded">
+            <input type="text" id="p_img" placeholder="Image URL" class="w-full p-2 border mb-3 text-sm rounded">
+            <button onclick="save('product')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold">Save Product</button>
         </div>
 
-        <!-- Add Banner Section -->
-        <div class="bg-white p-4 rounded shadow mb-6">
+        <!-- Add Banner -->
+        <div class="bg-white p-4 rounded shadow mb-6 border border-green-200">
             <h2 class="font-bold mb-3 border-b pb-1">Add Banner</h2>
-            <input type="text" id="b_img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm">
-            <input type="text" id="b_link" placeholder="Link URL" class="w-full p-2 border mb-3 text-sm">
-            <button onclick="save('banner')" class="w-full bg-green-600 text-white py-2 rounded text-sm">Save Banner</button>
+            <input type="text" id="b_img" placeholder="Banner Image URL" class="w-full p-2 border mb-2 text-sm rounded">
+            <input type="text" id="b_link" placeholder="Link URL" class="w-full p-2 border mb-3 text-sm rounded">
+            <button onclick="save('banner')" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold">Save Banner</button>
         </div>
 
-        <!-- Recent Orders -->
+        <!-- Orders -->
         <h2 class="font-bold mb-3">Recent Orders</h2>
-        <div id="order-list" class="space-y-3 pb-10">
-            <p class="text-center">Loading orders...</p>
+        <div id="order-list" class="space-y-3">
+            <p class="text-center text-gray-500">Loading orders...</p>
         </div>
     </div>
 
     <script>
         async function save(type) {
             let data = {};
-            if(type === 'product') data = { name: document.getElementById('p_name').value, price: document.getElementById('p_price').value, image_url: document.getElementById('p_img').value };
-            if(type === 'banner') data = { image_url: document.getElementById('b_img').value, link_url: document.getElementById('b_link').value };
+            if(type === 'product') {
+                data = { 
+                    name: document.getElementById('p_name').value, 
+                    price: document.getElementById('p_price').value, 
+                    stock: document.getElementById('p_stock').value,
+                    image_url: document.getElementById('p_img').value 
+                };
+            } else if(type === 'banner') {
+                data = { image_url: document.getElementById('b_img').value, link_url: document.getElementById('b_link').value };
+            }
             
-            const res = await fetch(`/api/admin-data?type=${type}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            if(res.ok) { alert(type + ' Saved!'); location.reload(); }
-            else alert('Error!');
+            try {
+                const res = await fetch(`/api/admin-data?type=${type}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if(res.ok) { alert(type + ' Saved successfully!'); location.reload(); }
+                else { alert('Error: ' + (result.error || 'Unknown error')); }
+            } catch(e) { alert('Network Error'); }
         }
 
         async function loadOrders() {
-            const res = await fetch('/api/orders');
-            const orders = await res.json();
-            document.getElementById('order-list').innerHTML = orders.map(o => `
-                <div class="bg-white p-3 rounded shadow border-l-4 border-green-500 text-sm">
-                    <p><b>Cust:</b> ${o.customer_name} (${o.phone})</p>
-                    <p class="truncate"><b>Addr:</b> ${o.address}</p>
-                    <p><b>Total:</b> ৳${o.total_price}</p>
-                    <button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1 rounded text-xs">Confirm Order</button>
-                </div>
-            `).join('');
+            try {
+                const res = await fetch('/api/orders');
+                const orders = await res.json();
+                const list = document.getElementById('order-list');
+                if(orders.length === 0) { list.innerHTML = '<p class="text-center">No orders found.</p>'; return; }
+                
+                list.innerHTML = orders.map(o => `
+                    <div class="bg-white p-3 rounded shadow border-l-4 border-green-500 text-sm">
+                        <p><b>Cust:</b> ${o.customer_name} (${o.phone})</p>
+                        <p><b>Addr:</b> ${o.address}</p>
+                        <p><b>Total:</b> ৳${o.total_price}</p>
+                        <p><b>Status:</b> ${o.status}</p>
+                        ${o.status === 'Pending' ? `<button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1 rounded text-xs">Confirm Order</button>` : ''}
+                    </div>
+                `).join('');
+            } catch(e) { document.getElementById('order-list').innerHTML = 'Error loading orders.'; }
         }
 
         async function confirmOrder(id) {
