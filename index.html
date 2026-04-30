@@ -29,19 +29,25 @@
 
     <!-- Slider -->
     <div class="px-4 py-2">
-        <div id="banner-slider" class="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden gold-border"></div>
+        <div id="banner-slider" class="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden gold-border">
+            <p class="text-center mt-16 text-xs text-gray-400">Loading Banners...</p>
+        </div>
     </div>
 
     <!-- Categories -->
     <div class="px-4 py-4">
         <h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2>
-        <div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div>
+        <div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+            <p class="text-gray-400 text-xs">Loading categories...</p>
+        </div>
     </div>
 
     <!-- Products -->
     <main class="px-4 py-2">
         <h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2>
-        <div id="product-grid" class="grid grid-cols-2 gap-4"></div>
+        <div id="product-grid" class="grid grid-cols-2 gap-4">
+            <p class="col-span-2 text-center text-gray-400">Loading products...</p>
+        </div>
     </main>
 
     <!-- Bottom Nav -->
@@ -54,7 +60,7 @@
     <script>
         async function loadData() {
             try {
-                // ডাটা লোড করার জন্য Promise.all
+                // Fetch Data
                 const [bRes, cRes, pRes] = await Promise.all([
                     fetch('/api/admin-data?type=banner'),
                     fetch('/api/admin-data?type=category'),
@@ -67,43 +73,49 @@
 
                 // Render Banners
                 const bContainer = document.getElementById('banner-slider');
-                bContainer.innerHTML = banners.map((b, i) => `<a href="${b.link_url}" class="absolute w-full h-full transition-opacity duration-1000 ${i===0?'opacity-100':'opacity-0'}"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-                
+                if(banners.length > 0) {
+                    bContainer.innerHTML = banners.map((b, i) => `
+                        <a href="${b.link_url}" class="absolute w-full h-full transition-opacity duration-1000 ${i===0?'opacity-100':'opacity-0'}">
+                            <img src="${b.image_url}" class="w-full h-full object-cover">
+                        </a>`).join('');
+                    let current = 0; setInterval(() => { const imgs = bContainer.querySelectorAll('a'); imgs[current].classList.replace('opacity-100', 'opacity-0'); current = (current + 1) % imgs.length; imgs[current].classList.replace('opacity-0', 'opacity-100'); }, 5000);
+                } else bContainer.innerHTML = '<p class="text-center mt-16 text-xs text-gray-400">No Banners</p>';
+
                 // Render Categories
                 document.getElementById('category-grid').innerHTML = cats.map(c => `
                     <a href="${c.link_url}" class="flex-shrink-0 text-center">
                         <div class="w-16 h-16 bg-black rounded-full gold-border overflow-hidden"><img src="${c.image_url}" class="w-full h-full object-cover"></div>
-                        <p class="text-[9px] mt-2 font-bold tracking-widest">${c.name}</p>
+                        <p class="text-[9px] mt-2 font-bold">${c.name}</p>
                     </a>`).join('');
 
                 // Render Products
                 document.getElementById('product-grid').innerHTML = prods.map(p => `
                     <div class="p-2 border gold-border">
                         <img src="${p.image_url}" class="w-full h-40 object-cover">
-                        <h3 class="text-[11px] font-bold mt-2">${p.name}</h3>
+                        <h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3>
                         <p class="font-bold text-xs text-[#C1A44E] mb-2">৳ ${p.price}</p>
                         <button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white">Add to Bag</button>
                     </div>`).join('');
-            } catch (e) {
-                console.log(e);
-            }
+            } catch(e) { console.log(e); }
         }
 
-        // Hidden Admin Trigger
-        let clicks = 0;
-        document.getElementById('hidden-trigger').addEventListener('click', () => { clicks++; if(clicks===3) window.location.href='admin/admin-login.html'; });
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBagCount(); loadData();
+            if(localStorage.getItem('user_session')) document.getElementById('auth-link').href = 'profile.html';
+        });
+
+        document.getElementById('hidden-trigger').addEventListener('click', () => {
+            let clicks = 0; return () => { clicks++; if(clicks===3) window.location.href='admin/admin-login.html'; }
+        }());
 
         function addToBag(p) {
             let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
             bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            alert("Added to bag!"); document.getElementById('bag-count').innerText = bag.length;
+            updateBagCount(); alert("Added to bag!");
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
+        function updateBagCount() {
             document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
-            if(localStorage.getItem('user_session')) document.getElementById('auth-link').href = 'profile.html';
-            loadData();
-        });
+        }
     </script>
 </body>
 </html>
