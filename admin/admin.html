@@ -2,38 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>if (localStorage.getItem('is_admin') !== 'true') window.location.href = 'admin-login.html';</script>
 </head>
 <body class="bg-gray-100 p-4">
-    <div class="max-w-[400px] mx-auto pb-10">
-        <h1 class="text-xl font-bold mb-6 text-center">Admin Dashboard</h1>
-        <div class="flex gap-1 mb-4"><button onclick="showTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-xs">Product</button><button onclick="showTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-xs">Banner</button><button onclick="showTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-xs">Cat</button></div>
-        <div class="bg-white p-4 shadow mb-6"><div id="fields"></div><button onclick="save()" id="save-btn" class="w-full bg-black text-white py-2 mt-2 hidden">Save</button></div>
-        <h2 class="font-bold mb-3">Recent Orders</h2>
-        <div id="order-list" class="space-y-3"></div>
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-2xl font-bold mb-4">Manage Products</h1>
+        <div id="item-list" class="space-y-4"></div>
     </div>
+
     <script>
-        let currentType = '';
-        function showTab(type) {
-            currentType = type; document.getElementById('save-btn').classList.remove('hidden');
-            let fields = type === 'product' ? `<input type="text" id="name" placeholder="Name" class="w-full p-2 border mb-2 text-sm"><input type="number" id="price" placeholder="Price" class="w-full p-2 border mb-2 text-sm"><input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm"><textarea id="desc" placeholder="Description" class="w-full p-2 border mb-2 text-sm"></textarea>` : `<input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm"><input type="text" id="link" placeholder="Link URL" class="w-full p-2 border mb-2 text-sm">${type==='category' ? '<input type="text" id="name" placeholder="Category Name" class="w-full p-2 border mb-2 text-sm">' : ''}`;
-            document.getElementById('fields').innerHTML = fields;
+        async function loadItems() {
+            const res = await fetch('/api/admin-data?type=product');
+            const data = await res.json();
+            document.getElementById('item-list').innerHTML = data.map(p => `
+                <div class="bg-white p-4 shadow flex flex-col gap-2">
+                    <input type="text" id="name-${p.id}" value="${p.name}" class="border p-1">
+                    <input type="number" id="price-${p.id}" value="${p.price}" class="border p-1">
+                    <button onclick="updateItem(${p.id})" class="bg-blue-500 text-white p-1">Update</button>
+                    <button onclick="deleteItem(${p.id})" class="bg-red-500 text-white p-1">Delete</button>
+                </div>
+            `).join('');
         }
-        async function save() {
-            const data = { name: document.getElementById('name')?.value, price: document.getElementById('price')?.value, image_url: document.getElementById('img')?.value, link_url: document.getElementById('link')?.value, description: document.getElementById('desc')?.value, stock: 10 };
-            const res = await fetch(`/api/admin-data?type=${currentType}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            if(res.ok) { alert('Saved!'); location.reload(); }
+
+        async function updateItem(id) {
+            const data = { id, name: document.getElementById('name-'+id).value, price: document.getElementById('price-'+id).value };
+            await fetch('/api/admin-data?type=product', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            alert('Updated!'); loadItems();
         }
-        async function loadOrders() {
-            const res = await fetch('/api/orders');
-            const orders = await res.json();
-            document.getElementById('order-list').innerHTML = orders.map(o => `<div class="bg-white p-3 shadow border-l-4 border-green-500 text-sm"><p><b>Cust:</b> ${o.customer_name} | <b>Total:</b> ৳${o.total_price}</p><button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm</button></div>`).join('');
+
+        async function deleteItem(id) {
+            await fetch('/api/admin-data?type=product', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
+            alert('Deleted!'); loadItems();
         }
-        async function confirmOrder(id) { const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) }); if(res.ok) loadOrders(); }
-        loadOrders();
+        loadItems();
     </script>
 </body>
 </html>
