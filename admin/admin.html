@@ -5,66 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script> if (localStorage.getItem('is_admin') !== 'true') window.location.href = 'admin-login.html'; </script>
 </head>
 <body class="bg-gray-100 p-4">
     <div class="max-w-[400px] mx-auto">
-        <h1 class="text-xl font-bold mb-4 text-center">Admin Dashboard</h1>
-
-        <!-- Tab Buttons -->
-        <div class="flex gap-1 mb-4">
-            <button onclick="showTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-xs font-bold">Product</button>
-            <button onclick="showTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-xs font-bold">Banner</button>
-            <button onclick="showTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-xs font-bold">Category</button>
-        </div>
-
-        <!-- Dynamic Form -->
-        <div id="form-container" class="bg-white p-4 rounded shadow mb-6">
-            <h2 id="form-title" class="font-bold mb-3 border-b pb-1">Select an option above</h2>
-            <div id="fields"></div>
-            <button onclick="save()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 rounded hidden">Save Data</button>
-        </div>
-
+        <h1 class="text-xl font-bold mb-4 text-center">Dashboard</h1>
+        <div class="flex gap-1 mb-4"><button onclick="showTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-xs">Prod</button><button onclick="showTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-xs">Banner</button><button onclick="showTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-xs">Cat</button></div>
+        <div class="bg-white p-4 shadow mb-6"><div id="fields"></div><button onclick="save()" id="save-btn" class="w-full bg-black text-white py-2 mt-2 hidden">Save</button></div>
         <h2 class="font-bold mb-3">Recent Orders</h2>
         <div id="order-list" class="space-y-3 pb-10"></div>
     </div>
-
     <script>
         let currentType = '';
         function showTab(type) {
             currentType = type;
-            document.getElementById('form-title').innerText = "Add " + type.toUpperCase();
             document.getElementById('save-btn').classList.remove('hidden');
-            let fields = '';
-            if(type === 'product') fields = `<input type="text" id="name" placeholder="Name" class="w-full p-2 border mb-2 text-sm"><input type="number" id="price" placeholder="Price" class="w-full p-2 border mb-2 text-sm"><input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm">`;
-            else fields = `<input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm"><input type="text" id="link" placeholder="Link URL" class="w-full p-2 border mb-2 text-sm">${type==='category' ? '<input type="text" id="name" placeholder="Category Name" class="w-full p-2 border mb-2 text-sm">' : ''}`;
+            let fields = type === 'product' ? `<input type="text" id="name" placeholder="Name" class="w-full p-2 border mb-2 text-sm"><input type="number" id="price" placeholder="Price" class="w-full p-2 border mb-2 text-sm"><input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm">` : `<input type="text" id="img" placeholder="Image URL" class="w-full p-2 border mb-2 text-sm"><input type="text" id="link" placeholder="Link URL" class="w-full p-2 border mb-2 text-sm">${type==='category' ? '<input type="text" id="name" placeholder="Category Name" class="w-full p-2 border mb-2 text-sm">' : ''}`;
             document.getElementById('fields').innerHTML = fields;
         }
-
         async function save() {
-            const data = {
-                name: document.getElementById('name')?.value,
-                price: document.getElementById('price')?.value,
-                image_url: document.getElementById('img').value,
-                link_url: document.getElementById('link')?.value
-            };
-            const res = await fetch(`/api/admin-data?type=${currentType}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
+            const data = { name: document.getElementById('name')?.value, price: document.getElementById('price')?.value, image_url: document.getElementById('img')?.value, link_url: document.getElementById('link')?.value, stock: 10 };
+            const res = await fetch(`/api/admin-data?type=${currentType}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
             if(res.ok) { alert('Saved!'); location.reload(); }
-            else alert('Error!');
         }
-
         async function loadOrders() {
             const res = await fetch('/api/orders');
             const orders = await res.json();
-            document.getElementById('order-list').innerHTML = orders.map(o => `
-                <div class="bg-white p-3 shadow text-sm">
-                    <p><b>Cust:</b> ${o.customer_name} | <b>Total:</b> ৳${o.total_price}</p>
-                    <button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm</button>
-                </div>`).join('');
+            document.getElementById('order-list').innerHTML = orders.map(o => `<div class="bg-white p-3 shadow text-sm"><b>Cust:</b> ${o.customer_name} | <b>Total:</b> ৳${o.total_price}<button onclick="confirm(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm</button></div>`).join('');
         }
+        async function confirm(id) { const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) }); if(res.ok) loadOrders(); }
         loadOrders();
     </script>
 </body>
