@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>SHAAM ITQAN | Luxury Boutique</title>
+    <title>SHAAM ITQAN | LUXURY BOUTIQUE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
-        .gold-text { color: #D4AF37 !important; } /* খাঁটি সোনা রঙ */
-        .gold-border { border: 2px solid #D4AF37; } /* মোটা গোল্ড বর্ডার */
-        .shadow-luxury { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -20,19 +18,19 @@
     <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
         <div class="relative w-10">
             <div id="hidden-trigger" class="absolute inset-0 cursor-pointer"></div>
-            <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full object-contain">
+            <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full">
         </div>
         <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
         <a href="bag.html" class="relative">
-            <svg class="w-6 h-6 gold-text" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             <span id="bag-count" class="absolute -top-1 -right-1 bg-black text-white text-[9px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
         </a>
     </nav>
 
-    <!-- Slider -->
+    <!-- Slide Banner -->
     <div class="px-4 py-2">
-        <div id="banner-slider" class="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden border-2 border-[#D4AF37]">
-            <p class="text-center mt-16 text-xs text-gray-400">Loading Banners...</p>
+        <div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border">
+            <p class="text-center mt-16 text-xs text-gray-400 w-full">Loading Banners...</p>
         </div>
     </div>
 
@@ -48,10 +46,10 @@
         <div id="product-grid" class="grid grid-cols-2 gap-4"></div>
     </main>
 
-    <!-- Bottom Navigation -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
-        <a href="index.html" class="gold-text flex flex-col items-center">HOME</a>
-        <a href="#" class="text-black flex flex-col items-center">FAVOURITE</a>
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold z-[100]">
+        <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">HOME</a>
+        <a href="#" class="text-black flex flex-col items-center">FAV</a>
         <a href="login.html" id="auth-link" class="text-black flex flex-col items-center">ACCOUNT</a>
         <a href="#" class="text-black flex flex-col items-center">MENU</a>
     </div>
@@ -68,40 +66,34 @@
                 const cats = await cRes.json();
                 const prods = await pRes.json();
 
-                // Banners
-                const bContainer = document.getElementById('banner-slider');
-                if(banners.length > 0) {
-                    bContainer.innerHTML = banners.map((b, i) => `<a href="${b.link_url}" class="absolute w-full h-full transition-opacity duration-1000 ${i===0?'opacity-100':'opacity-0'}"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-                    let current = 0; setInterval(() => { const imgs = bContainer.querySelectorAll('a'); imgs[current].classList.replace('opacity-100', 'opacity-0'); current = (current + 1) % imgs.length; imgs[current].classList.replace('opacity-0', 'opacity-100'); }, 5000);
-                } else bContainer.innerHTML = '<p class="text-center mt-16 text-xs text-gray-400">No Banners</p>';
+                // Banner Slider (Slide Effect)
+                const container = document.getElementById('banner-slider');
+                container.innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
+                
+                let current = 0; setInterval(() => {
+                    const imgs = container.querySelectorAll('a');
+                    if(imgs.length > 0) { current = (current + 1) % imgs.length; container.scrollTo({ left: imgs[current].offsetLeft, behavior: 'smooth' }); }
+                }, 10000);
 
-                // Categories
-                document.getElementById('category-grid').innerHTML = cats.map(c => `
-                    <a href="${c.link_url}" class="flex-shrink-0 text-center">
-                        <div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div>
-                        <p class="text-[9px] mt-2 font-bold">${c.name}</p>
-                    </a>`).join('');
-
-                // Products
+                // Render Categories & Products
+                document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full gold-border flex items-center justify-center overflow-hidden"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
                 document.getElementById('product-grid').innerHTML = prods.map(p => `
                     <div class="p-2 border-2 border-[#D4AF37] shadow-luxury">
                         <img src="${p.image_url}" class="w-full h-40 object-cover">
                         <h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3>
-                        <p class="font-bold text-xs gold-text mb-2">৳ ${p.price}</p>
-                        <button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button>
+                        <p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p>
+                        <button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white">Add to Bag</button>
                     </div>`).join('');
             } catch(e) { console.log(e); }
         }
         
         let clicks = 0;
         document.getElementById('hidden-trigger').addEventListener('click', () => { clicks++; if(clicks===3) window.location.href='admin/admin-login.html'; });
-        
-        function addToBag(p) { let bag = JSON.parse(localStorage.getItem('shaam_bag')) || []; bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag)); updateBagCount(); alert("Added to bag!"); }
-        function updateBagCount() { document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length; }
-        
+        function addToBag(p) { let bag = JSON.parse(localStorage.getItem('shaam_bag')) || []; bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag)); alert("Added!"); document.getElementById('bag-count').innerText = bag.length; }
         document.addEventListener('DOMContentLoaded', () => {
-            updateBagCount(); loadData();
+            document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
             if(localStorage.getItem('user_session')) document.getElementById('auth-link').href = 'profile.html';
+            loadData();
         });
     </script>
 </body>
