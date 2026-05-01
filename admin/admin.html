@@ -2,41 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Master Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script> if (localStorage.getItem('is_admin') !== 'true') window.location.href = 'admin-login.html'; </script>
 </head>
 <body class="bg-gray-100 p-4">
-    <div class="max-w-2xl mx-auto">
-        <h1 class="text-2xl font-bold mb-4">Manage Products</h1>
-        <div id="item-list" class="space-y-4"></div>
+    <div class="max-w-md mx-auto">
+        <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
+        
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-4">
+            <button onclick="switchTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-xs">Products</button>
+            <button onclick="switchTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-xs">Banners</button>
+            <button onclick="switchTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-xs">Category</button>
+        </div>
+
+        <div id="list-container" class="space-y-4 pb-20"></div>
     </div>
 
     <script>
-        async function loadItems() {
-            const res = await fetch('/api/admin-data?type=product');
-            const data = await res.json();
-            document.getElementById('item-list').innerHTML = data.map(p => `
-                <div class="bg-white p-4 shadow flex flex-col gap-2">
-                    <input type="text" id="name-${p.id}" value="${p.name}" class="border p-1">
-                    <input type="number" id="price-${p.id}" value="${p.price}" class="border p-1">
-                    <button onclick="updateItem(${p.id})" class="bg-blue-500 text-white p-1">Update</button>
-                    <button onclick="deleteItem(${p.id})" class="bg-red-500 text-white p-1">Delete</button>
-                </div>
-            `).join('');
+        let currentTab = 'product';
+
+        async function switchTab(tab) {
+            currentTab = tab;
+            const res = await fetch(`/api/admin-data?type=${tab}`);
+            const items = await res.json();
+            const list = document.getElementById('list-container');
+            
+            list.innerHTML = `<div class="bg-white p-3 shadow mb-4"><h3 class="font-bold text-sm">Add New ${tab}</h3><div id="form-fields"></div><button onclick="saveItem()" class="w-full bg-black text-white py-1 mt-2 text-xs">SAVE</button></div>`;
+            
+            // ফর্ম ফিল্ড তৈরি
+            let fields = tab === 'product' ? `<input type="text" id="name" placeholder="Name" class="w-full p-1 border mb-1 text-sm"><input type="number" id="price" placeholder="Price" class="w-full p-1 border mb-1 text-sm"><input type="text" id="img" placeholder="Image URL" class="w-full p-1 border mb-1 text-sm"><textarea id="desc" placeholder="Desc" class="w-full p-1 border text-sm"></textarea>` : `<input type="text" id="img" placeholder="Image URL" class="w-full p-1 border mb-1 text-sm"><input type="text" id="link" placeholder="Link URL" class="w-full p-1 border mb-1 text-sm">${tab==='category' ? '<input type="text" id="name" placeholder="Name" class="w-full p-1 border text-sm">' : ''}`;
+            document.getElementById('form-fields').innerHTML = fields;
+
+            // ডাটা লিস্ট দেখানো
+            items.forEach(item => {
+                list.innerHTML += `
+                    <div class="bg-white p-3 shadow text-sm">
+                        <p><b>${item.name || 'Banner/Cat'}</b> - ৳${item.price || 0}</p>
+                        <button onclick="deleteItem(${item.id})" class="text-red-500 text-xs">Delete</button>
+                    </div>`;
+            });
         }
 
-        async function updateItem(id) {
-            const data = { id, name: document.getElementById('name-'+id).value, price: document.getElementById('price-'+id).value };
-            await fetch('/api/admin-data?type=product', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-            alert('Updated!'); loadItems();
+        async function saveItem() {
+            const data = { 
+                name: document.getElementById('name')?.value, 
+                price: document.getElementById('price')?.value, 
+                image_url: document.getElementById('img')?.value, 
+                link_url: document.getElementById('link')?.value,
+                description: document.getElementById('desc')?.value 
+            };
+            await fetch(`/api/admin-data?type=${currentTab}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            alert('Saved!'); switchTab(currentTab);
         }
 
         async function deleteItem(id) {
-            await fetch('/api/admin-data?type=product', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
-            alert('Deleted!'); loadItems();
+            await fetch(`/api/admin-data?type=${currentTab}`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
+            alert('Deleted!'); switchTab(currentTab);
         }
-        loadItems();
+        
+        switchTab('product');
     </script>
 </body>
 </html>
