@@ -17,12 +17,11 @@
         </div>
 
         <div class="bg-white p-4 shadow rounded mb-6">
-            <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase">Select an Option</h2>
+            <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase text-sm">Select an Option</h2>
             <div id="fields" class="space-y-2"></div>
             <input type="hidden" id="edit_id">
             <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE / UPDATE</button>
         </div>
-
         <div id="item-list" class="space-y-3 pb-10"></div>
     </div>
 
@@ -49,7 +48,8 @@
                 price: document.getElementById('in_price')?.value, 
                 description: document.getElementById('in_desc')?.value, 
                 image_url: document.getElementById('in_img').value, 
-                link_url: document.getElementById('in_link')?.value 
+                link_url: document.getElementById('in_link')?.value,
+                stock: 10 
             };
             
             const method = id ? 'PUT' : 'POST';
@@ -58,7 +58,7 @@
                 headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify(data) 
             });
-            if(res.ok) { alert('Saved Successfully!'); location.reload(); }
+            if(res.ok) { alert('Saved Successfully!'); loadTab(currentType); } else { alert('Error!'); }
         }
 
         async function renderList(type) {
@@ -83,30 +83,16 @@
             if(document.getElementById('in_link')) document.getElementById('in_link').value = item.link_url || '';
         }
 
-        async function deleteItem(id) {
-            await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
-            renderList(currentType);
-        }
-      
-       async function loadOrders() {
+        async function deleteItem(id) { await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
             document.getElementById('save-btn').classList.add('hidden');
             document.getElementById('fields').innerHTML = "";
             const res = await fetch('/api/orders');
             const orders = await res.json();
-            document.getElementById('item-list').innerHTML = orders.map(o => `
-                <div class="bg-white p-3 shadow border-l-4 border-green-500 text-sm">
-                    <p><b>Cust:</b> ${o.customer_name} | <b>Total:</b> ৳${o.total_price}</p>
-                    <p><b>Status:</b> ${o.status}</p>
-                    ${o.status === 'Pending' ? `<button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm Order</button>` : ''}
-                </div>`).join('');
+            document.getElementById('item-list').innerHTML = orders.map(o => `<div class="bg-white p-3 shadow text-sm"><b>Cust:</b> ${o.customer_name} | ৳${o.total_price}<button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm</button></div>`).join('');
         }
-
-        async function confirmOrder(id) {
-            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) });
-            if(res.ok) { alert('Confirmed!'); loadOrders(); }
-        }
-        async function deleteItem(id) { await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        async function confirmOrder(id) { const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) }); if(res.ok) loadOrders(); }
     </script>
 </body>
 </html>
