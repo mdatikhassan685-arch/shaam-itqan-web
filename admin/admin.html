@@ -9,7 +9,6 @@
 <body class="bg-gray-100 p-4">
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
-        <!-- Tabs -->
         <div class="flex gap-1 mb-4 flex-wrap">
             <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px]">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px]">BANNERS</button>
@@ -17,10 +16,11 @@
             <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px]">ORDERS</button>
         </div>
 
-        <div id="content-area" class="bg-white p-4 shadow rounded mb-6">
+        <div class="bg-white p-4 shadow rounded mb-6">
             <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase">Select an Option</h2>
             <div id="fields" class="space-y-2"></div>
-            <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE</button>
+            <input type="hidden" id="edit_id">
+            <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE / UPDATE</button>
         </div>
 
         <div id="item-list" class="space-y-3 pb-10"></div>
@@ -30,9 +30,10 @@
         let currentType = '';
         function loadTab(type) {
             currentType = type;
-            document.getElementById('form-title').innerText = "Add " + type;
+            document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
-            let f = `<input type="text" id="in_name" placeholder="Name" class="w-full p-2 border text-sm">`;
+            document.getElementById('edit_id').value = '';
+            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm">`;
             if(type === 'product') f += `<input type="number" id="in_price" placeholder="Price" class="w-full p-2 border text-sm"><input type="text" id="in_desc" placeholder="Description" class="w-full p-2 border text-sm">`;
             else f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm">`;
             f += `<input type="text" id="in_img" placeholder="Image URL" class="w-full p-2 border text-sm">`;
@@ -41,9 +42,23 @@
         }
 
         async function saveItem() {
-            const data = { name: document.getElementById('in_name')?.value, price: document.getElementById('in_price')?.value, description: document.getElementById('in_desc')?.value, image_url: document.getElementById('in_img')?.value, link_url: document.getElementById('in_link')?.value, stock: 10 };
-            const res = await fetch(`/api/admin-data?type=${currentType}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-            if(res.ok) { alert('Saved!'); loadTab(currentType); }
+            const id = document.getElementById('edit_id').value;
+            const data = { 
+                id: id,
+                name: document.getElementById('in_name')?.value, 
+                price: document.getElementById('in_price')?.value, 
+                description: document.getElementById('in_desc')?.value, 
+                image_url: document.getElementById('in_img').value, 
+                link_url: document.getElementById('in_link')?.value 
+            };
+            
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(`/api/admin-data?type=${currentType}`, { 
+                method: method, 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify(data) 
+            });
+            if(res.ok) { alert('Saved Successfully!'); location.reload(); }
         }
 
         async function renderList(type) {
@@ -51,12 +66,29 @@
             const items = await res.json();
             document.getElementById('item-list').innerHTML = items.map(item => `
                 <div class="bg-white p-3 shadow flex justify-between items-center text-sm">
-                    <span>${item.name || 'Banner/Cat'}</span>
-                    <button onclick="deleteItem(${item.id})" class="text-red-500 font-bold">Delete</button>
+                    <span>${item.name || item.image_url.substring(0,15)+'...'}</span>
+                    <div>
+                        <button onclick='editItem(${JSON.stringify(item)})' class="text-blue-500 font-bold mr-2">Edit</button>
+                        <button onclick="deleteItem(${item.id})" class="text-red-500 font-bold">Delete</button>
+                    </div>
                 </div>`).join('');
         }
 
-        async function loadOrders() {
+        function editItem(item) {
+            document.getElementById('edit_id').value = item.id;
+            document.getElementById('in_name').value = item.name || '';
+            if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
+            if(document.getElementById('in_desc')) document.getElementById('in_desc').value = item.description || '';
+            document.getElementById('in_img').value = item.image_url || '';
+            if(document.getElementById('in_link')) document.getElementById('in_link').value = item.link_url || '';
+        }
+
+        async function deleteItem(id) {
+            await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
+            renderList(currentType);
+        }
+      
+       async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
             document.getElementById('save-btn').classList.add('hidden');
             document.getElementById('fields').innerHTML = "";
