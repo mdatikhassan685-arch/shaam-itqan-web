@@ -2,68 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script> if (localStorage.getItem('is_admin') !== 'true') window.location.href = 'admin-login.html'; </script>
 </head>
 <body class="bg-gray-100 p-4">
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
-        
         <!-- Tabs -->
-        <div class="flex gap-1 mb-4">
-            <button onclick="switchTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-xs">Products</button>
-            <button onclick="switchTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-xs">Banners</button>
-            <button onclick="switchTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-xs">Category</button>
+        <div class="flex gap-1 mb-4 flex-wrap">
+            <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px]">PRODUCTS</button>
+            <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px]">BANNERS</button>
+            <button onclick="loadTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-[10px]">CATEGORY</button>
+            <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px]">ORDERS</button>
         </div>
 
-        <div id="list-container" class="space-y-4 pb-20"></div>
+        <div id="content-area" class="bg-white p-4 shadow rounded mb-6">
+            <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase">Select an Option</h2>
+            <div id="fields" class="space-y-2"></div>
+            <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE</button>
+        </div>
+
+        <div id="item-list" class="space-y-3 pb-10"></div>
     </div>
 
     <script>
-        let currentTab = 'product';
-
-        async function switchTab(tab) {
-            currentTab = tab;
-            const res = await fetch(`/api/admin-data?type=${tab}`);
-            const items = await res.json();
-            const list = document.getElementById('list-container');
-            
-            list.innerHTML = `<div class="bg-white p-3 shadow mb-4"><h3 class="font-bold text-sm">Add New ${tab}</h3><div id="form-fields"></div><button onclick="saveItem()" class="w-full bg-black text-white py-1 mt-2 text-xs">SAVE</button></div>`;
-            
-            // ফর্ম ফিল্ড তৈরি
-            let fields = tab === 'product' ? `<input type="text" id="name" placeholder="Name" class="w-full p-1 border mb-1 text-sm"><input type="number" id="price" placeholder="Price" class="w-full p-1 border mb-1 text-sm"><input type="text" id="img" placeholder="Image URL" class="w-full p-1 border mb-1 text-sm"><textarea id="desc" placeholder="Desc" class="w-full p-1 border text-sm"></textarea>` : `<input type="text" id="img" placeholder="Image URL" class="w-full p-1 border mb-1 text-sm"><input type="text" id="link" placeholder="Link URL" class="w-full p-1 border mb-1 text-sm">${tab==='category' ? '<input type="text" id="name" placeholder="Name" class="w-full p-1 border text-sm">' : ''}`;
-            document.getElementById('form-fields').innerHTML = fields;
-
-            // ডাটা লিস্ট দেখানো
-            items.forEach(item => {
-                list.innerHTML += `
-                    <div class="bg-white p-3 shadow text-sm">
-                        <p><b>${item.name || 'Banner/Cat'}</b> - ৳${item.price || 0}</p>
-                        <button onclick="deleteItem(${item.id})" class="text-red-500 text-xs">Delete</button>
-                    </div>`;
-            });
+        let currentType = '';
+        function loadTab(type) {
+            currentType = type;
+            document.getElementById('form-title').innerText = "Add " + type;
+            document.getElementById('save-btn').classList.remove('hidden');
+            let f = `<input type="text" id="in_name" placeholder="Name" class="w-full p-2 border text-sm">`;
+            if(type === 'product') f += `<input type="number" id="in_price" placeholder="Price" class="w-full p-2 border text-sm"><input type="text" id="in_desc" placeholder="Description" class="w-full p-2 border text-sm">`;
+            else f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm">`;
+            f += `<input type="text" id="in_img" placeholder="Image URL" class="w-full p-2 border text-sm">`;
+            document.getElementById('fields').innerHTML = f;
+            renderList(type);
         }
 
         async function saveItem() {
-            const data = { 
-                name: document.getElementById('name')?.value, 
-                price: document.getElementById('price')?.value, 
-                image_url: document.getElementById('img')?.value, 
-                link_url: document.getElementById('link')?.value,
-                description: document.getElementById('desc')?.value 
-            };
-            await fetch(`/api/admin-data?type=${currentTab}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-            alert('Saved!'); switchTab(currentTab);
+            const data = { name: document.getElementById('in_name')?.value, price: document.getElementById('in_price')?.value, description: document.getElementById('in_desc')?.value, image_url: document.getElementById('in_img')?.value, link_url: document.getElementById('in_link')?.value, stock: 10 };
+            const res = await fetch(`/api/admin-data?type=${currentType}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            if(res.ok) { alert('Saved!'); loadTab(currentType); }
         }
 
-        async function deleteItem(id) {
-            await fetch(`/api/admin-data?type=${currentTab}`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
-            alert('Deleted!'); switchTab(currentTab);
+        async function renderList(type) {
+            const res = await fetch('/api/admin-data?type=' + type);
+            const items = await res.json();
+            document.getElementById('item-list').innerHTML = items.map(item => `
+                <div class="bg-white p-3 shadow flex justify-between items-center text-sm">
+                    <span>${item.name || 'Banner/Cat'}</span>
+                    <button onclick="deleteItem(${item.id})" class="text-red-500 font-bold">Delete</button>
+                </div>`).join('');
         }
-        
-        switchTab('product');
+
+        async function loadOrders() {
+            document.getElementById('form-title').innerText = "Recent Orders";
+            document.getElementById('save-btn').classList.add('hidden');
+            document.getElementById('fields').innerHTML = "";
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            document.getElementById('item-list').innerHTML = orders.map(o => `
+                <div class="bg-white p-3 shadow border-l-4 border-green-500 text-sm">
+                    <p><b>Cust:</b> ${o.customer_name} | <b>Total:</b> ৳${o.total_price}</p>
+                    <p><b>Status:</b> ${o.status}</p>
+                    ${o.status === 'Pending' ? `<button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm Order</button>` : ''}
+                </div>`).join('');
+        }
+
+        async function confirmOrder(id) {
+            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) });
+            if(res.ok) { alert('Confirmed!'); loadOrders(); }
+        }
+        async function deleteItem(id) { await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
     </script>
 </body>
 </html>
