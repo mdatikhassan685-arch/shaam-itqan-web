@@ -77,11 +77,24 @@
                 document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37] cursor-pointer" onclick="window.location.href='product.html?id=${p.id}'"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='event.stopPropagation(); addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
             } catch(e) { console.log(e); }
         }
-        function addToBag(p) { let bag = JSON.parse(localStorage.getItem('shaam_bag')) || []; bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag)); alert("Added to bag!"); document.getElementById('bag-count').innerText = bag.length; }
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length;
-            if(localStorage.getItem('user_session')) { document.getElementById('auth-link').href = 'profile.html'; document.getElementById('auth-link').innerHTML = '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile'; }
-            loadData();
+        // এই ফাংশনটি আগেরটি মুছে দিয়ে বসিয়ে দিন
+function addToBag(p) {
+    // লগইন চেক লজিক
+    const user = localStorage.getItem('user_session');
+    
+    if (!user) {
+        alert("Please login first to add items to your bag!");
+        window.location.href = 'login.html'; // লগইন পেজে পাঠিয়ে দিবে
+        return; // এখানে কাজ থামিয়ে দিবে
+    }
+
+    // যদি লগইন থাকে, তবে আগের মতোই ব্যাগে যোগ হবে
+    let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
+    bag.push(p); 
+    localStorage.setItem('shaam_bag', JSON.stringify(bag));
+    updateBagCount(); 
+    alert(p.name + " added to your bag!");
+}
         });
     </script>
 </body>
