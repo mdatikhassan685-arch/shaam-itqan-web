@@ -19,13 +19,17 @@
         </div>
     </div>
     <script>
-        function loadBag() {
-            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            const container = document.getElementById('bag-items');
-            if(bag.length == 0) { container.innerHTML = '<p class="text-center">Bag Empty</p>'; return; }
-            let total = 0;
-            container.innerHTML = bag.map((i, idx) => { total += parseFloat(i.price); return `<div class="p-2 border bg-white flex justify-between"><span>${i.name}</span><span>৳${i.price}</span></div>`}).join('');
-            document.getElementById('checkout-section').classList.remove('hidden');
+        async function loadBag() {
+    const user = JSON.parse(localStorage.getItem('user_session'));
+    if (!user) window.location.href = 'login.html';
+
+    const res = await fetch('/api/orders?email=' + user.email);
+    const cartItems = await res.json();
+    const container = document.getElementById('bag-items');
+    
+    container.innerHTML = cartItems.map(item => `
+        <div class="bg-white p-3 border">${item.products} - ৳${item.total_price}</div>
+    `).join('');
         }
         async function submitOrder() {
             const data = { name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value, products: localStorage.getItem('shaam_bag'), total_price: 0 };
