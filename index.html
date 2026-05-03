@@ -51,19 +51,18 @@
             } catch(e) { console.log(e); }
         }
 
-        function addToBag(p) {
-            if (!localStorage.getItem('user_session')) { alert("Please login first to add items!"); window.location.href = 'login.html'; return; }
-            let bag = JSON.parse(localStorage.getItem('shaam_bag')) || [];
-            bag.push(p); localStorage.setItem('shaam_bag', JSON.stringify(bag));
-            updateBagCount(); alert("Added to bag!");
+        async function addToBag(p) {
+    const user = JSON.parse(localStorage.getItem('user_session'));
+    if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+    
+    // API কল করে ডাটাবেসে সেভ করা
+    await fetch('/api/orders', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: [p], total: p.price })
+    });
+    alert("Added to Bag!");
         }
-
-        function updateBagCount() { document.getElementById('bag-count').innerText = (JSON.parse(localStorage.getItem('shaam_bag')) || []).length; }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updateBagCount(); loadData();
-            if(localStorage.getItem('user_session')) { document.getElementById('auth-link').href = 'profile.html'; document.getElementById('auth-link').innerText = 'PROFILE'; }
-        });
     </script>
 </body>
 </html>
