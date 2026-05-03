@@ -20,12 +20,16 @@
         <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
         <a href="bag.html" class="relative">
             <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-            <span id="bag-count" class="absolute -top-1 -right-1 bg-black text-white text-[9px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
         </a>
     </nav>
 
+    <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
+
+    <!-- Categories -->
     <div class="px-4 py-4"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2><div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div></div>
+
+    <!-- Products -->
     <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
 
     <!-- Bottom Nav -->
@@ -40,29 +44,19 @@
         async function loadData() {
             try {
                 const [bRes, cRes, pRes] = await Promise.all([fetch('/api/admin-data?type=banner'), fetch('/api/admin-data?type=category'), fetch('/api/admin-data?type=product')]);
-                const banners = await bRes.json();
-                const cats = await cRes.json();
-                const prods = await pRes.json();
-
-                const container = document.getElementById('banner-slider');
-                container.innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
+                const banners = await bRes.json(); const cats = await cRes.json(); const prods = await pRes.json();
+                document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
-                document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37] cursor-pointer" onclick="window.location.href='product.html?id=${p.id}'"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='event.stopPropagation(); addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
+                document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37]"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
             } catch(e) { console.log(e); }
         }
-
         async function addToBag(p) {
-    const user = JSON.parse(localStorage.getItem('user_session'));
-    if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-    
-    // API কল করে ডাটাবেসে সেভ করা
-    await fetch('/api/orders', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: [p], total: p.price })
-    });
-    alert("Added to Bag!");
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+            await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: p.name, total_price: p.price }) });
+            alert("Added to Bag!");
         }
+        document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
     </script>
 </body>
 </html>
