@@ -2,24 +2,21 @@ import { getDb } from './db.js';
 
 export default async function handler(req, res) {
     const db = await getDb();
+    const { method } = req;
     
-    if (req.method === 'POST') {
-        const { name, phone, address, products, total } = req.body;
-        try {
-            await db.execute(
-                'INSERT INTO orders (customer_name, phone, address, products, total_price) VALUES (?, ?, ?, ?, ?)',
-                [name, phone, address, JSON.stringify(products), total]
-            );
-            await db.end();
-            res.status(200).json({ message: 'Success' });
-        } catch (error) {
-            await db.end();
-            res.status(500).json({ error: error.message });
-        }
-    } else {
-        // GET Request এর জন্য
-        const [rows] = await db.execute('SELECT * FROM orders ORDER BY created_at DESC');
+    // GET: ইউজারের কার্ট ডাটা নিয়ে আসবে
+    if (method === 'GET') {
+        const { user_email } = req.query;
+        const [rows] = await db.execute('SELECT * FROM orders WHERE status = "Cart" AND customer_name = ?', [user_email]);
         await db.end();
         res.status(200).json(rows);
+    } 
+    // POST: কার্ট বা অর্ডার সেভ করবে
+    else if (method === 'POST') {
+        const { user_email, products, total_price, status } = req.body;
+        await db.execute('INSERT INTO orders (customer_name, products, total_price, status) VALUES (?, ?, ?, ?)', 
+        [user_email, JSON.stringify(products), total_price, status || 'Pending']);
+        await db.end();
+        res.status(200).json({ message: "Success" });
     }
 }
