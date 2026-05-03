@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bag | SHAAM ITQAN</title>
+    <title>My Bag</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 p-4">
@@ -20,22 +20,21 @@
     </div>
     <script>
         async function loadBag() {
-    const user = JSON.parse(localStorage.getItem('user_session'));
-    if (!user) window.location.href = 'login.html';
-
-    const res = await fetch('/api/orders?email=' + user.email);
-    const cartItems = await res.json();
-    const container = document.getElementById('bag-items');
-    
-    container.innerHTML = cartItems.map(item => `
-        <div class="bg-white p-3 border">${item.products} - ৳${item.total_price}</div>
-    `).join('');
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { window.location.href = 'login.html'; return; }
+            const res = await fetch('/api/orders?email=' + user.email);
+            const cartItems = await res.json();
+            const container = document.getElementById('bag-items');
+            if(cartItems.length == 0) { container.innerHTML = '<p class="text-center">Bag Empty</p>'; return; }
+            container.innerHTML = cartItems.map(i => `<div class="bg-white p-3 border">${i.products} - ৳${i.total_price}</div>`).join('');
+            document.getElementById('checkout-section').classList.remove('hidden');
         }
         async function submitOrder() {
-            const data = { name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value, products: localStorage.getItem('shaam_bag'), total_price: 0 };
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const data = { name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value, email: user.email };
             if(!data.name || !data.phone || !data.address) return alert("Fill everything!");
             const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-            if(res.ok) { alert('Order Success!'); localStorage.removeItem('shaam_bag'); window.location.href='index.html'; }
+            if(res.ok) { alert('Order Success!'); window.location.href='index.html'; }
         }
         loadBag();
     </script>
