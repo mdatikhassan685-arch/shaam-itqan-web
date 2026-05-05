@@ -15,13 +15,33 @@
 <body class="bg-white text-black font-sans pb-24">
 
     <!-- Navbar -->
-    <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
-        <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
-        <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
-        <a href="bag.html" class="relative">
-            <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-        </a>
-    </nav>
+    <!-- Navbar (Updated) -->
+<nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
+    <!-- লোগো -->
+    <div class="w-10">
+        <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full">
+    </div>
+
+    <!-- ব্র্যান্ড নাম (মাঝে) -->
+    <h1 class="absolute left-1/2 transform -translate-x-1/2 text-lg font-bold tracking-widest luxury-font">
+        SHAAM ITQAN
+    </h1>
+
+    <!-- ব্যাগ আইকন (ডান পাশে) -->
+    <a href="bag.html" class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+            <path d="M3 6h18"></path>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+    </a>
+</nav>
+
+    <!-- Search Bar -->
+    <div class="px-4 py-3">
+        <input type="text" id="search-input" placeholder="Search products..." 
+        class="w-full p-2 border border-[#D4AF37] rounded-lg text-sm focus:outline-none" oninput="filterProducts()">
+    </div>
 
     <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
@@ -35,39 +55,47 @@
     <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">HOME</a>
-        <a href="#" class="text-black flex flex-col items-center">FAV</a>
-        <a href="login.html" id="auth-link" class="text-black flex flex-col items-center">ACCOUNT</a>
-        <a href="#" class="text-black flex flex-col items-center">MENU</a>
+        <a href="#" class="flex flex-col items-center">FAV</a>
+        <a href="login.html" id="auth-link" class="flex flex-col items-center">ACCOUNT</a>
+        <a href="#" class="flex flex-col items-center">MENU</a>
     </div>
 
     <script>
+        let allProducts = []; // সার্চিং এর জন্য ডাটা রাখা
+
         async function loadData() {
             try {
                 const [bRes, cRes, pRes] = await Promise.all([fetch('/api/admin-data?type=banner'), fetch('/api/admin-data?type=category'), fetch('/api/admin-data?type=product')]);
-                const banners = await bRes.json(); const cats = await cRes.json(); const prods = await pRes.json();
+                const banners = await bRes.json(); 
+                const cats = await cRes.json(); 
+                allProducts = await pRes.json();
+                
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
-                document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37]"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
+                renderProducts(allProducts);
             } catch(e) { console.log(e); }
         }
-        // index.html এ এই ফাংশনটি রিপ্লেস করুন:
-async function addToBag(p) {
-    const user = JSON.parse(localStorage.getItem('user_session'));
-    if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-    
-    await fetch('/api/orders', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ 
-            action: 'add_to_cart', 
-            email: user.email, 
-            products: p.name, 
-            image_url: p.image_url, // এখানে নতুন করে ইমেজ লিঙ্ক পাঠাচ্ছি
-            total_price: p.price 
-        })
-    });
-    alert("Added to Bag!");
-}
+
+        function renderProducts(prods) {
+            document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37]"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
+        }
+
+        function filterProducts() {
+            const val = document.getElementById('search-input').value.toLowerCase();
+            renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(val)));
+        }
+
+        async function addToBag(p) {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+            await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: p.name, image_url: p.image_url, total_price: p.price })
+            });
+            alert("Added to Bag!");
+        }
+        
         document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
     </script>
 </body>
