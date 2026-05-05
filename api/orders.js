@@ -16,6 +16,12 @@ export default async function handler(req, res) {
             await db.end();
             return res.status(200).json(rows);
         } 
+            // api/orders.js এ DELETE রিকোয়েস্ট যোগ করুন
+else if (req.method === 'DELETE') {
+    const { id } = req.body;
+    await db.execute('DELETE FROM orders WHERE id = ?', [id]);
+    res.status(200).json({ status: "Deleted" });
+}
         else if (req.method === 'POST') {
             const b = req.body;
             // status: যদি action থাকে add_to_cart তবে Cart, নয়তো Pending
