@@ -1,3 +1,4 @@
+// orders.js
 import { getDb } from './db.js';
 
 export default async function handler(req, res) {
@@ -6,38 +7,30 @@ export default async function handler(req, res) {
         if (req.method === 'GET') {
             const url = new URL(req.url, `http://${req.headers.host}`);
             const email = url.searchParams.get('email');
-            let query = 'SELECT * FROM orders ORDER BY id DESC';
-            let params = [];
-            if (email) {
-                query = 'SELECT * FROM orders WHERE email = ? ORDER BY id DESC';
-                params = [email];
-            }
-            const [rows] = await db.execute(query, params);
-            await db.end();
-            return res.status(200).json(rows);
+            const query = email 
+                ? ['SELECT * FROM orders WHERE email = ? ORDER BY id DESC', [email]]
+                : ['SELECT * FROM orders ORDER BY id DESC', []];
+            
+            const [rows] = await db.execute(query[0], query[1]);
+            res.status(200).json(rows);
         } 
-            // api/orders.js এ DELETE রিকোয়েস্ট যোগ করুন
-else if (req.method === 'DELETE') {
-    const { id } = req.body;
-    await db.execute('DELETE FROM orders WHERE id = ?', [id]);
-    res.status(200).json({ status: "Deleted" });
-}
         else if (req.method === 'POST') {
             const b = req.body;
-            // status: যদি action থাকে add_to_cart তবে Cart, নয়তো Pending
-            const status = b.action === 'add_to_cart' ? 'Cart' : 'Pending';
-            
-            // api/orders.js এর POST পার্টটি:
-await db.execute(
-    'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products, b.total_price, status, b.image_url]
-);
-            await db.end();
-            return res.status(200).json({ status: "Success" });
+            if (b.action === 'add_to_cart') {
+                await db.execute('INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    ['N/A', 'N/A', 'N/A', b.email, b.products, b.total_price, 'Cart', b.image_url]);
+            } else {
+                // চেকআউট বা কনফার্ম অর্ডার
+                await db.execute('UPDATE orders SET customer_name=?, phone=?, address=?, status=? WHERE email=? AND status=?', 
+                    [b.name, b.phone, b.address, 'Pending', b.email, 'Cart']);
+            }
+            res.status(200).json({ status: "Success" });
+        }
+        else if (req.method === 'DELETE') {
+            await db.execute('DELETE FROM orders WHERE id = ?', [req.body.id]);
+            res.status(200).json({ status: "Deleted" });
         }
     } catch (e) {
-        await db.end();
-        console.error("Orders API Error:", e);
         res.status(500).json({ error: e.message });
     }
 }
