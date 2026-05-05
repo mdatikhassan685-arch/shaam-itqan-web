@@ -2,26 +2,37 @@ import { getDb } from './db.js';
 
 export default async function handler(req, res) {
     const db = await getDb();
-    const { method } = req;
-    const body = req.body;
-    const email = req.query.email;
-
+    
     try {
-        if (method === 'GET') {
-            // ইউজারের শুধুমাত্র 'Cart' স্ট্যাটাসের ডাটা আনবে
-            const [rows] = await db.execute('SELECT * FROM orders WHERE customer_name = ? AND status = "Cart"', [email]);
-            res.status(200).json(rows);
-        } else if (method === 'POST') {
-            // কার্ট আপডেট বা অর্ডার কনফার্ম
-            if (body.action === 'add_to_cart') {
-                await db.execute('INSERT INTO orders (customer_name, products, total_price, status) VALUES (?, ?, ?, "Cart")', 
-                [body.email, JSON.stringify(body.products), body.total]);
-            } else {
-                await db.execute('UPDATE orders SET status="Pending", address=?, phone=? WHERE status="Cart" AND customer_name=?', 
-                [body.address, body.phone, body.email]);
+        if (req.method === 'GET') {
+            const url = new URL(req.url, `http://${req.headers.host}`);
+            const email = url.searchParams.get('email');
+            
+            let query = 'SELECT * FROM orders';
+            let params = [];
+            if (email) {
+                query += ' WHERE email = ?';
+                params = [email];
             }
-            res.status(200).json({ message: "Success" });
+            
+            const [rows] = await db.execute(query, params);
+            await db.end();
+            return res.status(200).json(rows);
+        } 
+        else if (req.method === 'POST') {
+            const b = req.body;
+            // যদি action থাকে 'add_to_cart', তবে status হবে 'Cart'
+            const status = b.action === 'add_to_cart' ? 'Cart' : 'Pending';
+            
+            await db.execute(
+                'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products || 'Item', b.total_price || 0, status]
+            );
+            await db.end();
+            return res.status(200).json({ status: "Success" });
         }
+    } catch (e) {
         await db.end();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        res.status(500).json({ error: e.message });
+    }
 }
