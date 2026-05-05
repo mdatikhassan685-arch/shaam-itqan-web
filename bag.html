@@ -5,24 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+        .gold-border { border: 2px solid #D4AF37; }
+    </style>
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-white p-4 font-sans text-black">
     <div class="max-w-md mx-auto">
-        <h1 class="text-xl font-bold mb-4 uppercase">Your Bag</h1>
+        <h1 class="text-xl font-bold mb-6 luxury-font tracking-widest">MY BAG</h1>
         
-        <!-- Bag Items List -->
-        <div id="bag-items" class="space-y-3"></div>
-        
-        <!-- Total Price -->
-        <div class="mt-4 text-right font-bold text-lg">Total: ৳<span id="total-price">0</span></div>
+        <!-- Bag Items -->
+        <div id="bag-items" class="space-y-4">
+            <p class="text-center text-gray-400">Loading your bag...</p>
+        </div>
 
         <!-- Checkout Form -->
-        <div id="checkout-section" class="mt-6 bg-white p-4 shadow hidden">
-            <h2 class="font-bold mb-3 border-b pb-2">Confirm Order</h2>
-            <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border mb-2 text-sm">
-            <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-2 border mb-2 text-sm">
-            <textarea id="address" placeholder="Address" class="w-full p-2 border mb-2 text-sm"></textarea>
-            <button onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 font-bold">CONFIRM ORDER</button>
+        <div id="checkout-section" class="mt-8 p-4 bg-gray-50 border border-[#D4AF37] hidden">
+            <h2 class="text-lg font-bold mb-4 luxury-font">ORDER SUMMARY</h2>
+            <div class="flex justify-between font-bold mb-6">
+                <span>Total:</span>
+                <span class="text-[#D4AF37]">৳ <span id="total-price">0</span></span>
+            </div>
+            
+            <div class="space-y-3">
+                <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border border-gray-300">
+                <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-2 border border-gray-300">
+                <textarea id="address" placeholder="Delivery Address" class="w-full p-2 border border-gray-300"></textarea>
+                <button onclick="submitOrder()" class="w-full bg-black text-white py-3 uppercase tracking-widest hover:bg-[#D4AF37] transition">CONFIRM ORDER</button>
+            </div>
         </div>
     </div>
 
@@ -31,45 +42,44 @@
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { window.location.href = 'login.html'; return; }
 
+            // ডাটাবেস থেকে ওই ইউজারের কার্ট ডাটা নেওয়া
             const res = await fetch('/api/orders?email=' + user.email);
             const allOrders = await res.json();
             const cartItems = allOrders.filter(o => o.status === 'Cart');
             
             const container = document.getElementById('bag-items');
+            const checkoutSection = document.getElementById('checkout-section');
+            
             if(cartItems.length === 0) {
-                container.innerHTML = '<p class="text-center py-10">Bag Empty</p>';
-                document.getElementById('checkout-section').classList.add('hidden');
+                container.innerHTML = '<p class="text-center py-10">Your bag is empty!</p>';
+                checkoutSection.classList.add('hidden');
                 return;
             }
 
             let total = 0;
             container.innerHTML = cartItems.map(item => {
                 total += parseFloat(item.total_price);
-                // JSON থেকে ডাটা বের করা
-                const prod = typeof item.products === 'string' ? JSON.parse(item.products) : item.products;
-                
                 return `
-                    <div class="bg-white p-3 border flex items-center gap-3">
-                        <img src="${prod.image_url || 'https://via.placeholder.com/50'}" class="w-16 h-16 object-cover border">
-                        <div class="flex-grow">
-                            <h3 class="font-bold text-sm">${prod.name}</h3>
-                            <p class="text-xs text-orange-600">৳ ${item.total_price}</p>
+                    <div class="bg-white p-3 border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm">${item.products}</h3>
+                            <p class="text-[#D4AF37] font-bold text-xs">৳ ${item.total_price}</p>
                         </div>
-                        <button onclick="removeItem(${item.id})" class="text-red-500 text-xs font-bold">REMOVE</button>
+                        <button onclick="removeItem(${item.id})" class="text-red-500 text-[10px] font-bold uppercase">Remove</button>
                     </div>`;
             }).join('');
             
             document.getElementById('total-price').innerText = total.toFixed(2);
-            document.getElementById('checkout-section').classList.remove('hidden');
+            checkoutSection.classList.remove('hidden');
         }
 
         async function removeItem(id) {
-            await fetch('/api/orders', { 
+            const res = await fetch('/api/orders', { 
                 method: 'DELETE', 
                 headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify({id}) 
             });
-            loadBag();
+            if(res.ok) loadBag();
         }
 
         async function submitOrder() {
@@ -78,15 +88,23 @@
                 name: document.getElementById('name').value, 
                 phone: document.getElementById('phone').value, 
                 address: document.getElementById('address').value, 
-                email: user.email 
+                email: user.email,
+                action: 'confirm_order',
+                total_price: document.getElementById('total-price').innerText
             };
             
             if(!data.name || !data.phone || !data.address) return alert("Fill everything!");
             
-            // সব কার্ট আইটেমকে 'Pending' করা
-            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...data, action: 'confirm_order'}) });
+            const res = await fetch('/api/orders', { 
+                method: 'POST', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify(data) 
+            });
             
-            if(res.ok) { alert('Order Success!'); window.location.href='index.html'; }
+            if(res.ok) { 
+                alert('Order Success!'); 
+                window.location.href='index.html'; 
+            }
         }
         loadBag();
     </script>
