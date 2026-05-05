@@ -50,12 +50,23 @@
                 document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37]"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
             } catch(e) { console.log(e); }
         }
-        async function addToBag(p) {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-            await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: p.name, total_price: p.price }) });
-            alert("Added to Bag!");
-        }
+        // index.html এ এই ফাংশনটি রিপ্লেস করুন:
+async function addToBag(p) {
+    const user = JSON.parse(localStorage.getItem('user_session'));
+    if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+    
+    await fetch('/api/orders', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+            action: 'add_to_cart', 
+            email: user.email, 
+            products: p.name, 
+            total_price: p.price 
+        })
+    });
+    alert("Added to Bag!");
+}
         document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
     </script>
 </body>
