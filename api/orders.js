@@ -27,11 +27,11 @@ else if (req.method === 'DELETE') {
             // status: যদি action থাকে add_to_cart তবে Cart, নয়তো Pending
             const status = b.action === 'add_to_cart' ? 'Cart' : 'Pending';
             
-            // আপনার ডাটাবেস কলাম অনুযায়ী ইনসার্ট
-            await db.execute(
-                'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, JSON.stringify(b.products), b.total_price || 0, status]
-            );
+            // api/orders.js এর POST পার্টটি:
+await db.execute(
+    'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products, b.total_price, status, b.image_url]
+);
             await db.end();
             return res.status(200).json({ status: "Success" });
         }
