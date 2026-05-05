@@ -6,23 +6,32 @@ export default async function handler(req, res) {
         if (req.method === 'GET') {
             const url = new URL(req.url, `http://${req.headers.host}`);
             const email = url.searchParams.get('email');
-            const [rows] = email ? await db.execute('SELECT * FROM orders WHERE email = ?', [email]) : await db.execute('SELECT * FROM orders ORDER BY id DESC');
+            let query = 'SELECT * FROM orders ORDER BY id DESC';
+            let params = [];
+            if (email) {
+                query = 'SELECT * FROM orders WHERE email = ? ORDER BY id DESC';
+                params = [email];
+            }
+            const [rows] = await db.execute(query, params);
             await db.end();
             return res.status(200).json(rows);
-        } else if (req.method === 'POST') {
+        } 
+        else if (req.method === 'POST') {
             const b = req.body;
-            // কার্ডে যোগ করার সময় 'Cart', অর্ডারের সময় 'Pending'
+            // status: যদি action থাকে add_to_cart তবে Cart, নয়তো Pending
             const status = b.action === 'add_to_cart' ? 'Cart' : 'Pending';
             
+            // আপনার ডাটাবেস কলাম অনুযায়ী ইনসার্ট
             await db.execute(
                 'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products, b.total_price || 0, status]
+                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, JSON.stringify(b.products), b.total_price || 0, status]
             );
             await db.end();
             return res.status(200).json({ status: "Success" });
         }
     } catch (e) {
         await db.end();
+        console.error("Orders API Error:", e);
         res.status(500).json({ error: e.message });
     }
 }
