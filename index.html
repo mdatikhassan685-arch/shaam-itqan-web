@@ -62,6 +62,7 @@ async function addToBag(p) {
             action: 'add_to_cart', 
             email: user.email, 
             products: p.name, 
+            image_url: p.image_url, // এখানে নতুন করে ইমেজ লিঙ্ক পাঠাচ্ছি
             total_price: p.price 
         })
     });
