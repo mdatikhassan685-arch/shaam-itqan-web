@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- প্রফেশনাল নোটিফিকেশনের জন্য -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
@@ -20,7 +19,7 @@
         <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
         <h1 class="absolute left-1/2 transform -translate-x-1/2 text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
         <a href="bag.html" class="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         </a>
     </nav>
 
@@ -40,9 +39,9 @@
         let allProducts = [];
         async function loadData() {
             const [bRes, cRes, pRes] = await Promise.all([fetch('/api/admin-data?type=banner'), fetch('/api/admin-data?type=category'), fetch('/api/admin-data?type=product')]);
-            const banners = await bRes.json(); const cats = await cRes.json(); allProducts = await pRes.json();
-            document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-            document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
+            allProducts = await pRes.json();
+            document.getElementById('banner-slider').innerHTML = (await bRes.json()).map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
+            document.getElementById('category-grid').innerHTML = (await cRes.json()).map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
             renderProducts(allProducts);
         }
 
@@ -52,19 +51,19 @@
 
         async function addToBag(p) {
             const user = localStorage.getItem('user_session');
-            if (!user) {
-                Swal.fire({ title: 'Authentication Required', text: "Please login to continue shopping", icon: 'warning', confirmButtonText: 'Login Now', confirmButtonColor: '#D4AF37' }).then(() => { window.location.href = 'login.html'; });
+            if (!user) { 
+                Swal.fire({ title: 'Oops!', text: 'Please login first to add items.', icon: 'warning', confirmButtonColor: '#D4AF37' }).then(() => { window.location.href = 'login.html'; });
                 return;
             }
             const userData = JSON.parse(user);
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: 'add_to_cart', email: userData.email, products: p.name, image_url: p.image_url, total_price: p.price })
+                body: JSON.stringify({ action: 'add_to_cart', email: userData.email, products: {name: p.name}, image_url: p.image_url, total_price: p.price })
             });
-            if(res.ok) Swal.fire({ title: 'Success!', text: 'Added to your bag', icon: 'success', timer: 1500, showConfirmButton: false });
+            if(res.ok) Swal.fire({ title: 'Success!', text: 'Added to your bag', icon: 'success', showConfirmButton: false, timer: 1500 });
         }
-
+        
         document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
     </script>
 </body>
