@@ -3,110 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bag | SHAAM ITQAN</title>
+    <title>My Bag</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- প্রফেশনাল অ্যালার্টের জন্য -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-50 p-4 font-serif">
     <div class="max-w-md mx-auto">
         <h1 class="text-2xl font-bold mb-6 text-center uppercase tracking-widest">Shopping Bag</h1>
-        
-        <!-- Bag Items -->
-        <div id="bag-items" class="space-y-4">
-            <p class="text-center py-10 text-gray-400">Loading your bag...</p>
-        </div>
-        
-        <!-- Checkout Section -->
-        <div id="checkout-section" class="mt-8 bg-white p-6 shadow border border-[#C1A44E]/20 hidden">
-            <h2 class="font-bold mb-4 uppercase text-sm border-b pb-2">Delivery Details</h2>
-            <div class="flex justify-between font-bold mb-6 text-[#C1A44E]">
-                <span>Total Amount:</span>
-                <span>৳ <span id="total-price">0</span></span>
-            </div>
-            
-            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border mb-3 text-sm focus:border-[#C1A44E] outline-none">
-            <input type="tel" id="phone" placeholder="Phone Number (11 Digits)" class="w-full p-3 border mb-3 text-sm focus:border-[#C1A44E] outline-none">
-            <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border mb-6 text-sm focus:border-[#C1A44E] outline-none"></textarea>
-            
-            <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase tracking-widest text-sm hover:bg-[#C1A44E] transition">Confirm Order</button>
+        <div id="bag-items" class="space-y-4"></div>
+        <div id="checkout-section" class="mt-8 bg-white p-6 shadow hidden border border-[#C1A44E]/20">
+            <div class="flex justify-between font-bold mb-6 text-[#C1A44E]"><span>Total:</span><span>৳ <span id="total-price">0</span></span></div>
+            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border mb-3 text-sm">
+            <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-3 border mb-3 text-sm">
+            <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border mb-6 text-sm"></textarea>
+            <button onclick="submitOrder()" class="w-full bg-[#333333] text-white py-3 uppercase text-sm">Confirm Order</button>
         </div>
     </div>
 
     <script>
         async function loadBag() {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            if (!user) { window.location.href = 'login.html'; return; }
+            const userStr = localStorage.getItem('user_session');
+            if (!userStr) { window.location.href = 'login.html'; return; }
+            const user = JSON.parse(userStr);
 
-            try {
-                const res = await fetch('/api/orders?email=' + user.email);
-                const allOrders = await res.json();
-                const cartItems = allOrders.filter(o => o.status === 'Cart');
-                
-                const container = document.getElementById('bag-items');
-                if(cartItems.length === 0) {
-                    container.innerHTML = '<p class="text-center py-10 text-gray-400">Your bag is currently empty.</p>';
-                    return;
-                }
+            const res = await fetch('/api/orders?email=' + user.email);
+            const allOrders = await res.json();
+            const cartItems = allOrders.filter(o => o.status === 'Cart');
+            
+            const container = document.getElementById('bag-items');
+            if(cartItems.length === 0) { container.innerHTML = '<p class="text-center py-10">Bag is empty</p>'; return; }
 
-                let total = 0;
-                container.innerHTML = cartItems.map(item => {
-                    total += parseFloat(item.total_price);
-                    return `
-                        <div class="bg-white p-3 flex items-center gap-4 border shadow-sm">
-                            <img src="${item.image_url}" class="w-16 h-16 object-cover rounded">
-                            <div class="flex-grow">
-                                <h3 class="font-bold text-sm">${item.products}</h3>
-                                <p class="text-[#C1A44E] text-xs font-bold">৳ ${item.total_price}</p>
-                            </div>
-                            <button onclick="removeItem(${item.id})" class="text-red-400 text-[10px] font-bold uppercase hover:underline">Remove</button>
-                        </div>`;
-                }).join('');
-                
-                document.getElementById('total-price').innerText = total.toFixed(2);
-                document.getElementById('checkout-section').classList.remove('hidden');
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        async function removeItem(id) {
-            const res = await fetch('/api/orders', { 
-                method: 'DELETE', 
-                headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify({id}) 
-            });
-            if(res.ok) loadBag();
+            let total = 0;
+            container.innerHTML = cartItems.map(i => {
+                total += parseFloat(i.total_price);
+                return `<div class="bg-white p-3 flex items-center gap-4 border">${i.products}<button onclick="removeItem(${i.id})" class="ml-auto text-red-500 text-xs">Remove</button></div>`;
+            }).join('');
+            document.getElementById('total-price').innerText = total.toFixed(2);
+            document.getElementById('checkout-section').classList.remove('hidden');
         }
 
         async function submitOrder() {
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const address = document.getElementById('address').value;
             const user = JSON.parse(localStorage.getItem('user_session'));
-
-            // ভ্যালিডেশন লজিক
-            if(!name || name.length < 3) return Swal.fire('Error', 'Please enter a valid name', 'error');
-            if(!phone || phone.length < 11) return Swal.fire('Error', 'Please enter a valid 11-digit phone number', 'error');
-            if(!address || address.length < 10) return Swal.fire('Error', 'Please provide a detailed address', 'error');
-
-            const data = { name, phone, address, email: user.email };
+            const data = { name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value, email: user.email };
             
-            const res = await fetch('/api/orders', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(data) 
-            });
+            if(!data.name || !data.phone || !data.address) return Swal.fire('Error', 'Fill all fields', 'error');
             
-            if(res.ok) { 
-                Swal.fire({ title: 'Order Confirmed!', text: 'Thank you for shopping with us.', icon: 'success' }).then(() => {
-                    window.location.href = 'index.html';
-                });
-            } else {
-                Swal.fire('Error', 'Failed to place order. Try again.', 'error');
-            }
+            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            if(res.ok) { Swal.fire('Success', 'Order placed!', 'success').then(() => window.location.href='index.html'); }
         }
         
+        async function removeItem(id) { await fetch('/api/orders', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); loadBag(); }
         loadBag();
     </script>
 </body>
