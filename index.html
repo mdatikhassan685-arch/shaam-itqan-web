@@ -86,14 +86,33 @@
         }
 
         async function addToBag(p) {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-            await fetch('/api/orders', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: p.name, image_url: p.image_url, total_price: p.price })
-            });
-            alert("Added to Bag!");
+    const user = JSON.parse(localStorage.getItem('user_session'));
+    
+    // ১. লগইন চেক
+    if (!user || !user.email) { 
+        alert("Please login first to add items to your bag!"); 
+        window.location.href = 'login.html'; 
+        return; 
+    }
+    
+    // ২. এপিআই কল
+    const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+            action: 'add_to_cart', 
+            email: user.email, // এখানে অবশ্যই ইমেইল থাকতে হবে
+            products: p.name, 
+            image_url: p.image_url, 
+            total_price: p.price 
+        })
+    });
+
+    if(res.ok) {
+        alert("Added to Bag!");
+    } else {
+        alert("Failed to add to bag.");
+    }
         }
         
         document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
