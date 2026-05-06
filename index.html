@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- প্রফেশনাল নোটিফিকেশনের জন্য -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
@@ -14,45 +16,19 @@
 </head>
 <body class="bg-white text-black font-sans pb-24">
 
-    <!-- Navbar -->
-    <!-- Navbar (Updated) -->
-<nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
-    <!-- লোগো -->
-    <div class="w-10">
-        <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full">
-    </div>
+    <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
+        <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
+        <h1 class="absolute left-1/2 transform -translate-x-1/2 text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
+        <a href="bag.html" class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+        </a>
+    </nav>
 
-    <!-- ব্র্যান্ড নাম (মাঝে) -->
-    <h1 class="absolute left-1/2 transform -translate-x-1/2 text-lg font-bold tracking-widest luxury-font">
-        SHAAM ITQAN
-    </h1>
-
-    <!-- ব্যাগ আইকন (ডান পাশে) -->
-    <a href="bag.html" class="relative">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-            <path d="M3 6h18"></path>
-            <path d="M16 10a4 4 0 0 1-8 0"></path>
-        </svg>
-    </a>
-</nav>
-
-    <!-- Search Bar -->
-    <div class="px-4 py-3">
-        <input type="text" id="search-input" placeholder="Search products..." 
-        class="w-full p-2 border border-[#D4AF37] rounded-lg text-sm focus:outline-none" oninput="filterProducts()">
-    </div>
-
-    <!-- Slider -->
+    <div class="px-4 py-3"><input type="text" id="search-input" placeholder="Search products..." class="w-full p-2 border border-[#D4AF37] rounded-lg text-sm focus:outline-none" oninput="filterProducts()"></div>
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
-
-    <!-- Categories -->
     <div class="px-4 py-4"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2><div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div></div>
-
-    <!-- Products -->
     <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
 
-    <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">HOME</a>
         <a href="#" class="flex flex-col items-center">FAV</a>
@@ -61,60 +37,34 @@
     </div>
 
     <script>
-        let allProducts = []; // সার্চিং এর জন্য ডাটা রাখা
-
+        let allProducts = [];
         async function loadData() {
-            try {
-                const [bRes, cRes, pRes] = await Promise.all([fetch('/api/admin-data?type=banner'), fetch('/api/admin-data?type=category'), fetch('/api/admin-data?type=product')]);
-                const banners = await bRes.json(); 
-                const cats = await cRes.json(); 
-                allProducts = await pRes.json();
-                
-                document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-                document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
-                renderProducts(allProducts);
-            } catch(e) { console.log(e); }
+            const [bRes, cRes, pRes] = await Promise.all([fetch('/api/admin-data?type=banner'), fetch('/api/admin-data?type=category'), fetch('/api/admin-data?type=product')]);
+            const banners = await bRes.json(); const cats = await cRes.json(); allProducts = await pRes.json();
+            document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
+            document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
+            renderProducts(allProducts);
         }
 
         function renderProducts(prods) {
             document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37]"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
         }
 
-        function filterProducts() {
-            const val = document.getElementById('search-input').value.toLowerCase();
-            renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(val)));
-        }
-
         async function addToBag(p) {
-    const user = JSON.parse(localStorage.getItem('user_session'));
-    
-    // ১. লগইন চেক
-    if (!user || !user.email) { 
-        alert("Please login first to add items to your bag!"); 
-        window.location.href = 'login.html'; 
-        return; 
-    }
-    
-    // ২. এপিআই কল
-    const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ 
-            action: 'add_to_cart', 
-            email: user.email, // এখানে অবশ্যই ইমেইল থাকতে হবে
-            products: p.name, 
-            image_url: p.image_url, 
-            total_price: p.price 
-        })
-    });
-
-    if(res.ok) {
-        alert("Added to Bag!");
-    } else {
-        alert("Failed to add to bag.");
-    }
+            const user = localStorage.getItem('user_session');
+            if (!user) {
+                Swal.fire({ title: 'Authentication Required', text: "Please login to continue shopping", icon: 'warning', confirmButtonText: 'Login Now', confirmButtonColor: '#D4AF37' }).then(() => { window.location.href = 'login.html'; });
+                return;
+            }
+            const userData = JSON.parse(user);
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'add_to_cart', email: userData.email, products: p.name, image_url: p.image_url, total_price: p.price })
+            });
+            if(res.ok) Swal.fire({ title: 'Success!', text: 'Added to your bag', icon: 'success', timer: 1500, showConfirmButton: false });
         }
-        
+
         document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
     </script>
 </body>
