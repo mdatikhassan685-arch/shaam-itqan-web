@@ -1,7 +1,7 @@
 const pool = require('./db');
 
 // একটি কনস্ট্যান্ট সিক্রেট কি যা শুধুমাত্র তুমি জানবে
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_secret_admin_token_123';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_secret_admin_token';
 
 export default async function handler(req, res) {
     // নিরাপত্তা: রিকোয়েস্ট হেডারে সিক্রেট কি চেক করা
