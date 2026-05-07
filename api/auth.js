@@ -28,8 +28,7 @@ export default async function handler(req, res) {
             const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 
             // HTTP-Only Cookie সেট করা
-            res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Strict`);
-            
+            res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Strict; Secure`);
             return res.status(200).json({ user: { name: user.username, email: user.email } });
         }
     } catch (error) {
