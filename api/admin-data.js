@@ -1,40 +1,49 @@
-// admin-data.js
-import { getDb } from './db.js';
+const pool = require('./db');
+
+// একটি কনস্ট্যান্ট সিক্রেট কি যা শুধুমাত্র তুমি জানবে
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_secret_admin_token_123';
 
 export default async function handler(req, res) {
-    const db = await getDb();
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const type = url.searchParams.get('type');
-    
-    // Whitelist: শুধুমাত্র এই টেবিলগুলোই অ্যাক্সেস করা যাবে
-    const tableMap = { 'product': 'products', 'banner': 'banners', 'category': 'categories' };
-    const tableName = tableMap[type];
+    // নিরাপত্তা: রিকোয়েস্ট হেডারে সিক্রেট কি চেক করা
+    const authHeader = req.headers['authorization'];
+    if (authHeader !== ADMIN_SECRET) {
+        return res.status(403).json({ message: 'Forbidden: Access Denied' });
+    }
 
-    if (!tableName) return res.status(400).json({ error: "Invalid request type" });
+    const { type } = req.query; // product, banner, category
+    const method = req.method;
 
     try {
-        if (req.method === 'GET') {
-            const [rows] = await db.execute(`SELECT * FROM ${tableName} ORDER BY id DESC`);
-            res.status(200).json(rows);
-        } else if (req.method === 'POST' || req.method === 'PUT') {
-            const b = req.body;
-            if (type === 'product') {
-                if (req.method === 'POST') 
-                    await db.execute('INSERT INTO products (name, price, stock, image_url, description) VALUES (?, ?, ?, ?, ?)', [b.name, b.price, b.stock, b.image_url, b.description]);
-                else 
-                    await db.execute('UPDATE products SET name=?, price=?, image_url=?, description=? WHERE id=?', [b.name, b.price, b.image_url, b.description, b.id]);
-            } else {
-                if (req.method === 'POST')
-                    await db.execute(`INSERT INTO ${tableName} (name, image_url, link_url) VALUES (?, ?, ?)`, [b.name, b.image_url, b.link_url]);
-                else
-                    await db.execute(`UPDATE ${tableName} SET name=?, image_url=?, link_url=? WHERE id=?`, [b.name, b.image_url, b.link_url, b.id]);
-            }
-            res.status(200).json({ status: "Success" });
-        } else if (req.method === 'DELETE') {
-            await db.execute(`DELETE FROM ${tableName} WHERE id = ?`, [req.body.id]);
-            res.status(200).json({ status: "Deleted" });
+        if (method === 'GET') {
+            const [rows] = await pool.query(`SELECT * FROM ??`, [type]);
+            return res.status(200).json(rows);
         }
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+
+        if (method === 'POST') {
+            const { name, price, description, image_url, link_url, stock } = req.body;
+            await pool.query(
+                `INSERT INTO ?? (name, price, description, image_url, link_url, stock) VALUES (?, ?, ?, ?, ?, ?)`,
+                [type, name, price, description, image_url, link_url, stock || 0]
+            );
+            return res.status(201).json({ message: 'Added Successfully' });
+        }
+
+        if (method === 'PUT') {
+            const { id, name, price, description, image_url, link_url } = req.body;
+            await pool.query(
+                `UPDATE ?? SET name=?, price=?, description=?, image_url=?, link_url=? WHERE id=?`,
+                [type, name, price, description, image_url, link_url, id]
+            );
+            return res.status(200).json({ message: 'Updated Successfully' });
+        }
+
+        if (method === 'DELETE') {
+            const { id } = req.body;
+            await pool.query(`DELETE FROM ?? WHERE id=?`, [type, id]);
+            return res.status(200).json({ message: 'Deleted Successfully' });
+        }
+
+    } catch (error) {
+        return res.status(500).json({ message: 'Database Error', error: error.message });
     }
 }
