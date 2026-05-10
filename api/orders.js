@@ -17,13 +17,15 @@ export default async function handler(req, res) {
         } 
         else if (req.method === 'POST') {
             const b = req.body;
-            // Cart বা Pending সেট করার লজিক
             const status = b.action === 'add_to_cart' ? 'Cart' : 'Pending';
             
-            // সব ফিল্ড ঠিকমতো আছে কি না চেক করে ইনসার্ট
+            // নিশ্চিত করছি সব ডাটা সঠিক ফরম্যাটে আছে
+            const price = parseFloat(b.total_price) || 0;
+            const products = b.products || "Product";
+            
             await db.execute(
                 'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products, b.total_price || 0, status, b.image_url || '']
+                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, products, price, status, b.image_url || '']
             );
             res.status(200).json({ status: "Success" });
         }
@@ -38,9 +40,9 @@ export default async function handler(req, res) {
             res.status(200).json({ status: "Deleted" });
         }
     } catch (e) {
-        console.error("DB Error:", e); // এই এররটি ভেরসেল লগ এ দেখা যাবে
+        console.error("DB Error:", e);
         res.status(500).json({ error: e.message });
     } finally {
-        await db.end(); // সংযোগ বন্ধ করা নিশ্চিত করা
+        await db.end();
     }
 }
