@@ -2,31 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Product Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#FDF8EF] p-4 font-serif">
-    <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E]">
-        <img id="p-img" class="w-full h-64 object-cover border border-[#C1A44E]/30">
-        <h1 id="p-name" class="text-2xl font-bold mt-4"></h1>
-        <p id="p-price" class="text-xl text-[#C1A44E] font-bold"></p>
-        <p id="p-desc" class="text-gray-600 mt-4 text-sm leading-relaxed"></p>
-        <button onclick="window.history.back()" class="w-full bg-[#333333] text-white py-3 mt-6 uppercase tracking-widest text-sm">Back</button>
+<body class="bg-white pb-20 text-[#333333]">
+
+    <div class="max-w-md mx-auto bg-white min-h-screen">
+        <!-- Image Section -->
+        <div class="relative">
+            <img id="p-img" class="w-full h-96 object-cover" src="" alt="Product">
+        </div>
+        
+        <div class="p-5">
+            <h1 id="p-name" class="text-2xl font-bold uppercase tracking-widest"></h1>
+            <p id="p-price" class="text-2xl font-bold my-3 text-[#D4AF37]">৳ 0.00</p>
+            
+            <!-- Size Selector -->
+            <div class="mt-6">
+                <p class="text-xs font-bold mb-3 uppercase tracking-widest">Select Size</p>
+                <div class="flex gap-3">
+                    <button class="w-14 h-12 border-2 border-[#D4AF37] hover:bg-[#D4AF37] hover:text-white transition font-bold">M</button>
+                    <button class="w-14 h-12 border-2 border-[#D4AF37] hover:bg-[#D4AF37] hover:text-white transition font-bold">L</button>
+                    <button class="w-14 h-12 border-2 border-[#D4AF37] hover:bg-[#D4AF37] hover:text-white transition font-bold">XL</button>
+                </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="mt-6">
+                <p class="text-xs font-bold mb-3 uppercase tracking-widest">Quantity</p>
+                <div class="flex items-center border border-[#D4AF37] w-32">
+                    <button class="px-5 py-3 text-xl" onclick="changeQty(-1)">-</button>
+                    <span id="qty" class="px-5 font-bold">1</span>
+                    <button class="px-5 py-3 text-xl" onclick="changeQty(1)">+</button>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="mt-8 space-y-3">
+                <button onclick="addToBagFromPage()" class="w-full bg-[#333333] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition">Add to Cart</button>
+                <button class="w-full border-2 border-[#D4AF37] py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] hover:text-white transition">Buy with Cash on Delivery</button>
+            </div>
+
+            <!-- Description -->
+            <div class="mt-10 border-t border-gray-100 pt-6">
+                <h3 class="font-bold mb-3 uppercase text-sm tracking-widest">Product Description</h3>
+                <p id="p-desc" class="text-gray-600 text-sm leading-relaxed"></p>
+            </div>
+        </div>
     </div>
+
     <script>
+        let productData = null;
         const pid = new URLSearchParams(window.location.search).get('id');
+
         async function loadProduct() {
-            const res = await fetch('/api/admin-data?type=product');
-            const products = await res.json();
-            const p = products.find(prod => prod.id == pid);
-            if(p) {
-                document.getElementById('p-img').src = p.image_url;
-                document.getElementById('p-name').innerText = p.name;
-                document.getElementById('p-price').innerText = '৳ ' + p.price;
-                document.getElementById('p-desc').innerText = p.description;
-            }
+            try {
+                const res = await fetch('/api/admin-data?type=product');
+                const products = await res.json();
+                productData = products.find(p => p.id == pid);
+                if(productData) {
+                    document.getElementById('p-img').src = productData.image_url;
+                    document.getElementById('p-name').innerText = productData.name;
+                    document.getElementById('p-price').innerText = '৳ ' + productData.price;
+                    document.getElementById('p-desc').innerText = productData.description;
+                }
+            } catch(e) { console.error("Error loading product:", e); }
         }
+
+        function changeQty(val) {
+            let q = parseInt(document.getElementById('qty').innerText);
+            if(q + val > 0) document.getElementById('qty').innerText = q + val;
+        }
+
+        async function addToBagFromPage() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+            
+            const qty = parseInt(document.getElementById('qty').innerText);
+            const total = productData.price * qty;
+
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    action: 'add_to_cart', 
+                    email: user.email, 
+                    products: productData.name + ` (x${qty})`, 
+                    image_url: productData.image_url, 
+                    total_price: total 
+                })
+            });
+            if(res.ok) alert("Added to Bag!");
+            else alert("Failed to add to cart.");
+        }
+
         loadProduct();
     </script>
 </body>
