@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin Panel</title>
+    <title>Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-4">
@@ -51,7 +51,6 @@
                 link_url: document.getElementById('in_link')?.value,
                 stock: 10 
             };
-            
             const method = id ? 'PUT' : 'POST';
             const res = await fetch(`/api/admin-data?type=${currentType}`, { 
                 method: method, 
@@ -84,15 +83,28 @@
         }
 
         async function deleteItem(id) { await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
             document.getElementById('save-btn').classList.add('hidden');
             document.getElementById('fields').innerHTML = "";
             const res = await fetch('/api/orders');
             const orders = await res.json();
-            document.getElementById('item-list').innerHTML = orders.map(o => `<div class="bg-white p-3 shadow text-sm"><b>Cust:</b> ${o.customer_name} | ৳${o.total_price}<button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm</button></div>`).join('');
+            document.getElementById('item-list').innerHTML = orders.map(o => `
+                <div class="bg-white p-3 shadow text-sm">
+                    <b>Cust:</b> ${o.customer_name} | <b>Status:</b> ${o.status} | <b>Price:</b> ৳${o.total_price}
+                    <button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm Order</button>
+                </div>`).join('');
         }
-        async function confirmOrder(id) { const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) }); if(res.ok) loadOrders(); }
+
+        async function confirmOrder(id) { 
+            const res = await fetch('/api/orders', { 
+                method: 'PUT', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ id, status: 'Confirmed' }) 
+            }); 
+            if(res.ok) { alert('Order Confirmed!'); loadOrders(); } 
+        }
     </script>
 </body>
 </html>
