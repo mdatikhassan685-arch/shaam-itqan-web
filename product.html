@@ -6,37 +6,55 @@
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white text-[#333333]">
-    <div class="max-w-md mx-auto w-full">
-        <img id="p-img" class="w-full h-80 object-cover" src="" alt="Product">
-        <div class="p-5">
-            <h1 id="p-name" class="text-xl font-bold uppercase tracking-widest"></h1>
+<body class="bg-white text-[#333333] font-sans">
+    <div class="max-w-md mx-auto w-full min-h-screen">
+        <img id="p-img" class="w-full h-96 object-cover" src="" alt="Product">
+        
+        <div class="p-6">
+            <h1 id="p-name" class="text-2xl font-bold uppercase tracking-widest"></h1>
             <p id="p-price" class="text-2xl font-bold my-4 text-[#D4AF37]">৳ 0.00</p>
             
+            <!-- Size Selector -->
             <div class="mt-6">
-                <p class="text-xs font-bold mb-3 uppercase tracking-widest">Select Size</p>
-                <div id="size-selector" class="flex gap-3">
-                    <button onclick="selectSize(this, 'M')" class="size-btn w-12 h-12 border-2 border-[#D4AF37] font-bold">M</button>
-                    <button onclick="selectSize(this, 'L')" class="size-btn w-12 h-12 border-2 border-[#D4AF37] font-bold">L</button>
-                    <button onclick="selectSize(this, 'XL')" class="size-btn w-12 h-12 border-2 border-[#D4AF37] font-bold">XL</button>
+                <p class="text-[11px] font-bold mb-3 uppercase tracking-widest text-gray-500">Select Size</p>
+                <div id="size-selector" class="flex gap-2">
+                    <button onclick="selectSize(this, 'M')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">M</button>
+                    <button onclick="selectSize(this, 'L')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">L</button>
+                    <button onclick="selectSize(this, 'XL')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">XL</button>
+                    <button onclick="selectSize(this, 'XXL')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">XXL</button>
                 </div>
             </div>
 
+            <!-- New Stylish Quantity Selector -->
+            <div class="mt-6">
+                <p class="text-[11px] font-bold mb-3 uppercase tracking-widest text-gray-500">Quantity</p>
+                <div class="flex items-center w-36 border border-[#D4AF37] rounded-full overflow-hidden">
+                    <button onclick="changeQty(-1)" class="w-12 py-3 bg-white hover:bg-[#D4AF37] hover:text-white transition font-bold text-lg">-</button>
+                    <span id="qty" class="flex-grow text-center font-bold text-lg">1</span>
+                    <button onclick="changeQty(1)" class="w-12 py-3 bg-white hover:bg-[#D4AF37] hover:text-white transition font-bold text-lg">+</button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
             <div class="mt-8 space-y-3">
                 <button onclick="addToBag()" class="w-full border-2 border-black py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white transition">Add to Bag</button>
-                <button onclick="goToCheckout()" class="w-full bg-[#D4AF37] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#b8962d] transition">Buy Now</button>
+                <button onclick="goToCheckout()" class="w-full bg-[#D4AF37] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#b8962d] transition shadow-lg">Buy Now</button>
             </div>
         </div>
     </div>
 
     <script>
-        let productData = null; let selectedSize = 'M';
+        let productData = null; let selectedSize = 'M'; let qty = 1;
         const pid = new URLSearchParams(window.location.search).get('id');
 
         function selectSize(btn, size) {
             selectedSize = size;
-            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('bg-[#D4AF37]', 'text-white'));
-            btn.classList.add('bg-[#D4AF37]', 'text-white');
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('border-[#D4AF37]', 'bg-black', 'text-white'));
+            btn.classList.add('border-[#D4AF37]', 'bg-black', 'text-white');
+        }
+
+        function changeQty(val) {
+            if(qty + val > 0) { qty += val; document.getElementById('qty').innerText = qty; }
         }
 
         async function loadProduct() {
@@ -56,7 +74,7 @@
             await fetch('/api/orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: `${productData.name} (${selectedSize})`, total_price: productData.price, image_url: productData.image_url })
+                body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url })
             });
             alert("Added to Bag!");
         }
@@ -65,7 +83,7 @@
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ status: 'Checkout_Pending', products: `${productData.name} (${selectedSize})`, total_price: productData.price, image_url: productData.image_url })
+                body: JSON.stringify({ status: 'Checkout_Pending', products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url })
             });
             if(res.ok) window.location.href = 'checkout.html';
         }
