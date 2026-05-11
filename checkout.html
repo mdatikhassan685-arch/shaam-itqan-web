@@ -2,17 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen p-4">
-    <div class="max-w-md mx-auto bg-white p-6 shadow-xl border-t-4 border-[#D4AF37]">
-        <h2 class="text-xl font-bold mb-6 uppercase tracking-widest">Confirm Order</h2>
-        <div id="summary" class="mb-6 border-b pb-4"></div>
-        <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border mb-3 text-sm">
-        <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-3 border mb-3 text-sm">
-        <textarea id="address" placeholder="Delivery Address" class="w-full p-3 border mb-6 text-sm"></textarea>
-        <button onclick="confirmOrder()" class="w-full bg-[#333333] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition">PLACE ORDER</button>
+<body class="bg-white text-[#333333]">
+    <div class="max-w-md mx-auto p-6">
+        <h2 class="text-xl font-bold mb-6 uppercase tracking-widest text-center border-b pb-4">Confirm Order</h2>
+        <div id="summary" class="mb-8 p-4 bg-gray-50 border-l-4 border-[#D4AF37]"></div>
+        
+        <div class="space-y-4">
+            <input type="text" id="name" placeholder="Full Name" class="w-full p-4 border border-gray-300 focus:border-[#D4AF37] outline-none text-sm">
+            <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-4 border border-gray-300 focus:border-[#D4AF37] outline-none text-sm">
+            <textarea id="address" placeholder="Delivery Address" class="w-full p-4 border border-gray-300 focus:border-[#D4AF37] outline-none text-sm"></textarea>
+            <button onclick="confirmOrder()" class="w-full bg-[#333333] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition">PLACE ORDER</button>
+        </div>
     </div>
 
     <script>
@@ -21,9 +25,8 @@
             const res = await fetch('/api/orders?status=last_pending');
             const data = await res.json();
             if(data.length > 0) {
-                const o = data[0];
-                orderId = o.id;
-                document.getElementById('summary').innerHTML = `<div class="flex items-center gap-4"><img src="${o.image_url}" class="w-16 h-16 object-cover border"><div><p class="font-bold text-sm">${o.products}</p><p class="text-[#D4AF37] font-bold">Total: ৳${o.total_price}</p></div></div>`;
+                const o = data[0]; orderId = o.id;
+                document.getElementById('summary').innerHTML = `<p class="font-bold text-sm">${o.products}</p><p class="text-[#D4AF37] font-bold mt-2">Total: ৳${o.total_price}</p>`;
             }
         }
         async function confirmOrder() {
@@ -32,7 +35,7 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id: orderId, status: 'Pending', name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value })
             });
-            if(res.ok) { alert("Order Placed Successfully!"); window.location.href = 'index.html'; }
+            if(res.ok) { alert("Order Placed!"); window.location.href = 'index.html'; }
         }
         loadOrder();
     </script>
