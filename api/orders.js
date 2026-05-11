@@ -5,17 +5,13 @@ export default async function handler(req, res) {
     try {
         if (req.method === 'GET') {
             const url = new URL(req.url, `http://${req.headers.host}`);
-            const email = url.searchParams.get('email');
             const status = url.searchParams.get('status');
             
             let query = 'SELECT * FROM orders ORDER BY id DESC';
             let params = [];
             
-            if (status === 'last_pending') { // চেকআউট পেজের জন্য শেষ Pending অর্ডার নেওয়া
+            if (status === 'last_pending') {
                 query = 'SELECT * FROM orders WHERE status = "Checkout_Pending" ORDER BY id DESC LIMIT 1';
-            } else if (email) {
-                query = 'SELECT * FROM orders WHERE email = ? ORDER BY id DESC';
-                params = [email];
             }
             
             const [rows] = await db.execute(query, params);
@@ -23,17 +19,16 @@ export default async function handler(req, res) {
         } 
         else if (req.method === 'POST') {
             const b = req.body;
-            const status = b.status || 'Pending';
-            
             await db.execute(
                 'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email || 'guest', b.products, b.total_price, status, b.image_url]
+                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email || 'guest', b.products, b.total_price, b.status || 'Pending', b.image_url]
             );
             res.status(200).json({ status: "Success" });
         }
         else if (req.method === 'PUT') {
             const { id, status, name, phone, address } = req.body;
-            if(status === 'Confirmed') {
+            // ইউজার যখন চেকআউট পূরণ করে, তখন স্ট্যাটাস Pending হয়
+            if(status === 'Pending') {
                 await db.execute('UPDATE orders SET status=?, customer_name=?, phone=?, address=? WHERE id=?', [status, name, phone, address, id]);
             } else {
                 await db.execute('UPDATE orders SET status=? WHERE id=?', [status, id]);
