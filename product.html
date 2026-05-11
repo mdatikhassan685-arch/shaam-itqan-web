@@ -7,18 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white pb-20 text-[#333333]">
-
     <div class="max-w-md mx-auto bg-white min-h-screen">
-        <!-- Image Section -->
-        <div class="relative">
-            <img id="p-img" class="w-full h-96 object-cover" src="" alt="Product">
-        </div>
-        
+        <img id="p-img" class="w-full h-96 object-cover" src="" alt="Product">
         <div class="p-5">
             <h1 id="p-name" class="text-2xl font-bold uppercase tracking-widest"></h1>
             <p id="p-price" class="text-2xl font-bold my-3 text-[#D4AF37]">৳ 0.00</p>
             
-            <!-- Size Selector -->
             <div class="mt-6">
                 <p class="text-xs font-bold mb-3 uppercase tracking-widest">Select Size</p>
                 <div class="flex gap-3">
@@ -28,7 +22,6 @@
                 </div>
             </div>
 
-            <!-- Quantity -->
             <div class="mt-6">
                 <p class="text-xs font-bold mb-3 uppercase tracking-widest">Quantity</p>
                 <div class="flex items-center border border-[#D4AF37] w-32">
@@ -38,13 +31,11 @@
                 </div>
             </div>
 
-            <!-- Buttons -->
             <div class="mt-8 space-y-3">
                 <button onclick="addToBagFromPage()" class="w-full bg-[#333333] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition">Add to Cart</button>
-                <button class="w-full border-2 border-[#D4AF37] py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] hover:text-white transition">Buy with Cash on Delivery</button>
+                <button onclick="goToCheckout()" class="w-full border-2 border-[#D4AF37] py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] hover:text-white transition">BUY NOW</button>
             </div>
 
-            <!-- Description -->
             <div class="mt-10 border-t border-gray-100 pt-6">
                 <h3 class="font-bold mb-3 uppercase text-sm tracking-widest">Product Description</h3>
                 <p id="p-desc" class="text-gray-600 text-sm leading-relaxed"></p>
@@ -57,46 +48,28 @@
         const pid = new URLSearchParams(window.location.search).get('id');
 
         async function loadProduct() {
-            try {
-                const res = await fetch('/api/admin-data?type=product');
-                const products = await res.json();
-                productData = products.find(p => p.id == pid);
-                if(productData) {
-                    document.getElementById('p-img').src = productData.image_url;
-                    document.getElementById('p-name').innerText = productData.name;
-                    document.getElementById('p-price').innerText = '৳ ' + productData.price;
-                    document.getElementById('p-desc').innerText = productData.description;
-                }
-            } catch(e) { console.error("Error loading product:", e); }
+            const res = await fetch('/api/admin-data?type=product');
+            const products = await res.json();
+            productData = products.find(p => p.id == pid);
+            if(productData) {
+                document.getElementById('p-img').src = productData.image_url;
+                document.getElementById('p-name').innerText = productData.name;
+                document.getElementById('p-price').innerText = '৳ ' + productData.price;
+                document.getElementById('p-desc').innerText = productData.description;
+            }
         }
-
-        function changeQty(val) {
-            let q = parseInt(document.getElementById('qty').innerText);
-            if(q + val > 0) document.getElementById('qty').innerText = q + val;
-        }
-
-        async function addToBagFromPage() {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-            
+        function changeQty(v) { let q = parseInt(document.getElementById('qty').innerText); if(q+v > 0) document.getElementById('qty').innerText = q+v; }
+        
+        async function goToCheckout() {
             const qty = parseInt(document.getElementById('qty').innerText);
             const total = productData.price * qty;
-
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    action: 'add_to_cart', 
-                    email: user.email, 
-                    products: productData.name + ` (x${qty})`, 
-                    image_url: productData.image_url, 
-                    total_price: total 
-                })
+                body: JSON.stringify({ status: 'Checkout_Pending', products: productData.name + " (x" + qty + ")", total_price: total, image_url: productData.image_url })
             });
-            if(res.ok) alert("Added to Bag!");
-            else alert("Failed to add to cart.");
+            if(res.ok) window.location.href = 'checkout.html';
         }
-
         loadProduct();
     </script>
 </body>
