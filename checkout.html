@@ -10,7 +10,6 @@
     <div class="max-w-md mx-auto">
         <h2 class="text-xl font-bold mb-6 uppercase tracking-widest text-center border-b pb-4">Checkout Details</h2>
         <div id="summary" class="mb-6 p-4 bg-gray-50 border-l-4 border-[#D4AF37] text-sm"></div>
-        
         <form id="checkoutForm" class="space-y-4">
             <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border border-gray-300 outline-none text-sm">
             <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border border-gray-300 outline-none text-sm">
@@ -18,7 +17,6 @@
             <button type="submit" class="w-full bg-[#333333] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition">PLACE ORDER</button>
         </form>
     </div>
-
     <script>
         let orderId = null;
         async function loadOrder() {
@@ -29,20 +27,9 @@
                 document.getElementById('summary').innerHTML = `<b>Order:</b> ${o.products}<br><b>Total:</b> ৳${o.total_price}`;
             }
         }
-        
         document.getElementById('checkoutForm').onsubmit = async (e) => {
             e.preventDefault();
-            const res = await fetch('/api/orders', {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    id: orderId, 
-                    status: 'Pending', 
-                    name: document.getElementById('name').value, 
-                    phone: document.getElementById('phone').value, 
-                    address: document.getElementById('address').value 
-                })
-            });
+            const res = await fetch('/api/orders', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: orderId, status: 'Pending', name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value }) });
             if(res.ok) { alert("Order Placed Successfully!"); window.location.href = 'index.html'; }
         }
         loadOrder();
