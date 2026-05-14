@@ -2,25 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout | SHAAM ITQAN</title>
+    <title>Checkout</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white p-4">
     <div class="max-w-md mx-auto">
-        <h2 class="text-xl font-bold mb-6 uppercase tracking-widest text-center border-b pb-4">Checkout Details</h2>
+        <h2 class="text-xl font-bold mb-6 text-center border-b pb-4">Checkout Details</h2>
         <div id="summary" class="mb-6 p-4 bg-gray-50 border-l-4 border-[#D4AF37] text-sm"></div>
         <form id="checkoutForm" class="space-y-4">
-            <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border border-gray-300 outline-none text-sm">
-            <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border border-gray-300 outline-none text-sm">
-            <textarea id="address" required placeholder="Delivery Address" class="w-full p-4 border border-gray-300 outline-none text-sm"></textarea>
-            <button type="submit" class="w-full bg-[#333333] text-white py-4 font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition">PLACE ORDER</button>
+            <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border text-sm">
+            <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border text-sm">
+            <textarea id="address" required placeholder="Delivery Address" class="w-full p-4 border text-sm"></textarea>
+            <button type="submit" class="w-full bg-[#333333] text-white py-4 font-bold uppercase">PLACE ORDER</button>
         </form>
     </div>
     <script>
         let orderId = null;
         async function loadOrder() {
-            const res = await fetch('/api/orders?status=last_pending');
+            const res = await fetch('/api/orders?status=Checkout_Pending');
             const data = await res.json();
             if(data.length > 0) {
                 const o = data[0]; orderId = o.id;
