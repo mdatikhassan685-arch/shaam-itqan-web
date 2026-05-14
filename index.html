@@ -14,6 +14,16 @@
 </head>
 <body class="bg-white text-black font-sans pb-24">
 
+    <!-- Popup Ad -->
+    <div id="popup-ad" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+        <div class="bg-white p-6 max-w-xs w-full relative shadow-2xl border-t-4 border-[#D4AF37]">
+            <button onclick="document.getElementById('popup-ad').classList.add('hidden')" class="absolute top-2 right-2 text-xl font-bold">×</button>
+            <h2 class="font-bold text-lg mb-2">অসম্পূর্ণ অর্ডার!</h2>
+            <p class="text-sm mb-4">আপনার একটি অর্ডার অসম্পূর্ণ রয়ে গেছে, এখনই শেষ করুন।</p>
+            <a href="checkout.html" class="block w-full bg-[#D4AF37] text-white py-3 text-center font-bold uppercase text-xs">অর্ডারটি শেষ করুন</a>
+        </div>
+    </div>
+
     <!-- Navbar -->
     <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
         <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
@@ -60,50 +70,30 @@
                         <img src="${p.image_url}" class="w-full h-40 object-cover" onclick="window.location.href='product.html?id=${p.id}'">
                         <h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3>
                         <p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p>
-                        <button onclick='addToBag(event, ${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button>
+                        <button onclick="window.location.href='product.html?id=${p.id}'" class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">View Details</button>
                     </div>`).join('');
-            } catch(e) { console.error("Error loading data:", e); }
+            } catch(e) { console.error("Error:", e); }
         }
 
-        async function addToBag(event, p) {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-            
-            const btn = event.target;
-            btn.innerText = "Adding...";
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        action: 'add_to_cart', 
-                        email: user.email, 
-                        products: p.name, 
-                        image_url: p.image_url, 
-                        total_price: p.price 
-                    })
-                });
-                if(res.ok) alert("Added to Bag!");
-                else alert("Failed to add!");
-            } catch(e) { console.error(e); }
-            
-            btn.innerText = "Add to Bag";
-            btn.disabled = false;
-        }
-
-        // Auth link logic
-        document.getElementById('auth-link').addEventListener('click', (e) => {
-            if(!localStorage.getItem('user_session')) {
-                window.location.href = 'login.html';
-            } else {
-                window.location.href = 'profile.html';
+        async function checkIncomplete() {
+            if (sessionStorage.getItem('popup_shown')) return;
+            const res = await fetch('/api/orders?status=Checkout_Pending');
+            const orders = await res.json();
+            if(orders.length > 0) {
+                document.getElementById('popup-ad').classList.remove('hidden');
+                sessionStorage.setItem('popup_shown', 'true');
+                setTimeout(() => { document.getElementById('popup-ad').classList.add('hidden'); }, 3000);
             }
+        }
+
+        document.getElementById('auth-link').addEventListener('click', (e) => {
+            if(!localStorage.getItem('user_session')) { window.location.href = 'login.html'; } 
+            else { window.location.href = 'profile.html'; }
         });
 
         document.addEventListener('DOMContentLoaded', () => { 
             loadData(); 
+            checkIncomplete();
             if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; 
         });
     </script>
