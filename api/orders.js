@@ -5,10 +5,9 @@ export default async function handler(req, res) {
     try {
         if (req.method === 'GET') {
             const url = new URL(req.url, `http://${req.headers.host}`);
-            const status = url.searchParams.get('status'); // ফিল্টার করার জন্য
+            const status = url.searchParams.get('status');
             let query = 'SELECT * FROM orders ORDER BY id DESC';
             let params = [];
-
             if (status) {
                 query = 'SELECT * FROM orders WHERE status = ? ORDER BY id DESC';
                 params = [status];
@@ -19,7 +18,6 @@ export default async function handler(req, res) {
         else if (req.method === 'POST') {
             const b = req.body;
             const status = (b.action === 'add_to_cart') ? 'Cart' : 'Checkout_Pending';
-            
             const [result] = await db.execute(
                 'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email || 'guest', b.products, b.total_price, status, b.image_url]
