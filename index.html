@@ -49,53 +49,62 @@
         <a href="login.html" id="auth-link" class="text-black flex flex-col items-center">ACCOUNT</a>
         <a href="#" class="text-black flex flex-col items-center">MENU</a>
     </div>
-
     <script>
-        async function loadData() {
-            try {
-                const [bRes, cRes, pRes] = await Promise.all([
-                    fetch('/api/admin-data?type=banner'), 
-                    fetch('/api/admin-data?type=category'), 
-                    fetch('/api/admin-data?type=product')
-                ]);
-                const banners = await bRes.json(); 
-                const cats = await cRes.json(); 
-                const prods = await pRes.json();
+    function updateAuthUI() {
+        const authLink = document.getElementById('auth-link');
+        const user = localStorage.getItem('user_session');
 
-                document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-                document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
-                
-                document.getElementById('product-grid').innerHTML = prods.map(p => `
-                    <div class="p-2 border-2 border-[#D4AF37]">
-                        <img src="${p.image_url}" class="w-full h-40 object-cover" onclick="window.location.href='product.html?id=${p.id}'">
-                        <h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3>
-                        <p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p>
-                        <button onclick="window.location.href='product.html?id=${p.id}'" class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">View Details</button>
-                    </div>`).join('');
-            } catch(e) { console.error("Error:", e); }
+        if (user) {
+            // যদি লগইন করা থাকে
+            authLink.innerHTML = `<span class="flex flex-col items-center">PROFILE</span>`;
+            authLink.href = "profile.html";
+        } else {
+            // যদি লগইন করা না থাকে
+            authLink.innerHTML = `<span class="flex flex-col items-center">ACCOUNT</span>`;
+            authLink.href = "login.html";
         }
+    }
 
-        async function checkIncomplete() {
-            if (sessionStorage.getItem('popup_shown')) return;
-            const res = await fetch('/api/orders?status=Checkout_Pending');
-            const orders = await res.json();
-            if(orders.length > 0) {
-                document.getElementById('popup-ad').classList.remove('hidden');
-                sessionStorage.setItem('popup_shown', 'true');
-                setTimeout(() => { document.getElementById('popup-ad').classList.add('hidden'); }, 3000);
-            }
+    async function loadData() {
+        try {
+            const [bRes, cRes, pRes] = await Promise.all([
+                fetch('/api/admin-data?type=banner'), 
+                fetch('/api/admin-data?type=category'), 
+                fetch('/api/admin-data?type=product')
+            ]);
+            const banners = await bRes.json(); 
+            const cats = await cRes.json(); 
+            const prods = await pRes.json();
+
+            document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
+            document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
+            
+            document.getElementById('product-grid').innerHTML = prods.map(p => `
+                <div class="p-2 border-2 border-[#D4AF37]">
+                    <img src="${p.image_url}" class="w-full h-40 object-cover" onclick="window.location.href='product.html?id=${p.id}'">
+                    <h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3>
+                    <p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p>
+                    <button onclick="window.location.href='product.html?id=${p.id}'" class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">View Details</button>
+                </div>`).join('');
+        } catch(e) { console.error("Error:", e); }
+    }
+
+    async function checkIncomplete() {
+        if (sessionStorage.getItem('popup_shown')) return;
+        const res = await fetch('/api/orders?status=Checkout_Pending');
+        const orders = await res.json();
+        if(orders.length > 0) {
+            document.getElementById('popup-ad').classList.remove('hidden');
+            sessionStorage.setItem('popup_shown', 'true');
+            setTimeout(() => { document.getElementById('popup-ad').classList.add('hidden'); }, 3000);
         }
+    }
 
-        document.getElementById('auth-link').addEventListener('click', (e) => {
-            if(!localStorage.getItem('user_session')) { window.location.href = 'login.html'; } 
-            else { window.location.href = 'profile.html'; }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => { 
-            loadData(); 
-            checkIncomplete();
-            if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; 
-        });
-    </script>
+    document.addEventListener('DOMContentLoaded', () => { 
+        updateAuthUI(); // ইউজার চেক করা হচ্ছে
+        loadData(); 
+        checkIncomplete();
+    });
+</script>
 </body>
 </html>
