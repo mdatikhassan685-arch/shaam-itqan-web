@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details</title>
+    <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white text-[#333333]">
@@ -15,22 +15,34 @@
         <div class="mt-4">
             <p class="text-xs font-bold uppercase mb-2">Select Size</p>
             <div id="size-selector" class="flex gap-2">
-                <button onclick="selectSize(this, 'M')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">M</button>
+                <button onclick="selectSize(this, 'M')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition bg-black text-white">M</button>
                 <button onclick="selectSize(this, 'L')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">L</button>
                 <button onclick="selectSize(this, 'XL')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">XL</button>
                 <button onclick="selectSize(this, 'XXL')" class="size-btn w-12 h-12 border-2 border-gray-200 hover:border-[#D4AF37] font-bold transition">XXL</button>
             </div>
         </div>
+
+        <div class="mt-6">
+            <p class="text-xs font-bold uppercase mb-2">Quantity</p>
+            <div class="flex items-center w-36 border border-[#D4AF37] rounded-full overflow-hidden">
+                <button onclick="changeQty(-1)" class="w-12 py-3 bg-white hover:bg-[#D4AF37] hover:text-white transition font-bold text-lg">-</button>
+                <span id="qty" class="flex-grow text-center font-bold text-lg">1</span>
+                <button onclick="changeQty(1)" class="w-12 py-3 bg-white hover:bg-[#D4AF37] hover:text-white transition font-bold text-lg">+</button>
+            </div>
+        </div>
         
-        <div class="mt-6 space-y-3">
-            <button onclick="addToBag()" class="w-full border-2 border-black py-4 font-bold uppercase">Add to Bag</button>
-            <button onclick="goToCheckout()" class="w-full bg-[#D4AF37] text-white py-4 font-bold uppercase">Buy Now</button>
+        <div class="mt-8 space-y-3">
+            <button onclick="addToBag()" class="w-full border-2 border-black py-4 font-bold uppercase hover:bg-black hover:text-white transition">Add to Bag</button>
+            <button onclick="goToCheckout()" class="w-full bg-[#D4AF37] text-white py-4 font-bold uppercase hover:bg-[#b8962d] transition">Buy Now</button>
         </div>
     </div>
     <script>
-        let productData = null; let selectedSize = 'M';
+        let productData = null; let selectedSize = 'M'; let qty = 1;
         const pid = new URLSearchParams(window.location.search).get('id');
+        
         function selectSize(btn, s) { selectedSize = s; document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('bg-black', 'text-white')); btn.classList.add('bg-black', 'text-white'); }
+        function changeQty(v) { if(qty+v > 0) { qty += v; document.getElementById('qty').innerText = qty; } }
+        
         async function loadProduct() {
             const res = await fetch('/api/admin-data?type=product');
             const products = await res.json();
@@ -39,8 +51,16 @@
             document.getElementById('p-name').innerText = productData.name;
             document.getElementById('p-price').innerText = '৳ ' + productData.price;
         }
+        
+        async function addToBag() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { window.location.href = 'login.html'; return; }
+            await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url }) });
+            alert("Added to Bag!");
+        }
+
         async function goToCheckout() {
-            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status: 'Checkout_Pending', products: `${productData.name} (Size: ${selectedSize})`, total_price: productData.price, image_url: productData.image_url }) });
+            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status: 'Checkout_Pending', products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url }) });
             if(res.ok) window.location.href = 'checkout.html';
         }
         loadProduct();
