@@ -3,51 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | SHAAM ITQAN</title>
+    <title>My Account | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
-        .luxury-font { font-family: 'Playfair Display', serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap');
+        body { font-family: 'Montserrat', sans-serif; }
     </style>
 </head>
-<body class="bg-[#FDF8EF] text-[#333333] font-serif min-h-screen p-6">
+<body class="bg-[#FAFAFA] min-h-screen">
 
-    <div class="max-w-md mx-auto bg-white p-8 border border-[#C1A44E]/30 shadow-2xl">
-        <h2 class="text-3xl font-bold mb-8 text-center luxury-font uppercase tracking-widest">Profile</h2>
-        
-        <div class="space-y-6">
-            <div>
-                <p class="text-[10px] uppercase tracking-widest text-gray-500">Name</p>
-                <p id="user-name" class="font-bold text-lg">-</p>
-            </div>
-            <div>
-                <p class="text-[10px] uppercase tracking-widest text-gray-500">Email</p>
-                <p id="user-email" class="font-bold text-lg">-</p>
+    <!-- Header -->
+    <div class="max-w-md mx-auto bg-white p-8 shadow-sm border-b border-gray-100 text-center">
+        <h1 class="text-2xl font-light tracking-[0.2em] text-[#1A1A1A]">MY ACCOUNT</h1>
+    </div>
+
+    <div class="max-w-md mx-auto p-6 space-y-6">
+        <!-- User Info -->
+        <div class="bg-white p-6 border border-gray-100 shadow-sm">
+            <p class="text-[9px] uppercase tracking-[0.3em] text-[#D4AF37] font-bold mb-1">Personal Details</p>
+            <h2 id="user-name" class="text-lg font-semibold text-[#1A1A1A]"></h2>
+            <p id="user-email" class="text-sm text-gray-500"></p>
+        </div>
+
+        <!-- Order List Section -->
+        <div>
+            <p class="text-[9px] uppercase tracking-[0.3em] text-[#D4AF37] font-bold mb-4">Order History</p>
+            <div id="order-history" class="space-y-4">
+                <!-- Orders will appear here -->
             </div>
         </div>
 
-        <div class="mt-10 space-y-4">
-            <a href="index.html" class="block w-full text-center border border-[#333333] py-3 uppercase text-sm tracking-widest hover:bg-[#333333] hover:text-white transition">Continue Shopping</a>
-            <button onclick="logout()" class="w-full bg-[#C1A44E] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#a38a3f] transition">Logout</button>
-        </div>
+        <!-- Action Button -->
+        <button onclick="logout()" class="w-full py-4 border border-[#1A1A1A] text-[#1A1A1A] font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-[#1A1A1A] hover:text-white transition-all">Logout</button>
     </div>
 
     <script>
-        // পেজ লোড হওয়ার সাথে সাথে লগইন আছে কি না চেক করুন
         const user = JSON.parse(localStorage.getItem('user_session'));
+        if (!user) window.location.href = 'login.html';
         
-        if (!user) {
-            window.location.href = 'login.html';
-        } else {
-            document.getElementById('user-name').innerText = user.username || "Valued Customer";
-            document.getElementById('user-email').innerText = user.email;
-        }
+        document.getElementById('user-name').innerText = user.username;
+        document.getElementById('user-email').innerText = user.email;
 
-        function logout() {
-            localStorage.removeItem('user_session');
-            alert("You have been logged out.");
-            window.location.href = 'index.html';
+        async function loadOrders() {
+            const res = await fetch('/api/orders?email=' + user.email);
+            const orders = await res.json();
+            const container = document.getElementById('order-history');
+            
+            container.innerHTML = orders.map(o => `
+                <div class="bg-white p-5 border border-gray-100 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-sm font-semibold text-[#1A1A1A]">${o.products}</p>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">${o.status}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-[#D4AF37]">৳${o.total_price}</p>
+                        ${o.status === 'Checkout_Pending' ? 
+                            `<button onclick="window.location.href='checkout.html'" class="text-[9px] uppercase font-bold underline text-black">Resume</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
         }
+        function logout() { localStorage.removeItem('user_session'); window.location.href = 'index.html'; }
+        loadOrders();
     </script>
 </body>
 </html>
