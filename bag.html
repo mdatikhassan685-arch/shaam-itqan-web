@@ -76,29 +76,42 @@
         }
 
         async function submitOrder() {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            const data = { 
-                name: document.getElementById('name').value, 
-                phone: document.getElementById('phone').value, 
-                address: document.getElementById('address').value, 
-                email: user.email,
-                total_price: document.getElementById('total-price').innerText
-            };
-            
-            if(!data.name || !data.phone || !data.address) return alert("Please fill all fields!");
-            
-            const res = await fetch('/api/orders', { 
-                method: 'POST', 
-                headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify(data) 
-            });
-            
-            if(res.ok) { 
-                alert('Order Success!'); 
-                window.location.href='index.html'; 
-            } else {
-                alert('Failed to place order.');
-            }
+    const user = JSON.parse(localStorage.getItem('user_session'));
+    if (!user) { alert("Please login!"); return; }
+
+    // ১. সব কার্ট আইটেমগুলো ধরুন
+    const cartItems = JSON.parse(localStorage.getItem('my_cart')) || []; // যদি আপনি লোকাল স্টোরেজে কার্ট রাখেন
+    
+    // ২. নাম, প্রাইস এবং ইমেজগুলোকে একটি স্ট্রিং এ রূপান্তর করুন
+    const productNames = cartItems.map(i => i.name).join(', ');
+    const totalPrice = cartItems.reduce((sum, i) => sum + parseFloat(i.price), 0);
+    const firstImageUrl = cartItems[0]?.image_url || ''; // প্রথম প্রোডাক্টের ইমেজটি ব্যবহার করুন
+
+    const data = { 
+        name: document.getElementById('name').value, 
+        phone: document.getElementById('phone').value, 
+        address: document.getElementById('address').value, 
+        email: user.email,
+        products: productNames, // সব নাম কমা দিয়ে যুক্ত করা হয়েছে
+        total_price: totalPrice,
+        status: 'Pending',
+        image_url: firstImageUrl
+    };
+    
+    // ৩. ডাটা পাঠানো
+    const res = await fetch('/api/orders', { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify(data) 
+    });
+    
+    if(res.ok) { 
+        alert('Order Success!'); 
+        localStorage.removeItem('my_cart'); // অর্ডার হয়ে গেলে কার্ট খালি করুন
+        window.location.href='index.html'; 
+    } else {
+        alert('Failed to place order. Check logs.');
+    }
         }
         loadBag();
     </script>
