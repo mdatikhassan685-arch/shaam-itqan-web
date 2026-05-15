@@ -58,8 +58,15 @@
             alert("Added to Bag!");
         }
         async function goToCheckout() {
-            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status: 'Checkout_Pending', products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url }) });
-            if(res.ok) window.location.href = 'checkout.html';
+        const qty = parseInt(document.getElementById('qty').innerText);
+        const data = { 
+            status: 'Checkout_Pending', 
+            products: `ID: ${productData.product_id} | Name: ${productData.name} | Size: ${selectedSize} | Qty: ${qty}`, 
+            total_price: productData.price * qty, 
+            image_url: productData.image_url 
+        };
+        const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        if(res.ok) window.location.href = 'checkout.html';
         }
         loadProduct();
     </script>
