@@ -36,17 +36,32 @@
             <button onclick="goToCheckout()" class="w-full bg-[#D4AF37] text-white py-4 font-bold uppercase hover:bg-[#b8962d] transition">Buy Now</button>
         </div>
     </div>
-<script>
-    async function addToBag() {
-        const user = JSON.parse(localStorage.getItem('user_session'));
-        if (!user) { window.location.href = 'login.html'; return; }
-        await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: `${document.getElementById('p-name').innerText} (Size: ${selectedSize}, Qty: ${qty})`, total_price: parseFloat(document.getElementById('p-price').innerText.replace('৳', '')), image_url: document.getElementById('p-img').src, status: 'Cart' }) });
-        alert("Added to Bag!");
-    }
-    async function goToCheckout() {
-        const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status: 'Checkout_Pending', products: `${document.getElementById('p-name').innerText} (Size: ${selectedSize}, Qty: ${qty})`, total_price: parseFloat(document.getElementById('p-price').innerText.replace('৳', '')), image_url: document.getElementById('p-img').src }) });
-        if(res.ok) window.location.href = 'checkout.html';
-    }
-</script>
+    <script>
+        let productData = null; let selectedSize = 'M'; let qty = 1;
+        const pid = new URLSearchParams(window.location.search).get('id');
+        
+        function selectSize(btn, s) { selectedSize = s; document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('bg-black', 'text-white')); btn.classList.add('bg-black', 'text-white'); }
+        function changeQty(v) { if(qty+v > 0) { qty += v; document.getElementById('qty').innerText = qty; } }
+        
+        async function loadProduct() {
+            const res = await fetch('/api/admin-data?type=product');
+            const products = await res.json();
+            productData = products.find(p => p.id == pid);
+            document.getElementById('p-img').src = productData.image_url;
+            document.getElementById('p-name').innerText = productData.name;
+            document.getElementById('p-price').innerText = '৳ ' + productData.price;
+        }
+        async function addToBag() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { window.location.href = 'login.html'; return; }
+            await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url }) });
+            alert("Added to Bag!");
+        }
+        async function goToCheckout() {
+            const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status: 'Checkout_Pending', products: `${productData.name} (Size: ${selectedSize}, Qty: ${qty})`, total_price: productData.price * qty, image_url: productData.image_url }) });
+            if(res.ok) window.location.href = 'checkout.html';
+        }
+        loadProduct();
+    </script>
 </body>
 </html>
