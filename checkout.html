@@ -5,59 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap');
-        body { font-family: 'Montserrat', sans-serif; }
-    </style>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap'); body { font-family: 'Montserrat', sans-serif; }</style>
 </head>
 <body class="bg-[#FAFAFA] min-h-screen p-4 flex items-center justify-center">
-
     <div class="max-w-sm w-full bg-white p-8 shadow-sm border border-gray-100">
-        <!-- Title -->
         <h2 class="text-xl font-light tracking-[0.2em] text-center text-[#1A1A1A] mb-8">CHECKOUT</h2>
-        
-        <!-- Order Summary Card -->
         <div id="summary" class="mb-8 p-5 bg-[#FDF8EF] border-l-4 border-[#D4AF37] text-sm"></div>
-        
-        <!-- Form -->
         <form id="checkoutForm" class="space-y-5">
-            <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border border-gray-200 focus:border-[#D4AF37] outline-none text-sm transition">
-            <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border border-gray-200 focus:border-[#D4AF37] outline-none text-sm transition">
-            <textarea id="address" required placeholder="Delivery Address" class="w-full p-4 border border-gray-200 focus:border-[#D4AF37] outline-none text-sm transition h-24"></textarea>
-            
+            <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border border-gray-200 outline-none text-sm">
+            <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border border-gray-200 outline-none text-sm">
+            <textarea id="address" required placeholder="Delivery Address" class="w-full p-4 border border-gray-200 outline-none text-sm h-24"></textarea>
             <button type="submit" class="w-full bg-[#1A1A1A] text-white py-4 font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-[#D4AF37] transition-all">Place Order</button>
         </form>
     </div>
-
     <script>
         let orderId = null;
         async function loadOrder() {
-            try {
-                const res = await fetch('/api/orders?status=Checkout_Pending');
-                const data = await res.json();
-                if(data.length > 0) {
-                    const o = data[0]; orderId = o.id;
-                    document.getElementById('summary').innerHTML = `
-                        <p class="font-bold text-gray-800 mb-1">${o.products}</p>
-                        <p class="text-[#D4AF37] font-bold text-lg">৳${o.total_price}</p>
-                    `;
-                }
-            } catch(e) { console.error(e); }
+            const res = await fetch('/api/orders?status=Checkout_Pending');
+            const data = await res.json();
+            if(data.length > 0) {
+                const o = data[0]; orderId = o.id;
+                document.getElementById('summary').innerHTML = `<p class="font-bold text-gray-800">${o.products}</p><p class="text-[#D4AF37] font-bold text-lg">৳${o.total_price}</p>`;
+            }
         }
-
         document.getElementById('checkoutForm').onsubmit = async (e) => {
             e.preventDefault();
-            const res = await fetch('/api/orders', { 
-                method: 'PUT', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ 
-                    id: orderId, 
-                    status: 'Pending', 
-                    name: document.getElementById('name').value, 
-                    phone: document.getElementById('phone').value, 
-                    address: document.getElementById('address').value 
-                }) 
-            });
+            const res = await fetch('/api/orders', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: orderId, status: 'Pending', name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value }) });
             if(res.ok) { alert("Order Placed Successfully!"); window.location.href = 'index.html'; }
         }
         loadOrder();
