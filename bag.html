@@ -1,53 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Bag | SHAAM ITQAN</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 p-4">
-    <div class="max-w-md mx-auto">
-        <h1 class="text-xl font-bold mb-4 uppercase">YOUR BAG</h1>
-        <div id="bag-items" class="space-y-3"></div>
-        <div id="checkout-section" class="mt-6 bg-white p-4 shadow hidden">
-            <h2 class="font-bold mb-3">Confirm Order</h2>
-            <p>Total: ৳<span id="total-price">0</span></p>
-            <input type="text" id="name" placeholder="Name" class="w-full p-2 border my-2">
-            <input type="tel" id="phone" placeholder="Phone" class="w-full p-2 border my-2">
-            <textarea id="address" placeholder="Address" class="w-full p-2 border my-2"></textarea>
-            <button onclick="submitOrder()" class="w-full bg-black text-white py-3">CONFIRM ORDER</button>
-        </div>
+<head><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gray-50 p-4"><div class="max-w-md mx-auto">
+    <h1 class="text-xl font-bold mb-4">YOUR BAG</h1>
+    <div id="bag-items" class="space-y-3"></div>
+    <div id="checkout-section" class="mt-6 bg-white p-4 shadow hidden">
+        <p class="font-bold">Total: ৳<span id="total-price">0</span></p>
+        <input type="text" id="name" placeholder="Name" class="w-full p-2 border my-2">
+        <input type="tel" id="phone" placeholder="Phone" class="w-full p-2 border my-2">
+        <textarea id="address" placeholder="Address" class="w-full p-2 border my-2"></textarea>
+        <button onclick="submitOrder()" class="w-full bg-black text-white py-3">CONFIRM ORDER</button>
     </div>
-    <script>
-        async function loadBag() {
-            const res = await fetch('/api/orders?status=Cart');
-            const items = await res.json();
-            let total = 0;
-            document.getElementById('bag-items').innerHTML = items.map(i => {
-                total += parseFloat(i.total_price);
-                return `<div class="bg-white p-2 border"><b>${i.products}</b> - ৳${i.total_price}</div>`;
-            }).join('');
-            document.getElementById('total-price').innerText = total;
-            document.getElementById('checkout-section').classList.remove('hidden');
-        }
-
-        async function submitOrder() {
-            const res = await fetch('/api/orders', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    name: document.getElementById('name').value,
-                    phone: document.getElementById('phone').value,
-                    address: document.getElementById('address').value,
-                    products: "Cart Items",
-                    total_price: document.getElementById('total-price').innerText,
-                    status: 'Pending',
-                    image_url: 'N/A'
-                })
-            });
-            if(res.ok) { alert('Order Success!'); window.location.href = 'index.html'; }
-        }
-        loadBag();
-    </script>
+</div>
+<script>
+    let items = [];
+    async function loadBag() {
+        const user = JSON.parse(localStorage.getItem('user_session'));
+        const res = await fetch('/api/bag?email=' + user.email);
+        items = await res.json();
+        let total = 0;
+        document.getElementById('bag-items').innerHTML = items.map(i => {
+            total += (i.price * i.quantity);
+            return `<div class="bg-white p-2 border">${i.product_name} (${i.size}) x ${i.quantity} - ৳${i.price * i.quantity}</div>`;
+        }).join('');
+        document.getElementById('total-price').innerText = total;
+        if(items.length > 0) document.getElementById('checkout-section').classList.remove('hidden');
+    }
+    async function submitOrder() {
+        const user = JSON.parse(localStorage.getItem('user_session'));
+        const products = items.map(i => `${i.product_name} (${i.size}, Qty: ${i.quantity})`).join(', ');
+        await fetch('/api/orders', { method: 'POST', headers: {'Content-Type':'application/json'}, 
+            body: JSON.stringify({ name: document.getElementById('name').value, phone: document.getElementById('phone').value, address: document.getElementById('address').value, email: user.email, products, total_price: document.getElementById('total-price').innerText, status: 'Pending' }) 
+        });
+        alert('Order Success!'); window.location.href='index.html';
+    }
+    loadBag();
+</script>
 </body>
 </html>
