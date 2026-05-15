@@ -87,13 +87,21 @@
             } catch(e) { console.error("Error loading data:", e); }
         }
 
+        // নতুন সিস্টেম: সরাসরি 'bag' টেবিলে ডাটা পাঠাবে
         async function addToBagFromHome(p) {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { window.location.href = 'login.html'; return; }
-            await fetch('/api/orders', {
+            await fetch('/api/bag', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: 'add_to_cart', email: user.email, products: p.name, total_price: p.price, image_url: p.image_url })
+                body: JSON.stringify({ 
+                    email: user.email, 
+                    name: p.name, 
+                    price: p.price, 
+                    image_url: p.image_url,
+                    size: 'M', // ডিফল্ট সাইজ
+                    quantity: 1
+                })
             });
             alert("Added to Bag!");
         }
