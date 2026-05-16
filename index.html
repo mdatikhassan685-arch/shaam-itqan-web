@@ -98,12 +98,12 @@
                 
                 // ক্যাটাগরি রেন্ডার (উপরে নিচে নাম দেখাবে)
                 document.getElementById('category-grid').innerHTML = cats.map(c => `
-                    <a href="${c.link_url}" class="cat-item">
-                        <div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center">
-                            <img src="${c.image_url}" class="w-full h-full object-cover">
-                        </div>
-                        <p class="cat-text">${c.name.split(' ').join('<br>')}</p>
-                    </a>`).join('');
+    <a href="${c.link_url}" class="cat-item">
+        <div class="w-16 h-16 rounded-full border-2 border-[#D4AF37] p-0.5 overflow-hidden flex items-center justify-center">
+            <img src="${c.image_url}" class="w-full h-full object-cover rounded-full">
+        </div>
+        <p class="cat-text">${c.name.replace("SHAAM ITQAN ", "").replace(" ", "<br>")}</p>
+    </a>`).join('');
                 
                 document.getElementById('product-grid').innerHTML = prods.map(p => `
                     <div class="p-2 border-2 border-[#D4AF37]">
