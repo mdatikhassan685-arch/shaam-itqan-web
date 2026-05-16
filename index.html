@@ -11,21 +11,23 @@
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 .cat-item {
-    width: 23%; 
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-bottom: 10px;
+    width: 80px; /* প্রতিটি আইটেমের নির্দিষ্ট প্রস্থ */
+    flex-shrink: 0;
 }
 .cat-text {
-    font-size: 13px; 
-    font-weight: 800; 
-    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    margin-top: 8px;
     line-height: 1.1;
-    color: #000;
     text-transform: uppercase;
+    text-align: center;
+    width: 100%;
 }
     </style>
 </head>
@@ -52,12 +54,13 @@
 
     <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
-
+    
     <!-- Categories -->
-    <div class="px-4 py-4">
-        <h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2>
-        <div id="category-grid" class="flex justify-between flex-wrap gap-y-4"></div>
+<div class="px-4 py-4">
+    <h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2>
+    <div id="category-grid" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">      
     </div>
+</div>
 
     <!-- Products -->
     <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
@@ -90,16 +93,13 @@
                 const prods = await pRes.json();
 
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-document.getElementById('category-grid').innerHTML = cats.map(c => {
-    const displayName = c.name.split('#').join('<br>');
-    return `
-    <a href="${c.link_url}" class="cat-item">
-        <div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center">
-            <img src="${c.image_url}" class="w-full h-full object-cover">
-        </div>
-        <p class="cat-text">${displayName}</p>
-    </a>`;
-}).join('');
+document.getElementById('category-grid').innerHTML = cats.map(c => `
+        <a href="${c.link_url}" class="cat-item">
+            <div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center">
+                <img src="${c.image_url}" class="w-full h-full object-cover">
+            </div>
+            <p class="cat-text">${c.name.split('#').join('<br>')}</p>
+        </a>`).join('');
                 
             } catch(e) { console.error("Error loading data:", e); }
         }
