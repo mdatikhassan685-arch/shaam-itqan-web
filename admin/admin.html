@@ -121,9 +121,13 @@
         function editItem(item) {
             document.getElementById('edit_id').value = item.id;
             document.getElementById('in_name').value = item.name || '';
-            if(document.getElementById('in_pid')) document.getElementById('in_pid').value = item.product_id || '';
             if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
             if(document.getElementById('in_desc')) document.getElementById('in_desc').value = item.description || '';
+            if(document.getElementById('in_pid')) document.getElementById('in_pid').value = item.product_id || '';
+            if(document.getElementById('in_link')) {
+                document.getElementById('in_link').value = item.link_url || '';
+            }
+            
             document.getElementById('in_img').value = item.image_url || '';
         }
 
