@@ -14,8 +14,11 @@ export default async function handler(req, res) {
         } else if (req.method === 'POST') {
             const b = req.body;
             if (type === 'product') {
-                await db.execute('INSERT INTO products (product_id, name, price, stock, image_url, description) VALUES (?, ?, ?, ?, ?, ?)', 
-                [b.product_id, b.name, b.price, 10, b.image_url, b.description]);
+                // আপনার টেবিলের কলাম অর্ডারের সাথে মিল রেখে কুয়েরি
+                await db.execute(
+                    'INSERT INTO products (name, price, stock, image_url, description, product_id) VALUES (?, ?, ?, ?, ?, ?)', 
+                    [b.name, b.price, 10, b.image_url, b.description, b.product_id]
+                );
             } else if (type === 'banner') {
                 await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
             } else if (type === 'category') {
@@ -25,8 +28,10 @@ export default async function handler(req, res) {
         } else if (req.method === 'PUT') {
             const b = req.body;
             if (type === 'product') {
-                await db.execute('UPDATE products SET product_id=?, name=?, price=?, image_url=?, description=? WHERE id=?', 
-                [b.product_id, b.name, b.price, b.image_url, b.description, b.id]);
+                await db.execute(
+                    'UPDATE products SET name=?, price=?, image_url=?, description=?, product_id=? WHERE id=?', 
+                    [b.name, b.price, b.image_url, b.description, b.product_id, b.id]
+                );
             } else {
                 await db.execute(`UPDATE ${tableName} SET name=?, image_url=?, link_url=? WHERE id=?`, [b.name, b.image_url, b.link_url, b.id]);
             }
