@@ -10,25 +10,8 @@
         .luxury-font { font-family: 'Playfair Display', serif; }
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.cat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    width: 80px; /* প্রতিটি আইটেমের নির্দিষ্ট প্রস্থ */
-    flex-shrink: 0;
-}
-.cat-text {
-    font-size: 12px;
-    font-weight: 800;
-    margin-top: 8px;
-    line-height: 1.1;
-    text-transform: uppercase;
-    text-align: center;
-    width: 100%;
-}
+        .cat-item { display: flex; flex-direction: column; align-items: center; text-align: center; width: 80px; flex-shrink: 0; }
+        .cat-text { font-size: 13px; font-weight: 800; margin-top: 8px; line-height: 1.1; text-transform: uppercase; text-align: center; width: 100%; }
     </style>
 </head>
 <body class="bg-white text-black font-sans pb-24">
@@ -54,13 +37,9 @@
 
     <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
-    
+
     <!-- Categories -->
-<div class="px-4 py-4">
-    <h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2>
-    <div id="category-grid" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">      
-    </div>
-</div>
+    <div class="px-4 py-4"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2><div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div></div>
 
     <!-- Products -->
     <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
@@ -93,15 +72,17 @@
                 const prods = await pRes.json();
 
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-document.getElementById('category-grid').innerHTML = cats.map(c => `
-        <a href="${c.link_url}" class="cat-item">
-            <div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center">
-                <img src="${c.image_url}" class="w-full h-full object-cover">
-            </div>
-            <p class="cat-text">${c.name.split('#').join('<br>')}</p>
-        </a>`).join('');
+                document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="cat-item"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="cat-text">${c.name.split('#').join('<br>')}</p></a>`).join('');
                 
-            } catch(e) { console.error("Error loading data:", e); }
+                // প্রোডাক্ট রেন্ডার লজিক (যা আগের কোডে মিসিং ছিল)
+                document.getElementById('product-grid').innerHTML = prods.map(p => `
+                    <div class="p-2 border-2 border-[#D4AF37]">
+                        <img src="${p.image_url}" class="w-full h-40 object-cover cursor-pointer" onclick="window.location.href='product.html?id=${p.id}'">
+                        <h3 class="text-[11px] font-bold mt-2 truncate cursor-pointer" onclick="window.location.href='product.html?id=${p.id}'">${p.name}</h3>
+                        <p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p>
+                        <button onclick='addToBagFromHome(${JSON.stringify(p)})' class="w-full bg-black text-white py-1 text-[9px] uppercase font-bold hover:bg-[#D4AF37] transition">Add to Bag</button>
+                    </div>`).join('');
+            } catch(e) { console.error("Error:", e); }
         }
 
         async function addToBagFromHome(p) {
