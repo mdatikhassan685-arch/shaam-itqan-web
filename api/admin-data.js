@@ -13,15 +13,23 @@ export default async function handler(req, res) {
             res.status(200).json(rows);
         } else if (req.method === 'POST') {
             const b = req.body;
-            if (type === 'product') await db.execute('INSERT INTO products (name, price, stock, image_url, description) VALUES (?, ?, ?, ?, ?)', [b.name, b.price, b.stock, b.image_url, b.description]);
-            else if (type === 'banner') await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
-            else if (type === 'category') await db.execute('INSERT INTO categories (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
+            if (type === 'product') {
+                await db.execute('INSERT INTO products (product_id, name, price, stock, image_url, description) VALUES (?, ?, ?, ?, ?, ?)', 
+                [b.product_id, b.name, b.price, 10, b.image_url, b.description]);
+            } else if (type === 'banner') {
+                await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
+            } else if (type === 'category') {
+                await db.execute('INSERT INTO categories (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
+            }
             res.status(200).json({ status: "Success" });
         } else if (req.method === 'PUT') {
             const b = req.body;
-            if (type === 'product') await db.execute('UPDATE products SET name=?, price=?, image_url=?, description=? WHERE id=?', [b.name, b.price, b.image_url, b.description, b.id]);
-            else if (type === 'banner') await db.execute('UPDATE banners SET name=?, image_url=?, link_url=? WHERE id=?', [b.name, b.image_url, b.link_url, b.id]);
-            else if (type === 'category') await db.execute('UPDATE categories SET name=?, image_url=?, link_url=? WHERE id=?', [b.name, b.image_url, b.link_url, b.id]);
+            if (type === 'product') {
+                await db.execute('UPDATE products SET product_id=?, name=?, price=?, image_url=?, description=? WHERE id=?', 
+                [b.product_id, b.name, b.price, b.image_url, b.description, b.id]);
+            } else {
+                await db.execute(`UPDATE ${tableName} SET name=?, image_url=?, link_url=? WHERE id=?`, [b.name, b.image_url, b.link_url, b.id]);
+            }
             res.status(200).json({ status: "Updated" });
         } else if (req.method === 'DELETE') {
             await db.execute(`DELETE FROM ${tableName} WHERE id = ?`, [req.body.id]);
