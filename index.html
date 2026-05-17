@@ -85,8 +85,8 @@
                         <img src="${p.image_url}" class="w-full h-40 object-cover cursor-pointer" onclick="window.location.href='product.html?id=${p.id}'">
                         <h3 class="product-name truncate cursor-pointer" onclick="window.location.href='product.html?id=${p.id}'">${p.name}</h3>
                         <p class="product-price">৳ ${p.price}</p>
-                        <button onclick="window.location.href='product.html?id=${p.id}'" class="w-full bg-[#D4AF37] text-white py-2 text-[10px] font-bold uppercase hover:bg-[#b8962d] transition">Buy Now</button>
-                    </div>`).join('');
+                       <button onclick="window.location.href='product.html?id=${p.id}'" class="w-full bg-black text-white py-1 text-[9px] uppercase font-bold hover:bg-[#D4AF37] transition">Buy Now</button>
+                     </div>`).join('');
             } catch(e) { console.error("Error:", e); }
         }
 
