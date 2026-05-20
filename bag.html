@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,55 +11,43 @@
     </style>
 </head>
 <body class="bg-[#FAFAFA] min-h-screen">
-
-    <!-- Header -->
     <div class="bg-white p-6 shadow-sm border-b border-gray-100 text-center">
         <h1 class="text-xl font-light tracking-[0.2em] text-[#1A1A1A] uppercase">My Bag</h1>
     </div>
 
-    <div id="bag-container" class="max-w-md mx-auto p-4 space-y-4">
-        <!-- Bag Items will appear here -->
+    <div class="max-w-md mx-auto p-4 space-y-4">
         <div id="bag-items" class="space-y-4"></div>
         
-        <!-- Empty Message -->
-        <div id="empty-msg" class="hidden text-center py-20 text-gray-400">
-            <p class="text-sm uppercase tracking-widest">Your bag is empty</p>
-            <a href="index.html" class="block mt-4 underline text-xs font-bold text-[#D4AF37]">Continue Shopping</a>
-        </div>
-
-        <!-- Checkout Section -->
         <div id="checkout-section" class="hidden bg-white p-6 shadow-sm border border-gray-100">
             <div class="flex justify-between font-bold mb-6 text-sm">
                 <span>Total Amount:</span>
                 <span class="text-[#D4AF37]">৳ <span id="total-price">0</span></span>
             </div>
             <div class="space-y-4">
-                <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border border-gray-200 outline-none text-sm">
-                <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border border-gray-200 outline-none text-sm">
-                <textarea id="address" required placeholder="Delivery Address" class="w-full p-4 border border-gray-200 outline-none text-sm h-24"></textarea>
+                <input type="text" id="name" required placeholder="Full Name" class="w-full p-4 border text-sm outline-none">
+                <input type="tel" id="phone" required placeholder="Phone Number" class="w-full p-4 border text-sm outline-none">
+                <textarea id="address" required placeholder="Delivery Address" class="w-full p-4 border text-sm outline-none h-24"></textarea>
                 <button onclick="submitOrder()" class="w-full bg-[#1A1A1A] text-white py-4 font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-[#D4AF37] transition-all">Confirm Order</button>
             </div>
         </div>
     </div>
 
     <script>
-        async function loadBag() {
-            const user = JSON.parse(localStorage.getItem('user_session'));
-            if (!user) { window.location.href = 'login.html'; return; }
+        // ইউজার বা গেস্ট আইডি নেওয়া
+        const userId = localStorage.getItem('user_session') ? JSON.parse(localStorage.getItem('user_session')).email : localStorage.getItem('guest_id');
 
-            const res = await fetch('/api/bag?email=' + user.email);
+        async function loadBag() {
+            const res = await fetch('/api/bag?email=' + userId);
             const items = await res.json();
-            
-            const bagItems = document.getElementById('bag-items');
-            const emptyMsg = document.getElementById('empty-msg');
+            const container = document.getElementById('bag-items');
             const checkoutSection = document.getElementById('checkout-section');
             
             if(items.length === 0) {
-                emptyMsg.classList.remove('hidden');
+                container.innerHTML = '<p class="text-center py-20 text-gray-400">Your bag is empty</p>';
                 checkoutSection.classList.add('hidden');
             } else {
                 let total = 0;
-                bagItems.innerHTML = items.map(i => {
+                container.innerHTML = items.map(i => {
                     total += (i.price * i.quantity);
                     return `
                         <div class="bg-white p-4 border border-gray-100 shadow-sm flex justify-between items-center">
@@ -79,13 +67,12 @@
         }
 
         async function submitOrder() {
-            const user = JSON.parse(localStorage.getItem('user_session'));
             const data = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
                 address: document.getElementById('address').value,
-                email: user.email,
-                products: "Bag Order",
+                email: userId, // গেস্ট আইডি বা ইমেইল
+                products: "Bag Order (Multi Item)",
                 total_price: document.getElementById('total-price').innerText,
                 status: 'Pending',
                 image_url: 'N/A'
