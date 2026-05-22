@@ -8,7 +8,8 @@ export default async function handler(req, res) {
             res.status(200).json(rows);
         } else if (req.method === 'POST') {
             const { email, name, price, image_url, size, quantity } = req.body;
-            await db.execute('INSERT INTO bag (email, product_name, price, image_url, size, quantity) VALUES (?, ?, ?, ?, ?, ?)', [email, name, price, image_url, size, quantity]);
+            await db.execute('INSERT INTO bag (email, product_name, price, image_url, size, quantity) VALUES (?, ?, ?, ?, ?, ?)', 
+            [email, name, price, image_url, size, quantity]);
             res.status(200).json({ status: "Success" });
         } else if (req.method === 'DELETE') {
             await db.execute('DELETE FROM bag WHERE id = ?', [req.body.id]);
