@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>My Bag | SHAAM ITQAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-xl font-bold mb-4 uppercase">YOUR BAG</h1>
+        
+        <!-- Bag Items List -->
+        <div id="bag-items" class="space-y-3">
+            <p class="text-center py-10 text-gray-500">Loading your items...</p>
+        </div>
+        
+        <!-- Checkout Section -->
+        <div id="checkout-section" class="mt-6 bg-white p-4 shadow hidden border border-gray-200">
+            <h2 class="font-bold mb-3 border-b pb-2">Confirm Order</h2>
+            <div class="flex justify-between font-bold mb-4">
+                <span>Total Amount:</span>
+                <span class="text-[#D4AF37]">৳ <span id="total-price">0</span></span>
+            </div>
+            <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border mb-2 text-sm">
+            <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-2 border mb-2 text-sm">
+            <textarea id="address" placeholder="Delivery Address" class="w-full p-2 border mb-2 text-sm"></textarea>
+            <button onclick="submitOrder()" class="w-full bg-black text-white py-3 uppercase tracking-widest text-sm hover:bg-[#D4AF37] transition">CONFIRM ORDER</button>
+        </div>
+    </div>
+
+    <script>
+        async function loadBag() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            const res = await fetch('/api/orders?email=' + user.email);
+            const allOrders = await res.json();
+            const cartItems = allOrders.filter(o => o.status === 'Cart');
+            
+            const container = document.getElementById('bag-items');
+            const checkoutSection = document.getElementById('checkout-section');
+            
+            if(cartItems.length === 0) {
+                container.innerHTML = '<p class="text-center py-10">Bag Empty</p>';
+                checkoutSection.classList.add('hidden');
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = cartItems.map(item => {
+                total += parseFloat(item.total_price);
+                return `
+                    <div class="bg-white p-3 border flex items-center gap-4">
+                        <img src="${item.image_url || 'https://via.placeholder.com/64'}" class="w-16 h-16 object-cover border border-gray-200">
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-sm">${item.products}</h3>
+                            <p class="text-[#D4AF37] font-bold text-xs">৳ ${item.total_price}</p>
+                        </div>
+                        <button onclick="removeItem(${item.id})" class="text-red-500 text-[10px] font-bold uppercase hover:underline">Remove</button>
+                    </div>`;
+            }).join('');
+            
+            document.getElementById('total-price').innerText = total.toFixed(2);
+            checkoutSection.classList.remove('hidden');
+        }
+
+        async function removeItem(id) {
+            const res = await fetch('/api/orders', { 
+                method: 'DELETE', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify({id}) 
+            });
+            if(res.ok) loadBag();
+            else alert('Failed to remove item.');
+        }
+
+        async function submitOrder() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const data = { 
+                name: document.getElementById('name').value, 
+                phone: document.getElementById('phone').value, 
+                address: document.getElementById('address').value, 
+                email: user.email,
+                total_price: document.getElementById('total-price').innerText
+            };
+            
+            if(!data.name || !data.phone || !data.address) return alert("Please fill all fields!");
+            
+            const res = await fetch('/api/orders', { 
+                method: 'POST', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify(data) 
+            });
+            
+            if(res.ok) { 
+                alert('Order Success!'); 
+                window.location.href='index.html'; 
+            } else {
+                alert('Failed to place order.');
+            }
+        }
+        loadBag();
+    </script>
+</body>
+</html>

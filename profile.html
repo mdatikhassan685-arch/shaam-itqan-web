@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | SHAAM ITQAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="bg-[#FDF8EF] text-[#333333] font-serif min-h-screen p-6">
+
+    <div class="max-w-md mx-auto bg-white p-8 border border-[#C1A44E]/30 shadow-2xl">
+        <h2 class="text-3xl font-bold mb-8 text-center luxury-font uppercase tracking-widest">Profile</h2>
+        
+        <div class="space-y-6">
+            <div>
+                <p class="text-[10px] uppercase tracking-widest text-gray-500">Name</p>
+                <p id="user-name" class="font-bold text-lg">-</p>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase tracking-widest text-gray-500">Email</p>
+                <p id="user-email" class="font-bold text-lg">-</p>
+            </div>
+        </div>
+
+        <div class="mt-10 space-y-4">
+            <a href="index.html" class="block w-full text-center border border-[#333333] py-3 uppercase text-sm tracking-widest hover:bg-[#333333] hover:text-white transition">Continue Shopping</a>
+            <button onclick="logout()" class="w-full bg-[#C1A44E] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#a38a3f] transition">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // পেজ লোড হওয়ার সাথে সাথে লগইন আছে কি না চেক করুন
+        const user = JSON.parse(localStorage.getItem('user_session'));
+        
+        if (!user) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('user-name').innerText = user.username || "Valued Customer";
+            document.getElementById('user-email').innerText = user.email;
+        }
+
+        function logout() {
+            localStorage.removeItem('user_session');
+            alert("You have been logged out.");
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
