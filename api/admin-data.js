@@ -27,6 +27,7 @@ export default async function handler(req, res) {
             await db.execute(`DELETE FROM ${tableName} WHERE id = ?`, [req.body.id]);
             res.status(200).json({ status: "Deleted" });
         }
-    } catch (e) { res.status(500).json({ error: e.message }); }
-    finally { await db.end(); }
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 }
