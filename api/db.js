@@ -1,11 +1,20 @@
 import mysql from 'mysql2/promise';
+
+let pool;
+
 export const getDb = async () => {
-    return await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME,
-        port: 4000,
-        ssl: { rejectUnauthorized: false }
-    });
+    if (!pool) {
+        pool = mysql.createPool({
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASS,
+            database: process.env.DB_NAME,
+            port: 4000,
+            ssl: { rejectUnauthorized: false },
+            waitForConnections: true,
+            connectionLimit: 10,  -- একসাথে সর্বোচ্চ ১০টি অ্যাক্টিভ কানেকশন থাকবে
+            queueLimit: 0
+        });
+    }
+    return pool;
 };
