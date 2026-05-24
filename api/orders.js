@@ -13,31 +13,25 @@ export default async function handler(req, res) {
                 params = [email];
             }
             const [rows] = await db.execute(query, params);
-            await db.end();
             return res.status(200).json(rows);
         } 
-            // api/orders.js এ DELETE রিকোয়েস্ট যোগ করুন
-else if (req.method === 'DELETE') {
-    const { id } = req.body;
-    await db.execute('DELETE FROM orders WHERE id = ?', [id]);
-    res.status(200).json({ status: "Deleted" });
-}
+        else if (req.method === 'DELETE') {
+            const { id } = req.body;
+            await db.execute('DELETE FROM orders WHERE id = ?', [id]);
+            return res.status(200).json({ status: "Deleted" });
+        }
         else if (req.method === 'POST') {
             const b = req.body;
-            // status: যদি action থাকে add_to_cart তবে Cart, নয়তো Pending
             const status = b.action === 'add_to_cart' ? 'Cart' : 'Pending';
             
-            // api/orders.js এর POST পার্টটি:
-await db.execute(
-    'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products, b.total_price, status, b.image_url]
-);
-            await db.end();
+            await db.execute(
+                'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [b.name || 'N/A', b.phone || 'N/A', b.address || 'N/A', b.email, b.products, b.total_price, status, b.image_url]
+            );
             return res.status(200).json({ status: "Success" });
         }
     } catch (e) {
-        await db.end();
         console.error("Orders API Error:", e);
-        res.status(500).json({ error: e.message });
+        return res.status(500).json({ error: e.message });
     }
 }
