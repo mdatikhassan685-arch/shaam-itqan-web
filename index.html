@@ -32,43 +32,90 @@
     <!-- Products -->
     <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
 
-    <!-- Bottom Nav -->
+    <!-- Bottom Nav (আইকন এবং লেখা সহ সম্পূর্ণ আধুনিক নেভিগেশন বার) -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
-        <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">HOME</a>
-        <a href="#" class="text-black flex flex-col items-center">FAV</a>
-        <a href="login.html" id="auth-link" class="text-black flex flex-col items-center">ACCOUNT</a>
-        <a href="#" class="text-black flex flex-col items-center">MENU</a>
+        
+        <!-- Home Link -->
+        <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">
+            <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            HOME
+        </a>
+        
+        <!-- Favorites Link -->
+        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            FAV
+        </a>
+        
+        <!-- Account / Profile Link -->
+        <a href="login.html" id="auth-link" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span id="auth-text">ACCOUNT</span>
+        </a>
+        
+        <!-- Menu Link -->
+        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            MENU
+        </a>
     </div>
 
     <script>
         async function loadData() {
             try {
-                const [bRes, cRes, pRes] = await Promise.all([fetch('/api/admin-data?type=banner'), fetch('/api/admin-data?type=category'), fetch('/api/admin-data?type=product')]);
-                const banners = await bRes.json(); const cats = await cRes.json(); const prods = await pRes.json();
+                const [bRes, cRes, pRes] = await Promise.all([
+                    fetch('/api/admin-data?type=banner'), 
+                    fetch('/api/admin-data?type=category'), 
+                    fetch('/api/admin-data?type=product')
+                ]);
+                const banners = await bRes.json(); 
+                const cats = await cRes.json(); 
+                const prods = await pRes.json();
+                
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
                 document.getElementById('product-grid').innerHTML = prods.map(p => `<div class="p-2 border-2 border-[#D4AF37]"><img src="${p.image_url}" class="w-full h-40 object-cover"><h3 class="text-[11px] font-bold mt-2 truncate">${p.name}</h3><p class="font-bold text-xs text-[#D4AF37] mb-2">৳ ${p.price}</p><button onclick='addToBag(${JSON.stringify(p)})' class="w-full border border-black py-1 text-[9px] uppercase font-bold hover:bg-black hover:text-white transition">Add to Bag</button></div>`).join('');
             } catch(e) { console.log(e); }
         }
-        // index.html এ এই ফাংশনটি রিপ্লেস করুন:
-async function addToBag(p) {
-    const user = JSON.parse(localStorage.getItem('user_session'));
-    if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
-    
-    await fetch('/api/orders', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ 
-            action: 'add_to_cart', 
-            email: user.email, 
-            products: p.name, 
-            image_url: p.image_url, // এখানে নতুন করে ইমেজ লিঙ্ক পাঠাচ্ছি
-            total_price: p.price 
-        })
-    });
-    alert("Added to Bag!");
-}
-        document.addEventListener('DOMContentLoaded', () => { loadData(); if(localStorage.getItem('user_session')) document.getElementById('auth-link').innerText = 'PROFILE'; });
+
+        async function addToBag(p) {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+            
+            await fetch('/api/bag', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    email: user.email, 
+                    products: p.name, 
+                    image_url: p.image_url, 
+                    total_price: p.price 
+                })
+            });
+            alert("Added to Bag!");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            loadData(); 
+            
+            // কাস্টমার লগইন করা থাকলে ব্রাউজার সেশন চেক করে টেক্সট ও লিংক আপডেট করা হচ্ছে
+            if (localStorage.getItem('user_session')) {
+                const authLink = document.getElementById('auth-link');
+                const authText = document.getElementById('auth-text');
+                if (authLink && authText) {
+                    authText.innerText = 'PROFILE';     // টেক্সট পরিবর্তন হবে
+                    authLink.href = 'profile.html';     // লিংকটি পরিবর্তন করে profile.html করা হলো
+                }
+            }
+        });
     </script>
 </body>
 </html>
