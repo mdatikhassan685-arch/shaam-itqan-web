@@ -3,7 +3,6 @@ import { getDb } from './db.js';
 export default async function handler(req, res) {
     const db = await getDb();
     try {
-        // ১. ডাটাবেজের bag টেবিল থেকে কাস্টমারের ইমেইল অনুযায়ী কার্ট ডাটা তুলে আনার লজিক
         if (req.method === 'GET') {
             const url = new URL(req.url, `http://${req.headers.host}`);
             const email = url.searchParams.get('email');
@@ -14,8 +13,6 @@ export default async function handler(req, res) {
             const [rows] = await db.execute('SELECT * FROM bag WHERE email = ? ORDER BY id DESC', [email]);
             return res.status(200).json(rows);
         } 
-        
-        // ২. কাস্টমার যখন Add to Bag করবে, তখন ডাটাবেজের bag টেবিলে তথ্য সেভ করার লজিক
         else if (req.method === 'POST') {
             const b = req.body;
             await db.execute(
@@ -24,8 +21,6 @@ export default async function handler(req, res) {
             );
             return res.status(200).json({ status: "Success" });
         } 
-        
-        // ৩. কাস্টমার যখন কার্ট থেকে কোনো আইটেম ডিলিট করবে, তখন ডাটাবেজের bag টেবিল থেকে মুছে ফেলার লজিক
         else if (req.method === 'DELETE') {
             const { id } = req.body;
             await db.execute('DELETE FROM bag WHERE id = ?', [id]);
