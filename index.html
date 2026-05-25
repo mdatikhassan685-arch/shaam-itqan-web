@@ -32,7 +32,7 @@
     <!-- Products -->
     <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
 
-    <!-- Bottom Nav (আইকন এবং লেখা সহ সম্পূর্ণ আধুনিক নেভিগেশন বার) -->
+    <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         
         <!-- Home Link -->
@@ -90,29 +90,40 @@
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
             
-            await fetch('/api/bag', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    email: user.email, 
-                    products: p.name, 
-                    image_url: p.image_url, 
-                    total_price: p.price 
-                })
-            });
-            alert("Added to Bag!");
+            try {
+                const res = await fetch('/api/bag', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        email: user.email, 
+                        products: p.name, 
+                        image_url: p.image_url, 
+                        total_price: p.price 
+                    })
+                });
+
+                // এখন সফল বা ব্যর্থ হওয়া সঠিকভাবে চেক করা হবে
+                if (res.ok) {
+                    alert("Added to Bag!");
+                } else {
+                    const errData = await res.json();
+                    alert("Failed to add to bag: " + (errData.error || "Server Error"));
+                }
+            } catch (error) {
+                alert("Network error: Could not connect to the server.");
+                console.error(error);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
             loadData(); 
             
-            // কাস্টমার লগইন করা থাকলে ব্রাউজার সেশন চেক করে টেক্সট ও লিংক আপডেট করা হচ্ছে
             if (localStorage.getItem('user_session')) {
                 const authLink = document.getElementById('auth-link');
                 const authText = document.getElementById('auth-text');
                 if (authLink && authText) {
-                    authText.innerText = 'PROFILE';     // টেক্সট পরিবর্তন হবে
-                    authLink.href = 'profile.html';     // লিংকটি পরিবর্তন করে profile.html করা হলো
+                    authText.innerText = 'PROFILE';
+                    authLink.href = 'profile.html';
                 }
             }
         });
