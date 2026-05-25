@@ -12,7 +12,7 @@ export const getDb = async () => {
             port: 4000,
             ssl: { rejectUnauthorized: false },
             waitForConnections: true,
-            connectionLimit: 10,  // একসাথে সর্বোচ্চ ১০টি অ্যাক্টিভ কানেকশন থাকবে
+            connectionLimit: 10,  // Max 10 active connections at once
             queueLimit: 0
         });
     }
