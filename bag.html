@@ -46,12 +46,125 @@
             </div>
             
             <button onclick="submitOrder()" class="w-full bg-black text-white py-3.5 mt-5 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300">
-                ORDER PRESS
+                CONFIRM ORDER
             </button>
         </div>
     </div>
 
-    <!-- External Script Link -->
-    <script src="bag.js"></script>
+    <!-- ফ্রন্টএন্ডের জাভাস্ক্রিপ্ট কোড সরাসরি এইচটিএমএল ফাইলের ভেতরে যুক্ত করা হলো -->
+    <script>
+        async function loadBag() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { 
+                window.location.href = 'login.html'; 
+                return; 
+            }
+
+            try {
+                // ডাটাবেজ এপিআই /api/bag থেকে প্রোডাক্ট তথ্য আনা হচ্ছে
+                const res = await fetch('/api/bag?email=' + user.email);
+                
+                if (!res.ok) {
+                    throw new Error("Failed to fetch bag items");
+                }
+                
+                const cartItems = await res.json();
+                const container = document.getElementById('bag-items');
+                const checkoutSection = document.getElementById('checkout-section');
+                
+                if (cartItems.length === 0) {
+                    container.innerHTML = '<p class="text-center py-10 text-gray-500 text-sm">Your bag is currently empty.</p>';
+                    checkoutSection.classList.add('hidden');
+                    return;
+                }
+
+                let total = 0;
+                container.innerHTML = cartItems.map(item => {
+                    total += parseFloat(item.price);
+                    return `
+                        <div class="bg-white p-3 border border-gray-200 flex items-center gap-4 shadow-sm">
+                            <img src="${item.image_url || 'https://via.placeholder.com/64'}" class="w-16 h-16 object-cover border border-gray-100 rounded">
+                            <div class="flex-grow">
+                                <h3 class="font-bold text-xs uppercase tracking-wider text-gray-800">${item.product_name}</h3>
+                                <p class="text-[#D4AF37] font-bold text-xs mt-1">৳ ${parseFloat(item.price).toFixed(2)}</p>
+                            </div>
+                            <button onclick="removeItem(${item.id})" class="text-red-500 text-[10px] font-bold uppercase hover:underline tracking-widest px-2">
+                                Remove
+                            </button>
+                        </div>`;
+                }).join('');
+                
+                document.getElementById('total-price').innerText = total.toFixed(2);
+                checkoutSection.classList.remove('hidden');
+            } catch (error) {
+                console.error("Failed to load bag:", error);
+                document.getElementById('bag-items').innerHTML = '<p class="text-center py-10 text-red-500 text-xs">Error loading cart items.</p>';
+            }
+        }
+
+        async function removeItem(id) {
+            if (!confirm("Are you sure you want to remove this item?")) {
+                return;
+            }
+
+            try {
+                // এপিআই /api/bag তে ডিলিট রিকোয়েস্ট পাঠানো হচ্ছে
+                const res = await fetch('/api/bag', { 
+                    method: 'DELETE', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({ id }) 
+                });
+                
+                if (res.ok) {
+                    loadBag();
+                } else {
+                    alert('Failed to remove item.');
+                }
+            } catch (error) {
+                alert('An error occurred while removing the item.');
+                console.error(error);
+            }
+        }
+
+        async function submitOrder() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+
+            if (!name || !phone || !address) {
+                alert("Please fill in all order details!");
+                return;
+            }
+
+            const data = { 
+                action: 'checkout',
+                name: name, 
+                phone: phone, 
+                address: address, 
+                email: user.email
+            };
+            
+            try {
+                const res = await fetch('/api/orders', { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify(data) 
+                });
+                
+                if (res.ok) { 
+                    alert('Order Placed Successfully!'); 
+                    window.location.href = 'index.html'; 
+                } else {
+                    alert('Failed to place order.');
+                }
+            } catch (error) {
+                alert('Error placing order.');
+                console.error(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadBag);
+    </script>
 </body>
 </html>
