@@ -6,7 +6,7 @@
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
     </style>
 </head>
@@ -150,10 +150,11 @@
             }
         }
 
+        // Buy Now: আইটেম যোগ হয়ে এখন সরাসরি চেকআউট পেজে (checkout.html) চলে যাবে
         async function buyNow() {
             const success = await saveToBagApi();
             if (success) {
-                window.location.href = 'bag.html';
+                window.location.href = 'checkout.html';
             }
         }
 
