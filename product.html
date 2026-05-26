@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" class="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -106,7 +106,6 @@
             document.getElementById('qty-val').innerText = quantity;
         }
 
-        // এপিআই-তে ডাটা পাঠানোর কমন ফাংশন
         async function saveToBagApi() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { 
@@ -144,7 +143,6 @@
             }
         }
 
-        // ১. Add to Bag: আইটেম যোগ হবে এবং পেজেই থাকবে
         async function addProductToBag() {
             const success = await saveToBagApi();
             if (success) {
@@ -152,7 +150,6 @@
             }
         }
 
-        // ২. Buy Now: আইটেম যোগ হয়ে সরাসরি চেকআউট পেজে (bag.html) চলে যাবে
         async function buyNow() {
             const success = await saveToBagApi();
             if (success) {
