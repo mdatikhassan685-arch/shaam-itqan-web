@@ -22,7 +22,7 @@
                 Back
             </a>
             <h1 class="text-lg font-bold tracking-widest luxury-font uppercase">YOUR BAG</h1>
-            <div class="w-8"></div> <!-- Spacer for center alignment -->
+            <div class="w-8"></div>
         </div>
         
         <!-- Bag Items List Container -->
@@ -51,7 +51,6 @@
         </div>
     </div>
 
-    <!-- ফ্রন্টএন্ডের জাভাস্ক্রিপ্ট কোড সরাসরি এইচটিএমএল ফাইলের ভেতরে যুক্ত করা হলো -->
     <script>
         async function loadBag() {
             const user = JSON.parse(localStorage.getItem('user_session'));
@@ -61,7 +60,6 @@
             }
 
             try {
-                // ডাটাবেজ এপিআই /api/bag থেকে প্রোডাক্ট তথ্য আনা হচ্ছে
                 const res = await fetch('/api/bag?email=' + user.email);
                 
                 if (!res.ok) {
@@ -80,13 +78,19 @@
 
                 let total = 0;
                 container.innerHTML = cartItems.map(item => {
-                    total += parseFloat(item.price);
+                    const itemQty = parseInt(item.quantity) || 1;
+                    const itemPrice = parseFloat(item.price);
+                    const subtotal = itemPrice * itemQty;
+                    total += subtotal;
+
                     return `
-                        <div class="bg-white p-3 border border-gray-200 flex items-center gap-4 shadow-sm">
+                        <div class="bg-white p-3 border border-gray-200 flex items-center gap-4 shadow-sm rounded">
                             <img src="${item.image_url || 'https://via.placeholder.com/64'}" class="w-16 h-16 object-cover border border-gray-100 rounded">
                             <div class="flex-grow">
                                 <h3 class="font-bold text-xs uppercase tracking-wider text-gray-800">${item.product_name}</h3>
-                                <p class="text-[#D4AF37] font-bold text-xs mt-1">৳ ${parseFloat(item.price).toFixed(2)}</p>
+                                <!-- সাইজ এবং পরিমাণ প্রদর্শন করা হচ্ছে -->
+                                <p class="text-gray-500 text-[10px] mt-0.5 font-sans">Size: <b class="text-black">${item.size}</b> | Qty: <b class="text-black">${itemQty}</b></p>
+                                <p class="text-[#D4AF37] font-bold text-xs mt-1">৳ ${subtotal.toFixed(2)}</p>
                             </div>
                             <button onclick="removeItem(${item.id})" class="text-red-500 text-[10px] font-bold uppercase hover:underline tracking-widest px-2">
                                 Remove
@@ -108,7 +112,6 @@
             }
 
             try {
-                // এপিআই /api/bag তে ডিলিট রিকোয়েস্ট পাঠানো হচ্ছে
                 const res = await fetch('/api/bag', { 
                     method: 'DELETE', 
                     headers: {'Content-Type':'application/json'}, 
