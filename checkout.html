@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Checkout | SHAAM ITQAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 font-sans pb-10">
+
+    <div class="max-w-md mx-auto">
+        <!-- Header with Back Button -->
+        <div class="flex items-center justify-between mb-6 border-b pb-3">
+            <a href="bag.html" class="text-sm font-bold tracking-widest uppercase hover:underline flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Bag
+            </a>
+            <h1 class="text-lg font-bold tracking-widest luxury-font uppercase">Checkout</h1>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- Order Summary Box -->
+        <div class="bg-white p-4 shadow rounded mb-6 border border-gray-100">
+            <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Order Summary</h2>
+            <div class="space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>৳ <span id="summary-subtotal">0.00</span></span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Delivery Charge:</span>
+                    <span>৳ <span id="summary-shipping">80.00</span></span>
+                </div>
+                <div class="flex justify-between font-bold text-black text-base border-t pt-2 mt-2">
+                    <span>Total Amount:</span>
+                    <span class="text-[#D4AF37]">৳ <span id="summary-total">0.00</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Form Section -->
+        <div class="bg-white p-4 shadow border border-gray-200 rounded">
+            <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Shipping Details</h2>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Name</label>
+                    <input type="text" id="name" placeholder="Enter your full name" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Phone Number</label>
+                    <input type="tel" id="phone" placeholder="Enter your phone number" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Delivery Area</label>
+                    <select id="delivery-area" onchange="updateShipping()" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] bg-white rounded">
+                        <option value="inside_dhaka">Inside Dhaka (৳80)</option>
+                        <option value="outside_dhaka">Outside Dhaka (৳150)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Address</label>
+                    <textarea id="address" placeholder="House/Road, Area, District" rows="3" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded"></textarea>
+                </div>
+            </div>
+            
+            <button onclick="submitOrder()" class="w-full bg-black text-white py-3.5 mt-6 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded">
+                PLACE ORDER (CASH ON DELIVERY)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let subtotal = 0;
+
+        async function loadSummary() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            try {
+                const res = await fetch('/api/bag?email=' + user.email);
+                const cartItems = await res.json();
+
+                if (cartItems.length === 0) {
+                    alert("Your bag is empty! Redirecting to shop.");
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Subtotal ক্যালকুলেট করা
+                cartItems.forEach(item => {
+                    const qty = parseInt(item.quantity) || 1;
+                    subtotal += parseFloat(item.price) * qty;
+                });
+
+                document.getElementById('summary-subtotal').innerText = subtotal.toFixed(2);
+                updateShipping(); // লোড হওয়ার সাথে সাথে টোটাল আপডেট হবে
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ডেলিভারি ড্রপডাউন পরিবর্তনের সাথে সাথে চার্জ ও গ্র্যান্ড টোটাল আপডেট করার ফাংশন
+        function updateShipping() {
+            const area = document.getElementById('delivery-area').value;
+            const shippingFee = area === 'inside_dhaka' ? 80 : 150;
+            const grandTotal = subtotal + shippingFee;
+
+            document.getElementById('summary-shipping').innerText = shippingFee.toFixed(2);
+            document.getElementById('summary-total').innerText = grandTotal.toFixed(2);
+        }
+
+        async function submitOrder() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const area = document.getElementById('delivery-area').value;
+            const address = document.getElementById('address').value.trim();
+
+            if (!name || !phone || !address) {
+                alert("Please fill in all shipping details!");
+                return;
+            }
+
+            const data = { 
+                action: 'checkout',
+                name: name, 
+                phone: phone, 
+                address: address, 
+                delivery_area: area, // ব্যাকএন্ডে ডেলিভারি এরিয়া পাঠানো হচ্ছে
+                email: user.email
+            };
+            
+            try {
+                const res = await fetch('/api/orders', { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify(data) 
+                });
+                
+                if (res.ok) { 
+                    alert('Order Placed Successfully!'); 
+                    window.location.href = 'index.html'; 
+                } else {
+                    alert('Failed to place order.');
+                }
+            } catch (error) {
+                alert('Error placing order.');
+                console.error(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSummary);
+    </script>
+</body>
+</html>
