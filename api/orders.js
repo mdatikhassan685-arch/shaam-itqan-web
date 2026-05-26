@@ -29,23 +29,29 @@ export default async function handler(req, res) {
                     return res.status(400).json({ error: "Bag is empty" });
                 }
 
-                // ২. প্রোডাক্টের নাম, সাইজ এবং কোয়ান্টিটি মিলিয়ে ডিটেইল্ড ডেসক্রিপশন ও মোট মূল্য হিসাব করা
-                let total = 0;
+                // ২. প্রোডাক্টের নাম, সাইজ এবং কোয়ান্টিটি মিলিয়ে ডিটেইল্ড ডেসক্রিপশন ও সাবটোটাল হিসাব করা
+                let subtotal = 0;
                 const productDetailsArray = cartItems.map(item => {
                     const itemQty = parseInt(item.quantity) || 1;
-                    total += parseFloat(item.price) * itemQty;
-                    // অ্যাডমিন প্যানেলে দেখার সুবিধার্থে নাম, সাইজ ও কোয়ান্টিটি একসাথে জোড়া দেওয়া হলো
+                    subtotal += parseFloat(item.price) * itemQty;
                     return `${item.product_name} (Size: ${item.size}, Qty: ${itemQty})`;
                 });
                 const combinedProducts = productDetailsArray.join(', ');
 
-                // ৩. একটি নতুন অর্ডার ইনসার্ট করা
+                // ৩. ব্যাকএন্ডে ডেলিভারি চার্জ যাচাই করা (জালিয়াতি রোধে এটি অত্যন্ত গুরুত্বপূর্ণ)
+                const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
+                const grandTotal = subtotal + shippingFee; // সাবটোটাল + কুরিয়ার চার্জ
+
+                // ডেলিভারি ঠিকানা গুছিয়ে তৈরি করা
+                const detailedAddress = `${b.address} (${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
+
+                // ৪. ডাটাবেজে ফাইনাল গ্র্যান্ড টোটালসহ অর্ডার সেভ করা
                 await db.execute(
                     'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [b.name, b.phone, b.address, b.email, combinedProducts, total, 'Pending']
+                    [b.name, b.phone, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
                 );
 
-                // ৪. অর্ডার সফল হওয়ার পর ব্যাগ থেকে কাস্টমারের আইটেমগুলো মুছে ফেলা (কার্ট ক্লিয়ার)
+                // ৫. সফলভাবে সেভ করার পর ব্যাগ খালি করে দেওয়া
                 await db.execute('DELETE FROM bag WHERE email = ?', [b.email]);
 
                 return res.status(200).json({ status: "Success" });
