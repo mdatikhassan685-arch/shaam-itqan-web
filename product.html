@@ -3,30 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Product Details</title>
+    <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+    </style>
 </head>
-<body class="bg-[#FDF8EF] p-4 font-serif">
-    <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E]">
-        <img id="p-img" class="w-full h-64 object-cover border border-[#C1A44E]/30">
-        <h1 id="p-name" class="text-2xl font-bold mt-4"></h1>
-        <p id="p-price" class="text-xl text-[#C1A44E] font-bold"></p>
-        <p id="p-desc" class="text-gray-600 mt-4 text-sm leading-relaxed"></p>
-        <button onclick="window.history.back()" class="w-full bg-[#333333] text-white py-3 mt-6 uppercase tracking-widest text-sm">Back</button>
+<body class="bg-[#FDF8EF] p-4 font-sans pb-10">
+    <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E] rounded">
+        
+        <!-- Product Image -->
+        <img id="p-img" class="w-full h-72 object-cover border border-[#C1A44E]/30 rounded">
+        
+        <!-- Title and Price -->
+        <h1 id="p-name" class="text-xl font-bold mt-4 tracking-widest luxury-font uppercase text-gray-800"></h1>
+        <p id="p-price" class="text-lg text-[#C1A44E] font-bold mt-1"></p>
+        
+        <!-- Size Selection Section -->
+        <div class="mt-6 border-t pt-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">Select Size</p>
+            <div class="flex gap-2" id="size-selector">
+                <button onclick="selectSize('S')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">S</button>
+                <button onclick="selectSize('M')" class="size-btn border-2 border-black bg-black text-white w-10 h-10 text-xs font-bold rounded transition">M</button>
+                <button onclick="selectSize('L')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">L</button>
+                <button onclick="selectSize('XL')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">XL</button>
+                <button onclick="selectSize('XXL')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">XXL</button>
+            </div>
+        </div>
+
+        <!-- Quantity Selector -->
+        <div class="mt-6 border-t pt-4 flex items-center justify-between">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Quantity</p>
+            <div class="flex items-center border border-gray-300 rounded">
+                <button onclick="changeQty(-1)" class="px-3 py-1.5 font-bold hover:bg-gray-100 transition">-</button>
+                <span id="qty-val" class="px-5 font-bold text-sm">1</span>
+                <button onclick="changeQty(1)" class="px-3 py-1.5 font-bold hover:bg-gray-100 transition">+</button>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mt-6 border-t pt-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">Description</p>
+            <p id="p-desc" class="text-gray-600 text-sm leading-relaxed"></p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="mt-8 space-y-3">
+            <button onclick="addProductToBag()" class="w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded">
+                Add To Bag
+            </button>
+            <button onclick="window.history.back()" class="w-full border border-black text-black py-3 uppercase tracking-widest text-xs font-bold hover:bg-gray-50 transition rounded">
+                Back
+            </button>
+        </div>
     </div>
+
     <script>
         const pid = new URLSearchParams(window.location.search).get('id');
+        let selectedSize = 'M'; // ডিফল্ট সাইজ M
+        let quantity = 1;      // ডিফল্ট পরিমাণ ১টি
+        let productData = null;
+
         async function loadProduct() {
-            const res = await fetch('/api/admin-data?type=product');
-            const products = await res.json();
-            const p = products.find(prod => prod.id == pid);
-            if(p) {
-                document.getElementById('p-img').src = p.image_url;
-                document.getElementById('p-name').innerText = p.name;
-                document.getElementById('p-price').innerText = '৳ ' + p.price;
-                document.getElementById('p-desc').innerText = p.description;
+            try {
+                const res = await fetch('/api/admin-data?type=product');
+                const products = await res.json();
+                productData = products.find(prod => prod.id == pid);
+                if (productData) {
+                    document.getElementById('p-img').src = productData.image_url;
+                    document.getElementById('p-name').innerText = productData.name;
+                    document.getElementById('p-price').innerText = '৳ ' + productData.price;
+                    document.getElementById('p-desc').innerText = productData.description || "No description available.";
+                }
+            } catch (error) {
+                console.error("Failed to load product details:", error);
             }
         }
+
+        function selectSize(size) {
+            selectedSize = size;
+            const buttons = document.querySelectorAll('.size-btn');
+            buttons.forEach(btn => {
+                if (btn.innerText === size) {
+                    btn.className = "size-btn border-2 border-black bg-black text-white w-10 h-10 text-xs font-bold rounded transition";
+                } else {
+                    btn.className = "size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition";
+                }
+            });
+        }
+
+        function changeQty(amount) {
+            quantity += amount;
+            if (quantity < 1) quantity = 1;
+            document.getElementById('qty-val').innerText = quantity;
+        }
+
+        async function addProductToBag() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { 
+                alert("Please login first!"); 
+                window.location.href = 'login.html'; 
+                return; 
+            }
+            
+            if (!productData) return;
+
+            try {
+                const res = await fetch('/api/bag', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        email: user.email, 
+                        products: productData.name, 
+                        image_url: productData.image_url, 
+                        total_price: productData.price,
+                        size: selectedSize,
+                        quantity: quantity
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Added to Bag successfully!");
+                    window.location.href = 'bag.html';
+                } else {
+                    alert("Failed to add to bag. Please try again.");
+                }
+            } catch (error) {
+                alert("Network error: Could not add product.");
+                console.error(error);
+            }
+        }
+
         loadProduct();
     </script>
 </body>
