@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport" class="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -50,19 +50,26 @@
         
         <!-- Action Buttons -->
         <div class="mt-8 space-y-3">
-            <button onclick="addProductToBag()" class="w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded">
+            <!-- Buy Now Button (সরাসরি চেকআউট পেজে নিয়ে যাবে) -->
+            <button onclick="buyNow()" class="w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded">
+                Buy Now
+            </button>
+            
+            <!-- Add To Bag Button (যোগ করে কাস্টমারকে পেজেই রাখবে) -->
+            <button onclick="addProductToBag()" class="w-full border border-black text-black py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-black hover:text-white transition duration-300 rounded">
                 Add To Bag
             </button>
-            <button onclick="window.history.back()" class="w-full border border-black text-black py-3 uppercase tracking-widest text-xs font-bold hover:bg-gray-50 transition rounded">
-                Back
+            
+            <button onclick="window.history.back()" class="w-full text-gray-500 text-xs uppercase tracking-widest font-bold py-2 text-center block hover:underline">
+                Back to Shop
             </button>
         </div>
     </div>
 
     <script>
         const pid = new URLSearchParams(window.location.search).get('id');
-        let selectedSize = 'M'; // ডিফল্ট সাইজ M
-        let quantity = 1;      // ডিফল্ট পরিমাণ ১টি
+        let selectedSize = 'M';
+        let quantity = 1;
         let productData = null;
 
         async function loadProduct() {
@@ -99,15 +106,16 @@
             document.getElementById('qty-val').innerText = quantity;
         }
 
-        async function addProductToBag() {
+        // এপিআই-তে ডাটা পাঠানোর কমন ফাংশন
+        async function saveToBagApi() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { 
                 alert("Please login first!"); 
                 window.location.href = 'login.html'; 
-                return; 
+                return false; 
             }
             
-            if (!productData) return;
+            if (!productData) return false;
 
             try {
                 const res = await fetch('/api/bag', {
@@ -124,14 +132,31 @@
                 });
 
                 if (res.ok) {
-                    alert("Added to Bag successfully!");
-                    window.location.href = 'bag.html';
+                    return true;
                 } else {
-                    alert("Failed to add to bag. Please try again.");
+                    alert("Failed to add. Please try again.");
+                    return false;
                 }
             } catch (error) {
-                alert("Network error: Could not add product.");
+                alert("Network error: Could not connect.");
                 console.error(error);
+                return false;
+            }
+        }
+
+        // ১. Add to Bag: আইটেম যোগ হবে এবং পেজেই থাকবে
+        async function addProductToBag() {
+            const success = await saveToBagApi();
+            if (success) {
+                alert("Added to Bag successfully!");
+            }
+        }
+
+        // ২. Buy Now: আইটেম যোগ হয়ে সরাসরি চেকআউট পেজে (bag.html) চলে যাবে
+        async function buyNow() {
+            const success = await saveToBagApi();
+            if (success) {
+                window.location.href = 'bag.html';
             }
         }
 
