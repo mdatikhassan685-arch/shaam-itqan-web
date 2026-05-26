@@ -8,27 +8,33 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-gray-50 p-4 font-sans pb-10">
 
     <div class="max-w-md mx-auto">
-        <!-- Header with Back Button -->
-        <div class="flex items-center justify-between mb-6 border-b pb-3">
-            <a href="bag.html" class="text-sm font-bold tracking-widest uppercase hover:underline flex items-center gap-1">
+        <!-- Header: Absolute Positioning দিয়ে টাইটেলটি একদম পারফেক্ট সেন্টারে আনা হয়েছে -->
+        <div class="relative flex items-center justify-center mb-6 border-b pb-3 h-10">
+            <a href="bag.html" class="absolute left-0 text-xs font-bold tracking-widest uppercase hover:underline flex items-center gap-1 text-gray-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                Back to Bag
+                Bag
             </a>
-            <h1 class="text-lg font-bold tracking-widest luxury-font uppercase">Checkout</h1>
-            <div class="w-8"></div>
+            <h1 class="text-sm font-bold tracking-widest luxury-font uppercase">Checkout</h1>
         </div>
 
         <!-- Order Summary Box -->
         <div class="bg-white p-4 shadow rounded mb-6 border border-gray-100">
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Order Summary</h2>
-            <div class="space-y-2 text-sm text-gray-600">
+            
+            <!-- ৩ নং পয়েন্টের সমাধান: চেকআউট প্রোডাক্ট লিস্ট এরিয়া -->
+            <div id="checkout-items-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto scrollbar-hide">
+                <p class="text-center py-4 text-xs text-gray-400">Loading items...</p>
+            </div>
+
+            <div class="space-y-2 text-sm text-gray-600 border-t pt-3">
                 <div class="flex justify-between">
                     <span>Subtotal:</span>
                     <span>৳ <span id="summary-subtotal">0.00</span></span>
@@ -93,20 +99,32 @@
                     return;
                 }
 
-                // Subtotal ক্যালকুলেট করা
-                cartItems.forEach(item => {
+                // ৩ নং পয়েন্টের কাজ: কার্টের প্রোডাক্ট তালিকা এবং ছবি স্ক্রিনে লোড করা হচ্ছে
+                const listContainer = document.getElementById('checkout-items-list');
+                listContainer.innerHTML = cartItems.map(item => {
                     const qty = parseInt(item.quantity) || 1;
-                    subtotal += parseFloat(item.price) * qty;
-                });
+                    const price = parseFloat(item.price);
+                    subtotal += price * qty;
+
+                    return `
+                        <div class="flex items-center gap-3 text-xs text-gray-700 py-1.5 border-b border-gray-50 last:border-0">
+                            <img src="${item.image_url || 'https://via.placeholder.com/48'}" class="w-10 h-10 object-cover border rounded">
+                            <div class="flex-grow">
+                                <span class="font-bold block uppercase tracking-wider text-gray-800 text-[10px]">${item.product_name}</span>
+                                <span class="text-gray-500 text-[9px]">Size: ${item.size} | Qty: ${qty}</span>
+                            </div>
+                            <span class="font-bold text-gray-900">৳ ${(price * qty).toFixed(2)}</span>
+                        </div>
+                    `;
+                }).join('');
 
                 document.getElementById('summary-subtotal').innerText = subtotal.toFixed(2);
-                updateShipping(); // লোড হওয়ার সাথে সাথে টোটাল আপডেট হবে
+                updateShipping(); 
             } catch (e) {
                 console.error(e);
             }
         }
 
-        // ডেলিভারি ড্রপডাউন পরিবর্তনের সাথে সাথে চার্জ ও গ্র্যান্ড টোটাল আপডেট করার ফাংশন
         function updateShipping() {
             const area = document.getElementById('delivery-area').value;
             const shippingFee = area === 'inside_dhaka' ? 80 : 150;
@@ -133,7 +151,7 @@
                 name: name, 
                 phone: phone, 
                 address: address, 
-                delivery_area: area, // ব্যাকএন্ডে ডেলিভারি এরিয়া পাঠানো হচ্ছে
+                delivery_area: area,
                 email: user.email
             };
             
