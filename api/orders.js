@@ -23,13 +23,25 @@ export default async function handler(req, res) {
             
             // কাস্টমার চেকআউট করছে
             if (b.action === 'checkout') {
-                // ১. কাস্টমারের ব্যাগের আইটেমগুলো ডাটাবেজ থেকে নিয়ে আসা
-                const [cartItems] = await db.execute('SELECT * FROM bag WHERE email = ?', [b.email]);
-                if (cartItems.length === 0) {
-                    return res.status(400).json({ error: "Bag is empty" });
+                const checkedIds = b.checked_item_ids;
+                if (!checkedIds || !Array.isArray(checkedIds) || checkedIds.length === 0) {
+                    return res.status(400).json({ error: "No items selected for checkout" });
                 }
 
-                // ২. প্রোডাক্টের নাম, সাইজ এবং কোয়ান্টিটি মিলিয়ে ডিটেইল্ড ডেসক্রিপশন ও সাবটোটাল হিসাব করা
+                // এসকিউএল ডাইনামিক কুয়েরি প্লেসহোল্ডার তৈরি (যেমন: ?, ?, ?)
+                const placeholders = checkedIds.map(() => '?').join(',');
+
+                // ১. শুধুমাত্র সিলেক্টেড কার্ট আইটেমগুলো ডাটাবেজ থেকে রিড করা হচ্ছে
+                const [cartItems] = await db.execute(
+                    `SELECT * FROM bag WHERE email = ? AND id IN (${placeholders})`,
+                    [b.email, ...checkedIds]
+                );
+
+                if (cartItems.length === 0) {
+                    return res.status(400).json({ error: "Selected items not found in bag" });
+                }
+
+                // ২. প্রোডাক্টের নাম, সাইজ এবং কোয়ান্টিটি মিলিয়ে ডেসক্রিপশন ও সাবটোটাল হিসাব করা
                 let subtotal = 0;
                 const productDetailsArray = cartItems.map(item => {
                     const itemQty = parseInt(item.quantity) || 1;
@@ -38,11 +50,10 @@ export default async function handler(req, res) {
                 });
                 const combinedProducts = productDetailsArray.join(', ');
 
-                // ৩. ব্যাকএন্ডে ডেলিভারি চার্জ এবং গ্র্যান্ড টোটাল ভেরিফাই করা (জালিয়াতি রোধে অত্যন্ত গুরুত্বপূর্ণ)
+                // ৩. ডেলিভারি চার্জ এবং গ্র্যান্ড টোটাল ভেরিফাই করা
                 const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
                 const grandTotal = subtotal + shippingFee; 
 
-                // ৪. ডাটাবেজের কলামগুলোতে ডাটাগুলো অত্যন্ত গুছিয়ে সাজানো হচ্ছে (যাতে আগের অ্যাডমিন প্যানেলে অটো সুন্দর দেখায়)
                 const combinedPhones = `Primary: ${b.phone} | Alt: ${b.phone_backup} (${b.phone_backup_relation})`;
                 
                 const paymentInfo = b.payment_method === 'advance_charge' 
@@ -51,14 +62,17 @@ export default async function handler(req, res) {
                 
                 const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}`;
 
-                // ৫. ডাটাবেজে ফাইনাল ডাটা সেভ করা
+                // ৪. ডাটাবেজে ফাইনাল গ্র্যান্ড টোটালসহ অর্ডার সেভ করা
                 await db.execute(
                     'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
                     [b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
                 );
 
-                // ৬. সফলভাবে সেভ করার পর ব্যাগ খালি করে দেওয়া
-                await db.execute('DELETE FROM bag WHERE email = ?', [b.email]);
+                // ৫. সফলভাবে সেভ করার পর কেবল সিলেক্ট করা আইটেমগুলো কার্ট থেকে ডিলিট করা হচ্ছে (বাকিগুলো ব্যাগে সুরক্ষিত থাকবে!)
+                await db.execute(
+                    `DELETE FROM bag WHERE email = ? AND id IN (${placeholders})`,
+                    [b.email, ...checkedIds]
+                );
 
                 return res.status(200).json({ status: "Success" });
             } 
