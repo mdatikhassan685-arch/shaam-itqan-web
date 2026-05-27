@@ -14,13 +14,12 @@
 <body class="bg-gray-50 p-4 font-sans pb-10">
 
     <div class="max-w-md mx-auto">
-        <!-- Header: Absolute Positioning দিয়ে টাইটেলটি একদম পারফেক্ট সেন্টারে আনা হয়েছে -->
         <div class="relative flex items-center justify-center mb-6 border-b pb-3 h-10">
             <a href="bag.html" class="absolute left-0 text-xs font-bold tracking-widest uppercase hover:underline flex items-center gap-1 text-gray-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                Bag
+                Back
             </a>
             <h1 class="text-sm font-bold tracking-widest luxury-font uppercase">Checkout</h1>
         </div>
@@ -29,7 +28,7 @@
         <div class="bg-white p-4 shadow rounded mb-6 border border-gray-100">
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Order Summary</h2>
             
-            <!-- ৩ নং পয়েন্টের সমাধান: চেকআউট প্রোডাক্ট লিস্ট এরিয়া -->
+            <!-- প্রোডাক্ট সামারি লিস্ট -->
             <div id="checkout-items-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto scrollbar-hide">
                 <p class="text-center py-4 text-xs text-gray-400">Loading items...</p>
             </div>
@@ -50,7 +49,7 @@
             </div>
         </div>
 
-        <!-- Shipping Form Section -->
+        <!-- Shipping & Payment Form -->
         <div class="bg-white p-4 shadow border border-gray-200 rounded">
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Shipping Details</h2>
             
@@ -59,10 +58,33 @@
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Name</label>
                     <input type="text" id="name" placeholder="Enter your full name" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
                 </div>
+                
+                <!-- প্রাইমারি ফোন নম্বর -->
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Phone Number</label>
-                    <input type="tel" id="phone" placeholder="Enter your phone number" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Primary Phone Number</label>
+                    <input type="tel" id="phone" placeholder="e.g. 01712345678" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
                 </div>
+
+                <!-- অল্টারনেটিভ ফোন নম্বর এবং রিলেশনশিপ ড্রপডাউন -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Backup Phone (Alt...)</label>
+                        <input type="tel" id="phone-backup" placeholder="e.g. 01912345678" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Owner of Backup Phone</label>
+                        <select id="phone-backup-relation" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] bg-white rounded">
+                            <option value="Brother">Brother (ভাই)</option>
+                            <option value="Father">Father (বাবা)</option>
+                            <option value="Mother">Mother (মা)</option>
+                            <option value="Sister">Sister (বোন)</option>
+                            <option value="Spouse">Spouse (স্বামী/স্ত্রী)</option>
+                            <option value="Friend">Friend (বন্ধু)</option>
+                            <option value="Others">Others (অন্যান্য)</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Delivery Area</label>
                     <select id="delivery-area" onchange="updateShipping()" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] bg-white rounded">
@@ -70,20 +92,58 @@
                         <option value="outside_dhaka">Outside Dhaka (৳150)</option>
                     </select>
                 </div>
+
+                <!-- পেমেন্ট অপশন নির্বাচন (COD বনাম অগ্রিম চার্জ) -->
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Address</label>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Payment Method</label>
+                    <select id="payment-method" onchange="togglePaymentMethod()" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] bg-white rounded">
+                        <option value="cod">Full Cash on Delivery (COD)</option>
+                        <option value="advance_charge">Pay Delivery Charge Advance (Rest COD)</option>
+                    </select>
+                </div>
+                
+                <!-- বিকাশ পেমেন্ট ইনস্ট্রাকশন নোটিশ (ডাইনামিক শো/হাইড হবে) -->
+                <div id="bkash-payment-details" class="bg-[#FDF8EF] p-3 border border-[#C1A44E]/30 rounded text-xs leading-relaxed text-gray-700 hidden">
+                    <p class="font-bold text-black mb-1">📌 bKash Payment Instructions:</p>
+                    অর্ডারটি ভেরিফাই করতে ডেলিভারি চার্জ (<b id="notice-charge">৳৮০</b>) আমাদের বিকাশ পার্সোনাল নম্বরে <b>(01322415927)</b> সেন্ড মানি করুন। এরপর নিচে ট্রানজেকশন আইডিটি দিন।
+                    <div class="mt-2">
+                        <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">bKash Transaction ID (TrxID)</label>
+                        <input type="text" id="trxid" placeholder="e.g. K9B82HG5" class="w-full p-2.5 border text-sm focus:outline-none focus:border-[#D4AF37] rounded bg-white">
+                    </div>
+                </div>
+
+                <!-- ল্যান্ডমার্ক ইনপুট ফিল্ড -->
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Landmark (চারপাশের পরিচিত স্থান এমন জায়গায় যা সবাই এক নামে চিনে)</label>
+                    <input type="text" id="landmark" placeholder="e.g. ABC হাসপাতালের পাশে, মসজিদে পাশে " class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Delivery Address</label>
                     <textarea id="address" placeholder="House/Road, Area, District" rows="3" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded"></textarea>
+                </div>
+
+                <!-- ম্যাথ ক্যাপচা বক্স (বট অর্ডার ঠেকাতে) -->
+                <div class="bg-gray-100 p-3 border border-gray-200 rounded flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">Security Question</p>
+                        <p class="text-sm font-bold text-gray-800" id="captcha-question">What is X + Y = ?</p>
+                    </div>
+                    <div class="w-24">
+                        <input type="number" id="captcha-input" placeholder="Result" class="w-full p-2 border text-sm focus:outline-none focus:border-black text-center rounded bg-white">
+                    </div>
                 </div>
             </div>
             
             <button onclick="submitOrder()" class="w-full bg-black text-white py-3.5 mt-6 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded">
-                PLACE ORDER (CASH ON DELIVERY)
+                PLACE ORDER (CONFIRM)
             </button>
         </div>
     </div>
 
     <script>
         let subtotal = 0;
+        let captchaResult = 0;
 
         async function loadSummary() {
             const user = JSON.parse(localStorage.getItem('user_session'));
@@ -99,7 +159,6 @@
                     return;
                 }
 
-                // ৩ নং পয়েন্টের কাজ: কার্টের প্রোডাক্ট তালিকা এবং ছবি স্ক্রিনে লোড করা হচ্ছে
                 const listContainer = document.getElementById('checkout-items-list');
                 listContainer.innerHTML = cartItems.map(item => {
                     const qty = parseInt(item.quantity) || 1;
@@ -120,8 +179,28 @@
 
                 document.getElementById('summary-subtotal').innerText = subtotal.toFixed(2);
                 updateShipping(); 
+                generateCaptcha(); // ক্যাপচা লোড করা হলো
             } catch (e) {
                 console.error(e);
+            }
+        }
+
+        // ম্যাথ ক্যাপচা জেনারেটর
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 9) + 1; // ১ থেকে ৯ এর সংখ্যা
+            const num2 = Math.floor(Math.random() * 9) + 1;
+            captchaResult = num1 + num2;
+            document.getElementById('captcha-question').innerText = `What is ${num1} + ${num2} ?`;
+        }
+
+        // পেমেন্ট মেথড পরিবর্তনের সাথে সাথে বিকাশ ফর্ম শো/হাইড হবে
+        function togglePaymentMethod() {
+            const method = document.getElementById('payment-method').value;
+            const bkashDiv = document.getElementById('bkash-payment-details');
+            if (method === 'advance_charge') {
+                bkashDiv.classList.remove('hidden');
+            } else {
+                bkashDiv.classList.add('hidden');
             }
         }
 
@@ -132,17 +211,59 @@
 
             document.getElementById('summary-shipping').innerText = shippingFee.toFixed(2);
             document.getElementById('summary-total').innerText = grandTotal.toFixed(2);
+            document.getElementById('notice-charge').innerText = '৳' + shippingFee;
+        }
+
+        function isValidBDMobile(phone) {
+            const regex = /^(01)[3-9]\d{8}$/;
+            return regex.test(phone);
         }
 
         async function submitOrder() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             const name = document.getElementById('name').value.trim();
             const phone = document.getElementById('phone').value.trim();
+            const phoneBackup = document.getElementById('phone-backup').value.trim();
+            const relation = document.getElementById('phone-backup-relation').value;
             const area = document.getElementById('delivery-area').value;
+            const paymentMethod = document.getElementById('payment-method').value;
+            const trxid = document.getElementById('trxid').value.trim();
+            const landmark = document.getElementById('landmark').value.trim();
             const address = document.getElementById('address').value.trim();
+            const captchaInput = parseInt(document.getElementById('captcha-input').value.trim());
 
-            if (!name || !phone || !address) {
+            if (!name || !phone || !phoneBackup || !address || !landmark) {
                 alert("Please fill in all shipping details!");
+                return;
+            }
+
+            // মোবাইল নম্বর ভ্যালিডেশন চেক
+            if (!isValidBDMobile(phone)) {
+                alert("Please enter a valid 11-digit primary mobile number! (e.g. 017XXXXXXXX)");
+                return;
+            }
+
+            if (!isValidBDMobile(phoneBackup)) {
+                alert("Please enter a valid 11-digit backup mobile number! (e.g. 019XXXXXXXX)");
+                return;
+            }
+
+            // দুই নম্বর একই হলে চেকআউট ব্লক করা হবে
+            if (phone === phoneBackup) {
+                alert("Backup phone number must be different from primary phone number!");
+                return;
+            }
+
+            // পেমেন্ট টাইপ অগ্রিম সিলেক্ট করলে TrxID সাবমিট করা বাধ্যতামূলক
+            if (paymentMethod === 'advance_charge' && !trxid) {
+                alert("Please send delivery charge money first and enter the bKash Transaction ID!");
+                return;
+            }
+
+            // ম্যাথ ক্যাপচা ভ্যালিডেশন
+            if (captchaInput !== captchaResult) {
+                alert("Incorrect Security Question (CAPTCHA) answer! Please try again.");
+                generateCaptcha(); // ভুল হলে ক্যাপচা পরিবর্তন হয়ে যাবে
                 return;
             }
 
@@ -150,8 +271,13 @@
                 action: 'checkout',
                 name: name, 
                 phone: phone, 
+                phone_backup: phoneBackup,
+                phone_backup_relation: relation,
                 address: address, 
+                landmark: landmark,
                 delivery_area: area,
+                payment_method: paymentMethod,
+                trxid: trxid,
                 email: user.email
             };
             
