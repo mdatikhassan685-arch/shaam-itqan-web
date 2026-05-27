@@ -14,6 +14,7 @@
 <body class="bg-gray-50 p-4 font-sans pb-10">
 
     <div class="max-w-md mx-auto">
+        <!-- Header -->
         <div class="relative flex items-center justify-center mb-6 border-b pb-3 h-10">
             <a href="bag.html" class="absolute left-0 text-xs font-bold tracking-widest uppercase hover:underline flex items-center gap-1 text-gray-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +29,7 @@
         <div class="bg-white p-4 shadow rounded mb-6 border border-gray-100">
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Order Summary</h2>
             
-            <!-- প্রোডাক্ট সামারি লিস্ট -->
+            <!-- সিলেক্টেড প্রোডাক্ট লিস্ট এরিয়া -->
             <div id="checkout-items-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto scrollbar-hide">
                 <p class="text-center py-4 text-xs text-gray-400">Loading items...</p>
             </div>
@@ -49,7 +50,7 @@
             </div>
         </div>
 
-        <!-- Shipping & Payment Form -->
+        <!-- Shipping Form Section -->
         <div class="bg-white p-4 shadow border border-gray-200 rounded">
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Shipping Details</h2>
             
@@ -58,17 +59,13 @@
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Name</label>
                     <input type="text" id="name" placeholder="Enter your full name" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
                 </div>
-                
-                <!-- প্রাইমারি ফোন নম্বর -->
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Primary Phone Number</label>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Phone Number</label>
                     <input type="tel" id="phone" placeholder="e.g. 01712345678" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
                 </div>
-
-                <!-- অল্টারনেটিভ ফোন নম্বর এবং রিলেশনশিপ ড্রপডাউন -->
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Backup Phone (Alt...)</label>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Backup Phone (Alternative)</label>
                         <input type="tel" id="phone-backup" placeholder="e.g. 01912345678" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
                     </div>
                     <div>
@@ -84,7 +81,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Delivery Area</label>
                     <select id="delivery-area" onchange="updateShipping()" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] bg-white rounded">
@@ -92,8 +88,6 @@
                         <option value="outside_dhaka">Outside Dhaka (৳150)</option>
                     </select>
                 </div>
-
-                <!-- পেমেন্ট অপশন নির্বাচন (COD বনাম অগ্রিম চার্জ) -->
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Payment Method</label>
                     <select id="payment-method" onchange="togglePaymentMethod()" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] bg-white rounded">
@@ -101,29 +95,22 @@
                         <option value="advance_charge">Pay Delivery Charge Advance (Rest COD)</option>
                     </select>
                 </div>
-                
-                <!-- বিকাশ পেমেন্ট ইনস্ট্রাকশন নোটিশ (ডাইনামিক শো/হাইড হবে) -->
                 <div id="bkash-payment-details" class="bg-[#FDF8EF] p-3 border border-[#C1A44E]/30 rounded text-xs leading-relaxed text-gray-700 hidden">
                     <p class="font-bold text-black mb-1">📌 bKash Payment Instructions:</p>
-                    অর্ডারটি ভেরিফাই করতে ডেলিভারি চার্জ (<b id="notice-charge">৳৮০</b>) আমাদের বিকাশ পার্সোনাল নম্বরে <b>(01322415927)</b> সেন্ড মানি করুন। এরপর নিচে ট্রানজেকশন আইডিটি দিন।
+                    অর্ডারটি ভেরিফাই করতে ডেলিভারি চার্জ (<b id="notice-charge">৳৮০</b>) আমাদের বিকাশ পার্সোনাল নম্বরে <b>(০১৭XXXXXXXX)</b> সেন্ড মানি করুন। এরপর নিচে ট্রানজেকশন আইডিটি দিন।
                     <div class="mt-2">
                         <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">bKash Transaction ID (TrxID)</label>
                         <input type="text" id="trxid" placeholder="e.g. K9B82HG5" class="w-full p-2.5 border text-sm focus:outline-none focus:border-[#D4AF37] rounded bg-white">
                     </div>
                 </div>
-
-                <!-- ল্যান্ডমার্ক ইনপুট ফিল্ড -->
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Landmark (চারপাশের পরিচিত স্থান এমন জায়গায় যা সবাই এক নামে চিনে)</label>
-                    <input type="text" id="landmark" placeholder="e.g. ABC হাসপাতালের পাশে, মসজিদে পাশে " class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Landmark (চারপাশের পরিচিত স্থান)</label>
+                    <input type="text" id="landmark" placeholder="e.g. ল্যাবএইড হাসপাতালের বিপরীতে, হলুদ গেটের বাড়ি" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
                 </div>
-
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Delivery Address</label>
                     <textarea id="address" placeholder="House/Road, Area, District" rows="3" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded"></textarea>
                 </div>
-
-                <!-- ম্যাথ ক্যাপচা বক্স (বট অর্ডার ঠেকাতে) -->
                 <div class="bg-gray-100 p-3 border border-gray-200 rounded flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">Security Question</p>
@@ -149,18 +136,28 @@
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { window.location.href = 'login.html'; return; }
 
+            // ব্রাউজার মেমোরি থেকে শুধুমাত্র সিলেক্ট করা আইডিগুলো নেওয়া হচ্ছে
+            const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
+            if (checkedIds.length === 0) {
+                alert("No items selected for checkout! Redirecting to Bag.");
+                window.location.href = 'bag.html';
+                return;
+            }
+
             try {
                 const res = await fetch('/api/bag?email=' + user.email);
                 const cartItems = await res.json();
 
-                if (cartItems.length === 0) {
-                    alert("Your bag is empty! Redirecting to shop.");
-                    window.location.href = 'index.html';
+                // কেবল সিলেক্ট করা প্রোডাক্টগুলো ফিল্টার করা হচ্ছে
+                const checkedItems = cartItems.filter(item => checkedIds.includes(item.id));
+                if (checkedItems.length === 0) {
+                    alert("Selected items not found! Redirecting to Bag.");
+                    window.location.href = 'bag.html';
                     return;
                 }
 
                 const listContainer = document.getElementById('checkout-items-list');
-                listContainer.innerHTML = cartItems.map(item => {
+                listContainer.innerHTML = checkedItems.map(item => {
                     const qty = parseInt(item.quantity) || 1;
                     const price = parseFloat(item.price);
                     subtotal += price * qty;
@@ -179,21 +176,19 @@
 
                 document.getElementById('summary-subtotal').innerText = subtotal.toFixed(2);
                 updateShipping(); 
-                generateCaptcha(); // ক্যাপচা লোড করা হলো
+                generateCaptcha();
             } catch (e) {
                 console.error(e);
             }
         }
 
-        // ম্যাথ ক্যাপচা জেনারেটর
         function generateCaptcha() {
-            const num1 = Math.floor(Math.random() * 9) + 1; // ১ থেকে ৯ এর সংখ্যা
+            const num1 = Math.floor(Math.random() * 9) + 1;
             const num2 = Math.floor(Math.random() * 9) + 1;
             captchaResult = num1 + num2;
             document.getElementById('captcha-question').innerText = `What is ${num1} + ${num2} ?`;
         }
 
-        // পেমেন্ট মেথড পরিবর্তনের সাথে সাথে বিকাশ ফর্ম শো/হাইড হবে
         function togglePaymentMethod() {
             const method = document.getElementById('payment-method').value;
             const bkashDiv = document.getElementById('bkash-payment-details');
@@ -237,35 +232,38 @@
                 return;
             }
 
-            // মোবাইল নম্বর ভ্যালিডেশন চেক
             if (!isValidBDMobile(phone)) {
-                alert("Please enter a valid 11-digit primary mobile number! (e.g. 017XXXXXXXX)");
+                alert("Please enter a valid 11-digit primary mobile number!");
                 return;
             }
 
             if (!isValidBDMobile(phoneBackup)) {
-                alert("Please enter a valid 11-digit backup mobile number! (e.g. 019XXXXXXXX)");
+                alert("Please enter a valid 11-digit backup mobile number!");
                 return;
             }
 
-            // দুই নম্বর একই হলে চেকআউট ব্লক করা হবে
             if (phone === phoneBackup) {
                 alert("Backup phone number must be different from primary phone number!");
                 return;
             }
 
-            // পেমেন্ট টাইপ অগ্রিম সিলেক্ট করলে TrxID সাবমিট করা বাধ্যতামূলক
             if (paymentMethod === 'advance_charge' && !trxid) {
-                alert("Please send delivery charge money first and enter the bKash Transaction ID!");
+                alert("Please enter the bKash Transaction ID!");
                 return;
             }
 
-            // ম্যাথ ক্যাপচা ভ্যালিডেশন
             if (captchaInput !== captchaResult) {
-                alert("Incorrect Security Question (CAPTCHA) answer! Please try again.");
-                generateCaptcha(); // ভুল হলে ক্যাপচা পরিবর্তন হয়ে যাবে
+                alert("Incorrect CAPTCHA answer!");
+                generateCaptcha();
                 return;
             }
+
+            // অর্ডারের জন্য মেমোরি থেকে আইডিগুলো নেওয়া হচ্ছে
+            const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
+
+            const finalAddress = trxid 
+                ? `${address} [TrxID: ${trxid}] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
+                : `${address} (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
 
             const data = { 
                 action: 'checkout',
@@ -273,11 +271,9 @@
                 phone: phone, 
                 phone_backup: phoneBackup,
                 phone_backup_relation: relation,
-                address: address, 
-                landmark: landmark,
+                address: finalAddress, 
                 delivery_area: area,
-                payment_method: paymentMethod,
-                trxid: trxid,
+                checked_item_ids: checkedIds, // এপিআই-তে কেবল সিলেক্টেড আইডি পাঠানো হচ্ছে
                 email: user.email
             };
             
@@ -290,6 +286,7 @@
                 
                 if (res.ok) { 
                     alert('Order Placed Successfully!'); 
+                    localStorage.removeItem('checkout_item_ids'); // সেশন ক্লিয়ার
                     window.location.href = 'index.html'; 
                 } else {
                     alert('Failed to place order.');
