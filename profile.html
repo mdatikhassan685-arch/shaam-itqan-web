@@ -2,38 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>My Profile | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
+        .gold-border { border: 1px solid #C1A44E; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-[#FDF8EF] text-[#333333] font-serif min-h-screen p-6">
+<body class="bg-[#FDF8EF] text-[#333333] font-sans pb-28">
 
-    <div class="max-w-md mx-auto bg-white p-8 border border-[#C1A44E]/30 shadow-2xl">
-        <h2 class="text-3xl font-bold mb-8 text-center luxury-font uppercase tracking-widest">Profile</h2>
+    <div class="max-w-md mx-auto p-4">
         
-        <div class="space-y-6">
-            <div>
-                <p class="text-[10px] uppercase tracking-widest text-gray-500">Name</p>
-                <p id="user-name" class="font-bold text-lg">-</p>
-            </div>
-            <div>
-                <p class="text-[10px] uppercase tracking-widest text-gray-500">Email</p>
-                <p id="user-email" class="font-bold text-lg">-</p>
+        <!-- Header -->
+        <h2 class="text-2xl font-bold mb-6 text-center luxury-font uppercase tracking-widest text-gray-800 border-b pb-3 border-[#C1A44E]/20">Profile</h2>
+        
+        <!-- Luxury User Card -->
+        <div class="bg-white p-5 rounded shadow-xl border-t-4 border-[#C1A44E] mb-6">
+            <div class="flex items-center gap-4">
+                <!-- User Avatar Icon -->
+                <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center border border-[#C1A44E]/30">
+                    <svg class="w-6 h-6 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-[9px] uppercase tracking-wider text-[#C1A44E] font-bold font-sans">Valued Customer</p>
+                    <h3 id="user-name" class="font-bold text-base text-gray-800">-</h3>
+                    <p id="user-email" class="text-xs text-gray-500 font-mono">-</p>
+                </div>
             </div>
         </div>
 
-        <div class="mt-10 space-y-4">
-            <a href="index.html" class="block w-full text-center border border-[#333333] py-3 uppercase text-sm tracking-widest hover:bg-[#333333] hover:text-white transition">Continue Shopping</a>
-            <button onclick="logout()" class="w-full bg-[#C1A44E] text-white py-3 uppercase text-sm tracking-widest hover:bg-[#a38a3f] transition">Logout</button>
+        <!-- My Orders Section (অর্ডার ট্র্যাকিং ও ইতিহাস) -->
+        <div class="bg-white p-5 rounded shadow-xl border border-gray-100 mb-6">
+            <h3 class="font-bold text-xs uppercase tracking-widest border-b pb-2 mb-4 text-gray-800 flex items-center gap-2">
+                <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                My Orders
+            </h3>
+            
+            <!-- অর্ডার সমূহের ডাইনামিক লিস্ট এরিয়া -->
+            <div id="user-orders-list" class="space-y-4 max-h-[350px] overflow-y-auto scrollbar-hide">
+                <p class="text-center py-6 text-xs text-gray-400">Loading your orders...</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <button onclick="logout()" class="w-full border border-red-500 text-red-500 py-3 rounded uppercase text-xs tracking-widest font-bold hover:bg-red-500 hover:text-white transition duration-300">
+                Logout
+            </button>
         </div>
     </div>
 
+    <!-- Bottom Nav (আইকনসহ হোম পেজের মতো সেম নেভিগেশন বার) -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
+        
+        <!-- Home Link -->
+        <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            HOME
+        </a>
+        
+        <!-- Favorites Link -->
+        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            FAV
+        </a>
+        
+        <!-- Active Profile Link -->
+        <a href="profile.html" class="text-[#D4AF37] flex flex-col items-center">
+            <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            PROFILE
+        </a>
+        
+        <!-- Menu Link -->
+        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            MENU
+        </a>
+    </div>
+
     <script>
-        // পেজ লোড হওয়ার সাথে সাথে লগইন আছে কি না চেক করুন
         const user = JSON.parse(localStorage.getItem('user_session'));
         
         if (!user) {
@@ -41,6 +103,54 @@
         } else {
             document.getElementById('user-name').innerText = user.username || "Valued Customer";
             document.getElementById('user-email').innerText = user.email;
+            loadUserOrders(); // সেশন থাকলে অর্ডার লোড হবে
+        }
+
+        // কাস্টমারের নিজস্ব অর্ডার হিস্টোরি এবং স্ট্যাটাস লোড করার ডাইনামিক ফাংশন
+        async function loadUserOrders() {
+            try {
+                const res = await fetch('/api/orders?email=' + user.email);
+                const orders = await res.json();
+                const container = document.getElementById('user-orders-list');
+                
+                if (orders.length === 0) {
+                    container.innerHTML = `<p class="text-center py-10 text-xs text-gray-400">You haven't placed any orders yet.</p>`;
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => {
+                    const primaryPhone = o.phone.split(' | ')[0]?.replace('Primary: ', '') || 'N/A';
+                    
+                    return `
+                        <div class="bg-gray-50 p-4 border border-gray-100 rounded text-xs space-y-2.5 leading-relaxed">
+                            <!-- অর্ডার আইডি এবং স্ট্যাটাস ব্যাজ -->
+                            <div class="flex justify-between items-center border-b border-gray-200/50 pb-2 font-bold">
+                                <span class="text-gray-800">Order ID: #${o.id}</span>
+                                <span class="${o.status === 'Confirmed' ? 'text-green-600 bg-green-50' : 'text-orange-600 bg-orange-50'} px-2 py-0.5 rounded text-[9px] tracking-wider uppercase font-sans">${o.status}</span>
+                            </div>
+                            
+                            <!-- অর্ডার করা প্রোডাক্টের বিবরণ -->
+                            <div class="text-gray-700 font-sans">
+                                <b>Items:</b> ${o.products}
+                            </div>
+                            
+                            <!-- শিপিং সংক্ষিপ্ত তথ্য -->
+                            <div class="text-gray-500 font-sans text-[10px] space-y-0.5">
+                                <div><b>Deliver To:</b> ${o.customer_name} | ${primaryPhone}</div>
+                            </div>
+
+                            <!-- সর্বমোট প্রাইস -->
+                            <div class="flex justify-between items-center border-t border-gray-200/50 pt-2 font-bold text-gray-800 font-sans">
+                                <span>Total Price:</span>
+                                <span class="text-sm text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Failed to load user orders:", error);
+                document.getElementById('user-orders-list').innerHTML = `<p class="text-center py-6 text-red-500 text-xs">Error loading orders history.</p>`;
+            }
         }
 
         function logout() {
