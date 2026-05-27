@@ -38,20 +38,26 @@ export default async function handler(req, res) {
                 });
                 const combinedProducts = productDetailsArray.join(', ');
 
-                // ৩. ব্যাকএন্ডে ডেলিভারি চার্জ যাচাই করা (জালিয়াতি রোধে এটি অত্যন্ত গুরুত্বপূর্ণ)
+                // ৩. ব্যাকএন্ডে ডেলিভারি চার্জ এবং গ্র্যান্ড টোটাল ভেরিফাই করা (জালিয়াতি রোধে অত্যন্ত গুরুত্বপূর্ণ)
                 const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
-                const grandTotal = subtotal + shippingFee; // সাবটোটাল + কুরিয়ার চার্জ
+                const grandTotal = subtotal + shippingFee; 
 
-                // ডেলিভারি ঠিকানা গুছিয়ে তৈরি করা
-                const detailedAddress = `${b.address} (${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
+                // ৪. ডাটাবেজের কলামগুলোতে ডাটাগুলো অত্যন্ত গুছিয়ে সাজানো হচ্ছে (যাতে আগের অ্যাডমিন প্যানেলে অটো সুন্দর দেখায়)
+                const combinedPhones = `Primary: ${b.phone} | Alt: ${b.phone_backup} (${b.phone_backup_relation})`;
+                
+                const paymentInfo = b.payment_method === 'advance_charge' 
+                    ? `Advance Paid (TrxID: ${b.trxid || 'N/A'})` 
+                    : 'Full Cash on Delivery (COD)';
+                
+                const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}`;
 
-                // ৪. ডাটাবেজে ফাইনাল গ্র্যান্ড টোটালসহ অর্ডার সেভ করা
+                // ৫. ডাটাবেজে ফাইনাল ডাটা সেভ করা
                 await db.execute(
                     'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [b.name, b.phone, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
+                    [b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
                 );
 
-                // ৫. সফলভাবে সেভ করার পর ব্যাগ খালি করে দেওয়া
+                // ৬. সফলভাবে সেভ করার পর ব্যাগ খালি করে দেওয়া
                 await db.execute('DELETE FROM bag WHERE email = ?', [b.email]);
 
                 return res.status(200).json({ status: "Success" });
