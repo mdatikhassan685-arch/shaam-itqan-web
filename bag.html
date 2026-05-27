@@ -6,14 +6,14 @@
     <title>My Bag | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
     </style>
 </head>
 <body class="bg-gray-50 p-4 font-sans pb-10">
 
     <div class="max-w-md mx-auto">
-        <!-- Header with Back Button -->
+        <!-- Header -->
         <div class="flex items-center justify-between mb-6 border-b pb-3">
             <a href="index.html" class="text-sm font-bold tracking-widest uppercase hover:underline flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,11 +35,10 @@
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Cart Summary</h2>
             
             <div class="flex justify-between font-bold mb-4 text-sm">
-                <span>Subtotal (Excluding Delivery):</span>
-                <span class="text-[#D4AF37]">৳ <span id="total-price">0</span></span>
+                <span>Selected Subtotal:</span>
+                <span class="text-[#D4AF37]">৳ <span id="total-price">0.00</span></span>
             </div>
             
-            <!-- কাস্টমারকে চেকআউট পেজে রিডাইরেক্ট করার বাটন -->
             <button onclick="goToCheckout()" class="w-full bg-black text-white py-3.5 mt-5 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded">
                 PROCEED TO CHECKOUT
             </button>
@@ -71,15 +70,16 @@
                     return;
                 }
 
-                let total = 0;
                 container.innerHTML = cartItems.map(item => {
                     const itemQty = parseInt(item.quantity) || 1;
                     const itemPrice = parseFloat(item.price);
                     const subtotal = itemPrice * itemQty;
-                    total += subtotal;
 
                     return `
                         <div class="bg-white p-3 border border-gray-200 flex items-center gap-4 shadow-sm rounded">
+                            <!-- সিলেক্টিভ চেকআউট চেকবক্স -->
+                            <input type="checkbox" class="cart-checkbox w-4 h-4 accent-black cursor-pointer" data-id="${item.id}" data-price="${itemPrice}" data-qty="${itemQty}" checked onchange="calculateSubtotal()">
+                            
                             <img src="${item.image_url || 'https://via.placeholder.com/64'}" class="w-16 h-16 object-cover border border-gray-100 rounded">
                             <div class="flex-grow">
                                 <h3 class="font-bold text-xs uppercase tracking-wider text-gray-800">${item.product_name}</h3>
@@ -92,12 +92,26 @@
                         </div>`;
                 }).join('');
                 
-                document.getElementById('total-price').innerText = total.toFixed(2);
+                calculateSubtotal(); // ডাইনামিক সাবটোটাল প্রথমবার হিসাব করা হচ্ছে
                 checkoutSection.classList.remove('hidden');
             } catch (error) {
                 console.error("Failed to load bag:", error);
                 document.getElementById('bag-items').innerHTML = '<p class="text-center py-10 text-red-500 text-xs">Error loading cart items.</p>';
             }
+        }
+
+        // রিয়েল-টাইমে চেক করা চেকবক্স অনুযায়ী সাবটোটাল লাইভ পরিবর্তন করার ফাংশন
+        function calculateSubtotal() {
+            let total = 0;
+            const checkboxes = document.querySelectorAll('.cart-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    const price = parseFloat(cb.getAttribute('data-price'));
+                    const qty = parseInt(cb.getAttribute('data-qty'));
+                    total += price * qty;
+                }
+            });
+            document.getElementById('total-price').innerText = total.toFixed(2);
         }
 
         async function removeItem(id) {
@@ -123,7 +137,22 @@
             }
         }
 
+        // শুধুমাত্র চেকড থাকা প্রোডাক্টগুলোর আইডি নিয়ে চেকআউটে যাওয়া হচ্ছে
         function goToCheckout() {
+            const checkedIds = [];
+            const checkboxes = document.querySelectorAll('.cart-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    checkedIds.push(parseInt(cb.getAttribute('data-id')));
+                }
+            });
+
+            if (checkedIds.length === 0) {
+                alert("Please select at least one item to proceed to checkout!");
+                return;
+            }
+
+            localStorage.setItem('checkout_item_ids', JSON.stringify(checkedIds));
             window.location.href = 'checkout.html';
         }
 
