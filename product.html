@@ -6,7 +6,7 @@
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
     </style>
 </head>
@@ -50,16 +50,12 @@
         
         <!-- Action Buttons -->
         <div class="mt-8 space-y-3">
-            <!-- Buy Now Button (সরাসরি চেকআউট পেজে নিয়ে যাবে) -->
             <button onclick="buyNow()" class="w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded">
                 Buy Now
             </button>
-            
-            <!-- Add To Bag Button (যোগ করে কাস্টমারকে পেজেই রাখবে) -->
             <button onclick="addProductToBag()" class="w-full border border-black text-black py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-black hover:text-white transition duration-300 rounded">
                 Add To Bag
             </button>
-            
             <button onclick="window.history.back()" class="w-full text-gray-500 text-xs uppercase tracking-widest font-bold py-2 text-center block hover:underline">
                 Back to Shop
             </button>
@@ -106,15 +102,16 @@
             document.getElementById('qty-val').innerText = quantity;
         }
 
+        // এপিআই-তে সফলভাবে সেভ হলে ট্র্যাকিং করার জন্য { success, id } পাঠানো হচ্ছে
         async function saveToBagApi() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { 
                 alert("Please login first!"); 
                 window.location.href = 'login.html'; 
-                return false; 
+                return { success: false }; 
             }
             
-            if (!productData) return false;
+            if (!productData) return { success: false };
 
             try {
                 const res = await fetch('/api/bag', {
@@ -131,29 +128,31 @@
                 });
 
                 if (res.ok) {
-                    return true;
+                    const data = await res.json();
+                    return { success: true, id: data.id }; // এপিআই থেকে প্রাপ্ত কার্ট আইটেমের আইডি পাঠানো হচ্ছে
                 } else {
                     alert("Failed to add. Please try again.");
-                    return false;
+                    return { success: false };
                 }
             } catch (error) {
                 alert("Network error: Could not connect.");
                 console.error(error);
-                return false;
+                return { success: false };
             }
         }
 
         async function addProductToBag() {
-            const success = await saveToBagApi();
-            if (success) {
+            const resData = await saveToBagApi();
+            if (resData.success) {
                 alert("Added to Bag successfully!");
             }
         }
 
-        // Buy Now: আইটেম যোগ হয়ে এখন সরাসরি চেকআউট পেজে (checkout.html) চলে যাবে
+        // Buy Now: কেবল এই নির্দিষ্ট প্রোডাক্টের আইডি-টি ব্রাউজার মেমরিতে আলাদা ট্র্যাকিং করে চেকআউটে নিয়ে যাবে
         async function buyNow() {
-            const success = await saveToBagApi();
-            if (success) {
+            const resData = await saveToBagApi();
+            if (resData.success) {
+                localStorage.setItem('checkout_item_ids', JSON.stringify([resData.id]));
                 window.location.href = 'checkout.html';
             }
         }
