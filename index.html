@@ -6,7 +6,7 @@
     <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -75,13 +75,27 @@
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
                 
-                // প্রোডাক্ট কার্ড থেকে বাটন সরিয়ে পুরো এরিয়াকে লিংকেবল করা হয়েছে
-                document.getElementById('product-grid').innerHTML = prods.map(p => `
-                    <a href="product.html?id=${p.id}" class="block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded">
-                        <img src="${p.image_url}" class="w-full h-40 object-cover rounded">
-                        <h3 class="text-[11px] font-bold mt-2 truncate text-gray-800 hover:text-[#D4AF37]">${p.name}</h3>
-                        <p class="font-bold text-xs text-[#D4AF37] mt-1">৳ ${p.price}</p>
-                    </a>`).join('');
+                // কাস্টমারদের ইনভেন্টরি স্টেট বোঝানোর জন্য ডাইনামিক ব্যাজ যুক্ত করা হয়েছে
+                document.getElementById('product-grid').innerHTML = prods.map(p => {
+                    let stockBadge = "";
+                    if (p.stock < 0) {
+                        stockBadge = `<span class="text-[8px] font-bold text-blue-600 tracking-wider">COMING SOON</span>`;
+                    } else if (p.stock == 0) {
+                        stockBadge = `<span class="text-[8px] font-bold text-red-600 tracking-wider">STOCK OUT</span>`;
+                    } else {
+                        stockBadge = `<span class="text-[8px] font-bold text-green-600 tracking-wider">STOCK: ${p.stock}</span>`;
+                    }
+
+                    return `
+                        <a href="product.html?id=${p.id}" class="block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded">
+                            <img src="${p.image_url}" class="w-full h-40 object-cover rounded">
+                            <h3 class="text-[11px] font-bold mt-2 truncate text-gray-800 hover:text-[#D4AF37]">${p.name}</h3>
+                            <div class="flex items-center justify-between mt-1.5">
+                                <p class="font-bold text-xs text-[#D4AF37]">৳ ${p.price}</p>
+                                ${stockBadge}
+                            </div>
+                        </a>`;
+                }).join('');
             } catch(e) { console.log(e); }
         }
 
