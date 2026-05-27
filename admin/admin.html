@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin Panel</title>
+    <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
@@ -12,22 +12,27 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="bg-gray-100 p-4 pb-20">
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
+        
+        <!-- Tab Navigation Buttons -->
         <div class="flex gap-1 mb-4 flex-wrap">
-            <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px]">PRODUCTS</button>
-            <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px]">BANNERS</button>
-            <button onclick="loadTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-[10px]">CATEGORY</button>
-            <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px]">ORDERS</button>
+            <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
+            <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
+            <button onclick="loadTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-[10px] rounded font-bold">CATEGORY</button>
+            <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
+        <!-- Add/Edit Form Box -->
         <div class="bg-white p-4 shadow rounded mb-6">
             <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase text-sm">Select an Option</h2>
             <div id="fields" class="space-y-2"></div>
             <input type="hidden" id="edit_id">
             <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE / UPDATE</button>
         </div>
+        
+        <!-- List Container -->
         <div id="item-list" class="space-y-3 pb-10"></div>
     </div>
 
@@ -90,15 +95,78 @@
         }
 
         async function deleteItem(id) { await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        
+        // সম্পূর্ণ নতুন ডিজাইনের ডাইনামিক অর্ডার রেন্ডারিং ফাংশন
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
             document.getElementById('save-btn').classList.add('hidden');
             document.getElementById('fields').innerHTML = "";
             const res = await fetch('/api/orders');
             const orders = await res.json();
-            document.getElementById('item-list').innerHTML = orders.map(o => `<div class="bg-white p-3 shadow text-sm"><b>Cust:</b> ${o.customer_name} | ৳${o.total_price}<button onclick="confirmOrder(${o.id})" class="mt-2 w-full bg-green-600 text-white py-1">Confirm</button></div>`).join('');
+            
+            document.getElementById('item-list').innerHTML = orders.map(o => {
+                // ঠিকানা, ল্যান্ডমার্ক ও পেমেন্ট মেথড আলাদা করে পার্স করা হচ্ছে
+                const addressParts = o.address.split(' | ');
+                const mainAddress = addressParts[0] || 'N/A';
+                const landmark = addressParts.find(p => p.startsWith('Landmark:')) || 'Landmark: N/A';
+                const area = addressParts.find(p => p.startsWith('Area:')) || 'Area: N/A';
+                const method = addressParts.find(p => p.startsWith('Method:')) || 'Method: COD';
+
+                return `
+                    <div class="bg-white p-4 shadow rounded mb-4 border border-gray-200 text-sm leading-relaxed">
+                        <!-- অর্ডার আইডি এবং স্ট্যাটাস ব্যাজ -->
+                        <div class="flex justify-between items-center border-b pb-2 mb-2 font-bold">
+                            <span class="text-gray-800">Order ID: #${o.id}</span>
+                            <span class="${o.status === 'Confirmed' ? 'text-green-600 bg-green-50' : 'text-orange-600 bg-orange-50'} px-2 py-0.5 rounded text-xs uppercase tracking-wider">${o.status}</span>
+                        </div>
+                        
+                        <!-- কাস্টমার ডিটেইলস -->
+                        <p class="text-[10px] text-gray-400 uppercase font-bold mt-2 tracking-wider">Customer Info</p>
+                        <div class="bg-gray-50 p-2.5 rounded text-xs text-gray-700 mt-1 space-y-1 font-mono">
+                            <div><b>Name:</b> ${o.customer_name}</div>
+                            <div><b>Phones:</b> ${o.phone}</div>
+                            <div><b>Email:</b> ${o.email}</div>
+                        </div>
+
+                        <!-- শিপিং ও পেমেন্ট তথ্য -->
+                        <p class="text-[10px] text-gray-400 uppercase font-bold mt-3 tracking-wider">Shipping & Payment</p>
+                        <div class="bg-gray-50 p-2.5 rounded text-xs text-gray-700 mt-1 space-y-1 font-mono">
+                            <div><b>Address:</b> ${mainAddress}</div>
+                            <div><b>${landmark}</b></div>
+                            <div><b>${area}</b></div>
+                            <div><b class="text-[#C1A44E]">${method}</b></div>
+                        </div>
+
+                        <!-- প্রোডাক্ট সামারি -->
+                        <p class="text-[10px] text-gray-400 uppercase font-bold mt-3 tracking-wider">Products Ordered</p>
+                        <div class="bg-gray-50 p-2.5 rounded text-xs text-gray-700 mt-1 font-mono">
+                            ${o.products}
+                        </div>
+
+                        <!-- গ্র্যান্ড টোটাল -->
+                        <div class="flex justify-between items-center mt-4 border-t pt-3 font-bold text-gray-800">
+                            <span>Total Price:</span>
+                            <span class="text-base text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
+                        </div>
+
+                        <!-- কনফার্ম বাটন (অর্ডার পেন্ডিং থাকলে দেখাবে) -->
+                        ${o.status === 'Pending' ? `
+                            <button onclick="confirmOrder(${o.id})" class="mt-4 w-full bg-green-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded hover:bg-green-700 transition duration-300">
+                                Confirm Order & Ship
+                            </button>
+                        ` : ''}
+                    </div>`;
+            }).join('');
         }
-        async function confirmOrder(id) { const res = await fetch('/api/orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: 'Confirmed' }) }); if(res.ok) loadOrders(); }
+
+        async function confirmOrder(id) { 
+            const res = await fetch('/api/orders', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ action: 'confirm', id }) 
+            }); 
+            if(res.ok) loadOrders(); 
+        }
     </script>
 </body>
 </html>
