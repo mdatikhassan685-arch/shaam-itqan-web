@@ -101,10 +101,10 @@
                     const thumbContainer = document.getElementById('p-thumbnails');
                     if (images.length > 1) {
                         thumbContainer.innerHTML = images.map((img, index) => `
-                            <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-[#D4AF37] border-2 opacity-100' : 'opacity-50 border-gray-200'}">
-                                <img src="${img.trim()}" class="w-full h-full object-cover">
-                            </button>
-                        `).join('');
+    <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-[#D4AF37] border-2 opacity-100' : 'opacity-50 border-gray-200'}">
+        <img src="${img.trim()}" class="w-full h-full object-cover">
+    </button>
+`).join('');
                         thumbContainer.classList.remove('hidden');
                     }
 
