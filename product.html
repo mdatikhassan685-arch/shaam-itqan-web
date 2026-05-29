@@ -8,27 +8,34 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-[#FDF8EF] p-4 font-sans pb-10">
     <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E] rounded">
         
-        <!-- Product Image -->
-        <img id="p-img" class="w-full h-72 object-cover border border-[#C1A44E]/30 rounded">
+        <!-- স্লাইড ইমেজ স্লাইডার (Swipe Carousel) -->
+        <div class="relative w-full h-80 border border-[#C1A44E]/30 rounded overflow-hidden">
+            <div id="p-slider" class="flex overflow-x-auto h-full snap-x snap-mandatory scrollbar-hide scroll-smooth">
+                <!-- ইমেজ সমূহ এখানে ডাইনামিক্যালি স্লাইডার আকারে রেন্ডার হবে -->
+            </div>
+        </div>
         
         <!-- Title and Price -->
-        <h1 id="p-name" class="text-xl font-bold mt-4 tracking-widest luxury-font uppercase text-gray-800"></h1>
-        <p id="p-price" class="text-lg text-[#C1A44E] font-bold mt-1"></p>
+        <div class="flex justify-between items-start mt-4">
+            <div>
+                <h1 id="p-name" class="text-xl font-bold tracking-widest luxury-font uppercase text-gray-800"></h1>
+                <p id="p-price" class="text-lg text-[#C1A44E] font-bold mt-1"></p>
+            </div>
+            <!-- স্টক স্ট্যাটাস ডিসপ্লে এরিয়া -->
+            <div id="stock-badge" class="mt-1"></div>
+        </div>
         
         <!-- Size Selection Section -->
         <div class="mt-6 border-t pt-4">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">Select Size</p>
             <div class="flex gap-2" id="size-selector">
-                <button onclick="selectSize('S')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">S</button>
-                <button onclick="selectSize('M')" class="size-btn border-2 border-black bg-black text-white w-10 h-10 text-xs font-bold rounded transition">M</button>
-                <button onclick="selectSize('L')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">L</button>
-                <button onclick="selectSize('XL')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">XL</button>
-                <button onclick="selectSize('XXL')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">XXL</button>
+                <!-- ডাইনামিক সাইজ বাটন লোড হবে -->
             </div>
         </div>
 
@@ -36,9 +43,9 @@
         <div class="mt-6 border-t pt-4 flex items-center justify-between">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Quantity</p>
             <div class="flex items-center border border-gray-300 rounded">
-                <button onclick="changeQty(-1)" class="px-3 py-1.5 font-bold hover:bg-gray-100 transition">-</button>
+                <button id="qty-minus" onclick="changeQty(-1)" class="px-3 py-1.5 font-bold hover:bg-gray-100 transition">-</button>
                 <span id="qty-val" class="px-5 font-bold text-sm">1</span>
-                <button onclick="changeQty(1)" class="px-3 py-1.5 font-bold hover:bg-gray-100 transition">+</button>
+                <button id="qty-plus" onclick="changeQty(1)" class="px-3 py-1.5 font-bold hover:bg-gray-100 transition">+</button>
             </div>
         </div>
 
@@ -50,10 +57,10 @@
         
         <!-- Action Buttons -->
         <div class="mt-8 space-y-3">
-            <button onclick="buyNow()" class="w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded">
+            <button id="buy-btn" onclick="buyNow()" class="w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded">
                 Buy Now
             </button>
-            <button onclick="addProductToBag()" class="w-full border border-black text-black py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-black hover:text-white transition duration-300 rounded">
+            <button id="bag-btn" onclick="addProductToBag()" class="w-full border border-black text-black py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-black hover:text-white transition duration-300 rounded">
                 Add To Bag
             </button>
             <button onclick="window.history.back()" class="w-full text-gray-500 text-xs uppercase tracking-widest font-bold py-2 text-center block hover:underline">
@@ -67,42 +74,138 @@
         let selectedSize = 'M';
         let quantity = 1;
         let productData = null;
+        let stockMap = {};
 
         async function loadProduct() {
             try {
                 const res = await fetch('/api/admin-data?type=product');
                 const products = await res.json();
                 productData = products.find(prod => prod.id == pid);
+                
                 if (productData) {
-                    document.getElementById('p-img').src = productData.image_url;
+                    // ইমেজ স্লাইডার রেন্ডারিং (কমা দিয়ে ভাগ করে)
+                    const images = productData.image_url.split(',');
+                    const sliderContainer = document.getElementById('p-slider');
+                    sliderContainer.innerHTML = images.map(img => `
+                        <div class="flex-shrink-0 w-full h-full snap-center">
+                            <img src="${img.trim()}" class="w-full h-full object-cover">
+                        </div>
+                    `).join('');
+
                     document.getElementById('p-name').innerText = productData.name;
                     document.getElementById('p-price').innerText = '৳ ' + productData.price;
                     document.getElementById('p-desc').innerText = productData.description || "No description available.";
+                    
+                    // ৫টি পৃথক সাইজের স্টক ম্যাপ
+                    stockMap = {
+                        'S': parseInt(productData.stock_s) || 0,
+                        'M': parseInt(productData.stock_m) || 0,
+                        'L': parseInt(productData.stock_l) || 0,
+                        'XL': parseInt(productData.stock_xl) || 0,
+                        'XXL': parseInt(productData.stock_xxl) || 0
+                    };
+
+                    // স্টক এভেইলেবল থাকা প্রথম ভ্যালিড সাইজটি ডিফল্ট সিলেক্ট হবে
+                    const availableSizes = ['S', 'M', 'L', 'XL', 'XXL'].filter(sz => stockMap[sz] > 0);
+                    if (availableSizes.length > 0) {
+                        selectedSize = availableSizes[0];
+                    } else {
+                        selectedSize = ''; // সম্পূর্ণ স্টক আউট
+                    }
+
+                    renderSizeSelector();
+                    updateStockBadge();
                 }
             } catch (error) {
                 console.error("Failed to load product details:", error);
             }
         }
 
+        // সাইজ বাটন রেন্ডার করার ফাংশন (স্টক জিরো হলে বাটন স্ক্রিনশটের মতো ক্রস ও ডিসেবল হবে)
+        function renderSizeSelector() {
+            const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+            const selector = document.getElementById('size-selector');
+            
+            selector.innerHTML = sizes.map(sz => {
+                const stock = stockMap[sz];
+                if (stock <= 0) {
+                    // কাস্টমার যাতে সোল্ড আউট সাইজে ক্লিক করতে না পারে (ক্রস বাটন)
+                    return `<button disabled class="border border-gray-200 text-gray-300 w-10 h-10 text-xs font-bold rounded line-through cursor-not-allowed bg-gray-50">${sz}</button>`;
+                } else if (sz === selectedSize) {
+                    return `<button onclick="selectSize('${sz}')" class="size-btn border-2 border-black bg-black text-white w-10 h-10 text-xs font-bold rounded transition">${sz}</button>`;
+                } else {
+                    return `<button onclick="selectSize('${sz}')" class="size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition">${sz}</button>`;
+                }
+            }).join('');
+        }
+
         function selectSize(size) {
             selectedSize = size;
-            const buttons = document.querySelectorAll('.size-btn');
-            buttons.forEach(btn => {
-                if (btn.innerText === size) {
-                    btn.className = "size-btn border-2 border-black bg-black text-white w-10 h-10 text-xs font-bold rounded transition";
-                } else {
-                    btn.className = "size-btn border border-gray-300 w-10 h-10 text-xs font-bold rounded hover:border-black transition";
-                }
-            });
+            quantity = 1; // সাইজ পরিবর্তন করলে কোয়ান্টিটি পুনরায় ১ হবে
+            document.getElementById('qty-val').innerText = quantity;
+            renderSizeSelector();
+            updateStockBadge();
+        }
+
+        // সাইজ পরিবর্তনের সাথে সাথে স্টক ব্যাজ আপডেট করার ফাংশন
+        function updateStockBadge() {
+            const badge = document.getElementById('stock-badge');
+            
+            // যদি সব সাইজই স্টক আউট হয়
+            const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
+            if (totalStock <= 0) {
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[9px] font-bold px-2.5 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
+                disableActionButtons();
+                return;
+            }
+
+            const activeStock = stockMap[selectedSize];
+            if (activeStock < 0) {
+                badge.innerHTML = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
+                disableActionButtons();
+            } else if (activeStock == 0) {
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Sold Out</span>`;
+                // শুধুমাত্র এই সাইজের জন্য অর্ডার বাটন ধূসর হবে
+                document.getElementById('buy-btn').disabled = true;
+                document.getElementById('buy-btn').className = "w-full bg-gray-300 text-gray-500 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
+                document.getElementById('bag-btn').disabled = true;
+                document.getElementById('bag-btn').className = "w-full border border-gray-200 text-gray-400 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
+            } else {
+                badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                enableActionButtons();
+            }
+        }
+
+        function disableActionButtons() {
+            document.getElementById('buy-btn').disabled = true;
+            document.getElementById('buy-btn').className = "w-full bg-gray-300 text-gray-500 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
+            document.getElementById('bag-btn').disabled = true;
+            document.getElementById('bag-btn').className = "w-full border border-gray-200 text-gray-400 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
+            document.getElementById('qty-plus').disabled = true;
+            document.getElementById('qty-minus').disabled = true;
+        }
+
+        function enableActionButtons() {
+            document.getElementById('buy-btn').disabled = false;
+            document.getElementById('buy-btn').className = "w-full bg-black text-white py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition duration-300 rounded";
+            document.getElementById('bag-btn').disabled = false;
+            document.getElementById('bag-btn').className = "w-full border border-black text-black py-3.5 uppercase tracking-widest text-xs font-bold hover:bg-black hover:text-white transition duration-300 rounded";
+            document.getElementById('qty-plus').disabled = false;
+            document.getElementById('qty-minus').disabled = false;
         }
 
         function changeQty(amount) {
             quantity += amount;
             if (quantity < 1) quantity = 1;
+            
+            const limit = stockMap[selectedSize];
+            if (limit > 0 && quantity > limit) {
+                quantity = limit;
+                alert(`Sorry, we only have ${limit} items left in stock for size ${selectedSize}!`);
+            }
             document.getElementById('qty-val').innerText = quantity;
         }
 
-        // এপিআই-তে সফলভাবে সেভ হলে ট্র্যাকিং করার জন্য { success, id } পাঠানো হচ্ছে
         async function saveToBagApi() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { 
@@ -111,7 +214,7 @@
                 return { success: false }; 
             }
             
-            if (!productData) return { success: false };
+            if (!productData || !selectedSize) return { success: false };
 
             try {
                 const res = await fetch('/api/bag', {
@@ -129,7 +232,7 @@
 
                 if (res.ok) {
                     const data = await res.json();
-                    return { success: true, id: data.id }; // এপিআই থেকে প্রাপ্ত কার্ট আইটেমের আইডি পাঠানো হচ্ছে
+                    return { success: true, id: data.id };
                 } else {
                     alert("Failed to add. Please try again.");
                     return { success: false };
@@ -148,7 +251,6 @@
             }
         }
 
-        // Buy Now: কেবল এই নির্দিষ্ট প্রোডাক্টের আইডি-টি ব্রাউজার মেমরিতে আলাদা ট্র্যাকিং করে চেকআউটে নিয়ে যাবে
         async function buyNow() {
             const resData = await saveToBagApi();
             if (resData.success) {
