@@ -6,6 +6,7 @@
     <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
         if (localStorage.getItem('is_admin') !== 'true') {
             window.location.href = 'admin-login.html';
         }
@@ -15,6 +16,7 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
+        <!-- Tab Navigation Buttons -->
         <div class="flex gap-1 mb-4 flex-wrap">
             <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
@@ -22,6 +24,7 @@
             <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
+        <!-- Add/Edit Form Box -->
         <div class="bg-white p-4 shadow rounded mb-6">
             <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase text-sm">Select an Option</h2>
             <div id="fields" class="space-y-2"></div>
@@ -29,19 +32,32 @@
             <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE / UPDATE</button>
         </div>
         
+        <!-- List Container -->
         <div id="item-list" class="space-y-3 pb-10"></div>
     </div>
 
     <script>
         let currentType = '';
-        function loadTab(type) {
+        
+        // ডাইনামিক ট্যাব লোডিং ফাংশন
+        async function loadTab(type) {
             currentType = type;
             document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
-            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm">`;
+            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
             
-            if(type === 'product') {
+            if (type === 'product') {
+                // ডাটাবেজ থেকে অ্যাডমিনের আগে তৈরি করা ক্যাটাগরির তালিকা ফেচ করা হচ্ছে
+                let catOptions = `<option value="General">General (ডিফল্ট)</option>`;
+                try {
+                    const catRes = await fetch('/api/admin-data?type=category');
+                    const categories = await catRes.json();
+                    catOptions += categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                } catch (e) {
+                    console.error("Failed to load categories for dropdown:", e);
+                }
+
                 f += `
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -67,10 +83,12 @@
                     </select>
                 </div>
 
-                <!-- ক্যাটাগরি ইনপুট ফিল্ড যুক্ত করা হলো -->
+                <!-- পূর্বে তৈরি করা ক্যাটাগরি সমূহের ডাইনামিক ড্রপডাউন মেনু -->
                 <div>
-                    <label class="text-[9px] font-bold text-gray-500 uppercase">Category Name (e.g. Drop Shoulder, Regular Fit)</label>
-                    <input type="text" id="in_category" placeholder="Category Name" class="w-full p-2 border text-sm rounded">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Product Category (সিলেক্ট করুন)</label>
+                    <select id="in_category" class="w-full p-2 border text-sm rounded bg-white">
+                        ${catOptions}
+                    </select>
                 </div>
 
                 <div class="space-y-1">
@@ -84,10 +102,14 @@
                     </div>
                 </div>
                 <input type="text" id="in_desc" placeholder="Description" class="w-full p-2 border text-sm">`;
-            } else {
-                f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm">`;
+            } 
+            else if (type === 'banner') {
+                // ব্যানার লিংকের জন্য ইনপুট ফিল্ড থাকবে
+                f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm rounded">`;
             }
-            f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate for multiple: url1, url2)" class="w-full p-2 border text-sm">`;
+            // কুইক সেটিং: ক্যাটাগরি তৈরির সময় কোনো লিংক ইনপুটের প্রয়োজন নেই
+            f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate for multiple: url1, url2)" class="w-full p-2 border text-sm rounded">`;
+            
             document.getElementById('fields').innerHTML = f;
             renderList(type);
         }
@@ -100,7 +122,7 @@
                 price: document.getElementById('in_price')?.value, 
                 original_price: document.getElementById('in_original_price')?.value || 0,
                 tag: document.getElementById('in_tag')?.value || 'none',
-                category: document.getElementById('in_category')?.value || 'General', // ক্যাটাগরি ডাটা পাঠানো হচ্ছে
+                category: document.getElementById('in_category')?.value || 'General', 
                 description: document.getElementById('in_desc')?.value, 
                 image_url: document.getElementById('in_img').value, 
                 link_url: document.getElementById('in_link')?.value,
@@ -133,13 +155,18 @@
                 </div>`).join('');
         }
 
-        function editItem(item) {
+        // এডিট ট্র্রিগারের সময় ডাটা লোডিং লজিক
+        async function editItem(item) {
             document.getElementById('edit_id').value = item.id;
             document.getElementById('in_name').value = item.name || '';
             if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
             if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
             if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
-            if(document.getElementById('in_category')) document.getElementById('in_category').value = item.category || 'General'; // ক্যাটাগরি লোড করা হচ্ছে
+            
+            // প্রোডাক্ট এডিটের সময় আগে থেকে লোড হওয়া ড্রপডাউন ভ্যালু ম্যাচ করানো হচ্ছে
+            if(document.getElementById('in_category')) {
+                document.getElementById('in_category').value = item.category || 'General';
+            }
             
             if(document.getElementById('in_stock_s')) document.getElementById('in_stock_s').value = item.stock_s || 0;
             if(document.getElementById('in_stock_m')) document.getElementById('in_stock_m').value = item.stock_m || 0;
@@ -152,7 +179,7 @@
             if(document.getElementById('in_link')) document.getElementById('in_link').value = item.link_url || '';
         }
 
-        async function deleteItem(id) { await fetch('/api/admin-data?type=currentType', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        async function deleteItem(id) { await fetch(`/api/admin-data?type=${currentType}`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
         
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
