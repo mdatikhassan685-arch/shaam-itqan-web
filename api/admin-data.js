@@ -13,11 +13,11 @@ export default async function handler(req, res) {
             res.status(200).json(rows);
         } else if (req.method === 'POST') {
             const b = req.body;
-            // ৫টি পৃথক সাইজের স্টক ইনসার্ট করার জন্য কুয়েরি মডিফাই করা হলো
+            // original_price এবং tag ডাটাবেজে সেভ করার জন্য কুয়েরি আপডেট করা হলো
             if (type === 'product') {
                 await db.execute(
-                    'INSERT INTO products (name, price, stock_s, stock_m, stock_l, stock_xl, stock_xxl, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-                    [b.name, b.price, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description]
+                    'INSERT INTO products (name, price, original_price, tag, stock_s, stock_m, stock_l, stock_xl, stock_xxl, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+                    [b.name, b.price, b.original_price, b.tag, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description]
                 );
             }
             else if (type === 'banner') await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
@@ -25,11 +25,11 @@ export default async function handler(req, res) {
             res.status(200).json({ status: "Success" });
         } else if (req.method === 'PUT') {
             const b = req.body;
-            // এডিটের সময় ৫টি পৃথক সাইজের স্টক আপডেট করার জন্য কুয়েরি মডিফাই করা হলো
+            // এডিটের সময় original_price এবং tag আপডেট করার জন্য কুয়েরি মডিফাই করা হলো
             if (type === 'product') {
                 await db.execute(
-                    'UPDATE products SET name=?, price=?, stock_s=?, stock_m=?, stock_l=?, stock_xl=?, stock_xxl=?, image_url=?, description=? WHERE id=?', 
-                    [b.name, b.price, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description, b.id]
+                    'UPDATE products SET name=?, price=?, original_price=?, tag=?, stock_s=?, stock_m=?, stock_l=?, stock_xl=?, stock_xxl=?, image_url=?, description=? WHERE id=?', 
+                    [b.name, b.price, b.original_price, b.tag, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description, b.id]
                 );
             }
             else if (type === 'banner') await db.execute('UPDATE banners SET name=?, image_url=?, link_url=? WHERE id=?', [b.name, b.image_url, b.link_url, b.id]);
