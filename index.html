@@ -34,24 +34,32 @@
 
     <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
+        
+        <!-- Home Link -->
         <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">
             <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
             HOME
         </a>
+        
+        <!-- Favorites Link -->
         <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
             FAV
         </a>
+        
+        <!-- Account / Profile Link -->
         <a href="login.html" id="auth-link" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
             <span id="auth-text">ACCOUNT</span>
         </a>
+        
+        <!-- Menu Link -->
         <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -79,28 +87,35 @@
                     const images = p.image_url.split(',');
                     const firstImage = images[0] ? images[0].trim() : 'https://via.placeholder.com/300';
 
-                    const totalStock = (parseInt(p.stock_s) || 0) + (parseInt(p.stock_m) || 0) + (parseInt(p.stock_l) || 0) + (parseInt(p.stock_xl) || 0) + (parseInt(p.stock_xxl) || 0);
+                    const s_s = parseInt(p.stock_s) || 0;
+                    const s_m = parseInt(p.stock_m) || 0;
+                    const s_l = parseInt(p.stock_l) || 0;
+                    const s_xl = parseInt(p.stock_xl) || 0;
+                    const s_xxl = parseInt(p.stock_xxl) || 0;
+
+                    const hasActiveStock = s_s > 0 || s_m > 0 || s_l > 0 || s_xl > 0 || s_xxl > 0;
+                    const isComingSoon = !hasActiveStock && (s_s < 0 || s_m < 0 || s_l < 0 || s_xl < 0 || s_xxl < 0);
                     
                     let badge = "";
                     let cardLink = `product.html?id=${p.id}`;
 
-                    if (totalStock <= 0) {
-                        badge = `<span class="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">Sold Out</span>`;
+                    // ট্যাগটিকে একদম গোল্ডেন বর্ডারের কোণায় চাপিয়ে দেওয়ার জন্য top-0 right-0 এবং rounded-tr-[2px] ব্যবহার করা হয়েছে
+                    if (hasActiveStock) {
+                        badge = `<span class="absolute top-0 right-0 bg-black text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">Sale</span>`;
+                    } else if (isComingSoon) {
+                        badge = `<span class="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">Coming Soon</span>`;
                     } else {
-                        badge = `<span class="absolute top-2 right-2 bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">Sale</span>`;
+                        badge = `<span class="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">Sold Out</span>`;
                     }
 
-                    // স্ক্রিনশটের সাথে মিলিয়ে ২৫% বাড়তি মূল্য ধরে কাটা প্রাইস (line-through) তৈরি করা হচ্ছে
                     const originalPrice = Math.round(parseFloat(p.price) * 1.25);
 
                     return `
                         <a href="${cardLink}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
                             ${badge}
-                            <!-- aspect-[3/4] ক্লাসটি ইমেজটিকে চমৎকার লম্বাটে ও প্রিমিয়াম সাইজ দেবে -->
                             <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
                                 <img src="${firstImage}" class="w-full h-full object-cover">
                             </div>
-                            <!-- ফন্ট সাইজ বড় এবং line-clamp-2 দিয়ে কার্ডগুলোর উচ্চতা সমান রাখা হয়েছে -->
                             <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
                             <div class="flex items-center gap-2 mt-2 pt-1 border-t border-gray-100">
                                 <span class="line-through text-gray-400 text-[11px]">৳ ${originalPrice}</span>
