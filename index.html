@@ -14,23 +14,53 @@
 </head>
 <body class="bg-white text-black font-sans pb-24">
 
-    <!-- Navbar -->
+    <!-- Navbar: নোটিফিকেশন আইকন এবং ব্যাগ আইকন ডানে বিন্যস্ত করা হয়েছে -->
     <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
         <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
         <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
-        <a href="bag.html" class="relative">
-            <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-        </a>
+        
+        <div class="flex items-center gap-3">
+            <!-- নোটিফিকেশন বেল আইকন (লাল ডট নোটিশ সহ) -->
+            <button class="relative focus:outline-none" onclick="alert('No new notifications!')">
+                <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span class="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            </button>
+
+            <!-- ব্যাগ বা কার্ট আইকন -->
+            <a href="bag.html" class="relative">
+                <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            </a>
+        </div>
     </nav>
+
+    <!-- ২ নং পয়েন্টের সমাধান: আধুনিক ও রাউন্ডেড লাইভ সার্চ বার -->
+    <div class="px-4 py-2">
+        <div class="relative flex items-center">
+            <input type="text" id="search-input" oninput="searchProducts()" placeholder="Search T-shirts..." class="w-full p-2.5 pl-10 pr-4 border-2 border-gray-100 rounded-lg text-sm focus:outline-none focus:border-[#D4AF37] transition duration-200 bg-gray-50 font-sans">
+            <div class="absolute left-3.5 text-gray-400">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+    </div>
 
     <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
 
     <!-- Categories -->
-    <div class="px-4 py-4"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">Popular Categories</h2><div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div></div>
+    <div class="px-4 py-4">
+        <h2 class="text-xs font-bold mb-4 uppercase tracking-widest text-gray-700">Popular Categories</h2>
+        <div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div>
+    </div>
 
     <!-- Products -->
-    <main class="px-4 py-2"><h2 class="text-xs font-bold mb-4 uppercase tracking-widest">New Arrivals</h2><div id="product-grid" class="grid grid-cols-2 gap-4"></div></main>
+    <main class="px-4 py-2">
+        <h2 id="product-section-title" class="text-xs font-bold mb-4 uppercase tracking-widest text-gray-700">New Arrivals</h2>
+        <div id="product-grid" class="grid grid-cols-2 gap-4"></div>
+    </main>
 
     <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
@@ -61,6 +91,8 @@
     </div>
 
     <script>
+        let allProducts = []; // সব প্রোডাক্ট মেমোরিতে রাখার গ্লোবাল ভ্যারিয়েবল
+
         async function loadData() {
             try {
                 const [bRes, cRes, pRes] = await Promise.all([
@@ -70,58 +102,122 @@
                 ]);
                 const banners = await bRes.json(); 
                 const cats = await cRes.json(); 
-                const prods = await pRes.json();
+                allProducts = await pRes.json();
                 
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
-                document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
                 
-                document.getElementById('product-grid').innerHTML = prods.map(p => {
-                    const images = p.image_url.split(',');
-                    const firstImage = images[0] ? images[0].trim() : 'https://via.placeholder.com/300';
+                const categoryContainer = document.getElementById('category-grid');
+                let catHTML = `
+                    <button onclick="filterProducts('All')" class="flex-shrink-0 text-center focus:outline-none">
+                        <div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center shadow-md">
+                            <span class="text-white text-xs font-bold tracking-widest">ALL</span>
+                        </div>
+                        <p class="text-[9px] mt-2 font-bold text-gray-800">All Products</p>
+                    </button>
+                `;
+                catHTML += cats.map(c => `
+                    <button onclick="filterProducts('${c.name}')" class="flex-shrink-0 text-center focus:outline-none">
+                        <div class="w-16 h-16 bg-white rounded-full border-2 border-gray-100 overflow-hidden flex items-center justify-center shadow hover:border-[#D4AF37] transition duration-300">
+                            <img src="${c.image_url}" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-[9px] mt-2 font-bold text-gray-800">${c.name}</p>
+                    </button>
+                `).join('');
+                
+                categoryContainer.innerHTML = catHTML;
 
-                    const s_s = parseInt(p.stock_s) || 0;
-                    const s_m = parseInt(p.stock_m) || 0;
-                    const s_l = parseInt(p.stock_l) || 0;
-                    const s_xl = parseInt(p.stock_xl) || 0;
-                    const s_xxl = parseInt(p.stock_xxl) || 0;
-
-                    // ৫টি সাইজের টোটাল স্টক হিসাব করা হচ্ছে
-                    const totalStock = s_s + s_m + s_l + s_xl + s_xxl;
-                    
-                    let badge = "";
-                    let cardLink = `product.html?id=${p.id}`;
-
-                    // ডাইনামিক ট্যাগ এলাইনমেন্ট ও অ্যাডমিন-ভিত্তিক কাস্টম রঙিন ট্যাগ রেন্ডারিং
-                    if (totalStock <= 0) {
-                        badge = `<span class="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">Sold Out</span>`;
-                    } else if (p.tag && p.tag !== 'none') {
-                        let badgeBg = "bg-black"; // ডিফল্ট ব্যাকগ্রাউন্ড ব্ল্যাক (যেমন Sale এর জন্য)
-                        if (p.tag === 'New Arrival') badgeBg = "bg-green-600";
-                        if (p.tag === 'Coming Soon') badgeBg = "bg-blue-600";
-                        if (p.tag === 'Hot') badgeBg = "bg-orange-600";
-
-                        badge = `<span class="absolute top-0 right-0 ${badgeBg} text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">${p.tag}</span>`;
-                    }
-
-                    // ডাটাবেজে অরিজিনাল প্রাইস এন্ট্রি থাকলে তবেই কেবল কাটা দাগের প্রাইস রেন্ডার হবে
-                    const hasDiscount = parseFloat(p.original_price) > 0;
-                    const priceDisplay = hasDiscount 
-                        ? `<span class="line-through text-gray-400 text-[11px] mr-1.5">৳ ${Math.round(p.original_price)}</span> <span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`
-                        : `<span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`;
-
-                    return `
-                        <a href="${cardLink}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
-                            ${badge}
-                            <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
-                                <img src="${firstImage}" class="w-full h-full object-cover">
-                            </div>
-                            <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
-                            <div class="flex items-center mt-2 pt-1 border-t border-gray-100">
-                                ${priceDisplay}
-                            </div>
-                        </a>`;
-                }).join('');
+                renderProductGrid(allProducts);
             } catch(e) { console.log(e); }
+        }
+
+        function renderProductGrid(productsToRender) {
+            const grid = document.getElementById('product-grid');
+            if (productsToRender.length === 0) {
+                grid.innerHTML = `<p class="col-span-2 text-center py-10 text-xs text-gray-400">No products found.</p>`;
+                return;
+            }
+
+            grid.innerHTML = productsToRender.map(p => {
+                const images = p.image_url.split(',');
+                const firstImage = images[0] ? images[0].trim() : 'https://via.placeholder.com/300';
+
+                const s_s = parseInt(p.stock_s) || 0;
+                const s_m = parseInt(p.stock_m) || 0;
+                const s_l = parseInt(p.stock_l) || 0;
+                const s_xl = parseInt(p.stock_xl) || 0;
+                const s_xxl = parseInt(p.stock_xxl) || 0;
+
+                const totalStock = s_s + s_m + s_l + s_xl + s_xxl;
+                
+                let badge = "";
+                let cardLink = `product.html?id=${p.id}`;
+
+                if (totalStock <= 0) {
+                    badge = `<span class="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">Sold Out</span>`;
+                } else if (p.tag && p.tag !== 'none') {
+                    let badgeBg = "bg-black";
+                    if (p.tag === 'Best Sale') badgeBg = "bg-red-800";
+                    if (p.tag === 'Available') badgeBg = "bg-green-600";
+                    if (p.tag === 'New Arrival') badgeBg = "bg-teal-600";
+                    if (p.tag === 'Hot Sale') badgeBg = "bg-orange-600";
+                    if (p.tag === 'Coming Soon') badgeBg = "bg-blue-600";
+
+                    badge = `<span class="absolute top-0 right-0 ${badgeBg} text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">${p.tag}</span>`;
+                }
+
+                const originalPrice = Math.round(parseFloat(p.original_price) || 0);
+                const priceDisplay = originalPrice > 0 
+                    ? `<span class="line-through text-gray-400 text-[11px] mr-1.5">৳ ${originalPrice}</span> <span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`
+                    : `<span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`;
+
+                return `
+                    <a href="${cardLink}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
+                        ${badge}
+                        <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
+                            <img src="${firstImage}" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
+                        <div class="flex items-center gap-2 mt-2 pt-1 border-t border-gray-100">
+                            ${priceDisplay}
+                        </div>
+                    </a>`;
+            }).join('');
+        }
+
+        function filterProducts(categoryName) {
+            const sectionTitle = document.getElementById('product-section-title');
+            
+            // ফিল্টার করার আগে সার্চ ইনপুট ফিল্ডটি খালি করে দেওয়া হচ্ছে
+            document.getElementById('search-input').value = "";
+
+            if (categoryName === 'All') {
+                sectionTitle.innerText = "New Arrivals";
+                renderProductGrid(allProducts);
+            } else {
+                sectionTitle.innerText = categoryName;
+                const filtered = allProducts.filter(p => p.category && p.category.toLowerCase() === categoryName.toLowerCase());
+                renderProductGrid(filtered);
+            }
+        }
+
+        // রিয়েল-টাইম লাইভ সার্চ ফাংশন
+        function searchProducts() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            const sectionTitle = document.getElementById('product-section-title');
+            
+            if (query === "") {
+                sectionTitle.innerText = "New Arrivals";
+                renderProductGrid(allProducts);
+            } else {
+                sectionTitle.innerText = `Search results for "${query}"`;
+                // নামের সাথে বিবরণীর ও কাস্টম ম্যাচের ভিত্তিতে সার্চ হচ্ছে
+                const filtered = allProducts.filter(p => 
+                    p.name.toLowerCase().includes(query) || 
+                    (p.description && p.description.toLowerCase().includes(query)) ||
+                    (p.category && p.category.toLowerCase().includes(query))
+                );
+                renderProductGrid(filtered);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
