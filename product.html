@@ -157,14 +157,14 @@
 
         // সক্রিয় বা একটিভ থাম্বনেইল বর্ডার হাইলাইট করার ফাংশন
         function updateActiveThumbnail(activeIndex) {
-            const thumbnails = document.querySelectorAll('.thumb-btn');
-            thumbnails.forEach((thumb, idx) => {
-                if (idx === activeIndex) {
-                    thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 border-black border-2 opacity-100";
-                } else {
-                    thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 opacity-50 border-gray-200";
-                }
-            });
+    const thumbnails = document.querySelectorAll('.thumb-btn');
+    thumbnails.forEach((thumb, idx) => {
+        if (idx === activeIndex) {
+            thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 border-[#D4AF37] border-2 opacity-100";
+        } else {
+            thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 opacity-50 border-gray-200";
+        }
+    });
         }
 
         // কাস্টমার হাত দিয়ে স্লাইড করলে নিচের একটিভ থাম্বনেইল অটো আপডেট হওয়ার লিসেনার
