@@ -20,16 +20,19 @@
                 <!-- ডাইনামিক স্লাইড ইমেজ লোড হবে -->
             </div>
         </div>
+
+        <!-- ১ নং পয়েন্টের সমাধান: ক্লিকযোগ্য ছোট ছোট থাম্বনেইল ইমেজ এরিয়া -->
+        <div id="p-thumbnails" class="flex gap-2 mt-3 overflow-x-auto scrollbar-hide hidden">
+            <!-- থাম্বনেইল ছবিগুলো এখানে রেন্ডার হবে -->
+        </div>
         
-        <!-- Title and Price -->
-        <div class="flex justify-between items-start mt-4">
-            <div>
-                <h1 id="p-name" class="text-xl font-bold tracking-widest luxury-font uppercase text-gray-800"></h1>
-                <!-- আসল অরিজিনাল ডিসকাউন্টেড প্রাইস রেন্ডার এরিয়া -->
-                <div id="price-container" class="mt-1"></div>
-            </div>
-            <!-- স্টক স্ট্যাটাস ডিসপ্লে এরিয়া -->
-            <div id="stock-badge" class="mt-1"></div>
+        <!-- Title (উপরে শুধু টাইটেল থাকবে) -->
+        <h1 id="p-name" class="text-xl font-bold mt-5 tracking-widest luxury-font uppercase text-gray-800"></h1>
+        
+        <!-- ২ নং পয়েন্টের সমাধান: দাম ও স্টক ব্যাজ একই লাইনে সমান সমান্তরালে থাকবে -->
+        <div class="flex justify-between items-center mt-2.5">
+            <div id="price-container"></div>
+            <div id="stock-badge"></div>
         </div>
         
         <!-- Size Selection Section -->
@@ -85,6 +88,8 @@
                 
                 if (productData) {
                     const images = productData.image_url.split(',');
+                    
+                    // বড় স্লাইড ইমেজ রেন্ডার
                     const sliderContainer = document.getElementById('p-slider');
                     sliderContainer.innerHTML = images.map(img => `
                         <div class="flex-shrink-0 w-full h-full snap-center">
@@ -92,9 +97,19 @@
                         </div>
                     `).join('');
 
+                    // ছোট থাম্বনেইল ইমেজ রেন্ডার (একাধিক ছবি থাকলে তবেই দেখাবে)
+                    const thumbContainer = document.getElementById('p-thumbnails');
+                    if (images.length > 1) {
+                        thumbContainer.innerHTML = images.map((img, index) => `
+                            <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-black border-2 opacity-100' : 'opacity-50 border-gray-200'}">
+                                <img src="${img.trim()}" class="w-full h-full object-cover">
+                            </button>
+                        `).join('');
+                        thumbContainer.classList.remove('hidden');
+                    }
+
                     document.getElementById('p-name').innerText = productData.name;
                     
-                    // ডিসকাউন্ট প্রাইসের কাস্টম রেন্ডারিং (স্ক্রিনশটের মতো)
                     const originalPriceVal = parseFloat(productData.original_price) || 0;
                     const priceContainer = document.getElementById('price-container');
                     if (originalPriceVal > 0) {
@@ -122,10 +137,43 @@
 
                     renderSizeSelector();
                     updateStockBadge();
+                    setupSwipeListener(); // সোয়াইপ লিসেনার সচল করা হলো
                 }
             } catch (error) {
                 console.error("Failed to load product details:", error);
             }
+        }
+
+        // থাম্বনেইল ছবিতে ক্লিক করলে স্লাইড পরিবর্তন করার ফাংশন
+        function scrollToSlide(index) {
+            const slider = document.getElementById('p-slider');
+            const slideWidth = slider.clientWidth;
+            slider.scrollTo({
+                left: slideWidth * index,
+                behavior: 'smooth'
+            });
+            updateActiveThumbnail(index);
+        }
+
+        // সক্রিয় বা একটিভ থাম্বনেইল বর্ডার হাইলাইট করার ফাংশন
+        function updateActiveThumbnail(activeIndex) {
+            const thumbnails = document.querySelectorAll('.thumb-btn');
+            thumbnails.forEach((thumb, idx) => {
+                if (idx === activeIndex) {
+                    thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 border-black border-2 opacity-100";
+                } else {
+                    thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 opacity-50 border-gray-200";
+                }
+            });
+        }
+
+        // কাস্টমার হাত দিয়ে স্লাইড করলে নিচের একটিভ থাম্বনেইল অটো আপডেট হওয়ার লিসেনার
+        function setupSwipeListener() {
+            const slider = document.getElementById('p-slider');
+            slider.addEventListener('scroll', () => {
+                const index = Math.round(slider.scrollLeft / slider.clientWidth);
+                updateActiveThumbnail(index);
+            });
         }
 
         function renderSizeSelector() {
@@ -154,18 +202,16 @@
 
         function updateStockBadge() {
             const badge = document.getElementById('stock-badge');
-            
-            // কাস্টম ট্যাগ যদি 'Coming Soon' বা সরাসরি সোল্ড আউট হয়
             const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
             
             if (productData.tag === 'Coming Soon') {
-                badge.innerHTML = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
+                badge.innerHTML = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
                 disableActionButtons();
                 return;
             }
 
             if (totalStock <= 0) {
-                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2.5 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
                 disableActionButtons();
                 return;
             }
@@ -178,7 +224,17 @@
                 document.getElementById('bag-btn').disabled = true;
                 document.getElementById('bag-btn').className = "w-full border border-gray-200 text-gray-400 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
             } else {
-                badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                if (productData.tag && productData.tag !== 'none') {
+                    let badgeBg = "bg-black";
+                    if (productData.tag === 'Best Sale') badgeBg = "bg-red-800";
+                    if (productData.tag === 'Available') badgeBg = "bg-green-600";
+                    if (productData.tag === 'New Arrival') badgeBg = "bg-teal-600";
+                    if (productData.tag === 'Hot Sale') badgeBg = "bg-orange-600";
+
+                    badge.innerHTML = `<span class="${badgeBg} text-white text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase mr-1">${productData.tag}</span> <span class="bg-green-100 text-green-800 text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                } else {
+                    badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                }
                 enableActionButtons();
             }
         }
