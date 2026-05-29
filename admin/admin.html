@@ -43,8 +43,31 @@
             
             if(type === 'product') {
                 f += `
-                <input type="number" id="in_price" placeholder="Price" class="w-full p-2 border text-sm">
-                <!-- ৫টি সাইজের জন্য আলাদা কমপ্যাক্ট ইনপুট এরিয়া -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Selling Price (৳১০০)</label>
+                        <input type="number" id="in_price" placeholder="Discount Price" class="w-full p-2 border text-sm rounded">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Original Price (৳১২৫ - Optional)</label>
+                        <input type="number" id="in_original_price" placeholder="Crossed Price" class="w-full p-2 border text-sm rounded">
+                    </div>
+                </div>
+                
+                <!-- আপনার দেওয়া আকর্ষণীয় ট্যাগসমূহের তালিকা ড্রপডাউনে যুক্ত করা হয়েছে -->
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Product Tag Badge</label>
+                    <select id="in_tag" class="w-full p-2 border text-sm rounded bg-white">
+                        <option value="none">None (কোনো ট্যাগ নেই)</option>
+                        <option value="Sale">Sale (সেল)</option>
+                        <option value="Best Sale">Best Sale (সেরা অফার)</option>
+                        <option value="Available">Available (স্টকে আছে)</option>
+                        <option value="New Arrival">New Arrival (নতুন কালেকশন)</option>
+                        <option value="Hot Sale">Hot Sale (হট সেল)</option>
+                        <option value="Coming Soon">Coming Soon (শীঘ্রই আসছে)</option>
+                    </select>
+                </div>
+
                 <div class="space-y-1">
                     <p class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Stocks (S, M, L, XL, XXL) | Use -1 for Coming Soon</p>
                     <div class="grid grid-cols-5 gap-1.5">
@@ -59,7 +82,6 @@
             } else {
                 f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm">`;
             }
-            // একাধিক ছবির লিংকের জন্য ডেসক্রিপশন সেট করা হলো
             f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate for multiple: url1, url2)" class="w-full p-2 border text-sm">`;
             document.getElementById('fields').innerHTML = f;
             renderList(type);
@@ -71,10 +93,11 @@
                 id: id,
                 name: document.getElementById('in_name')?.value, 
                 price: document.getElementById('in_price')?.value, 
+                original_price: document.getElementById('in_original_price')?.value || 0,
+                tag: document.getElementById('in_tag')?.value || 'none',
                 description: document.getElementById('in_desc')?.value, 
                 image_url: document.getElementById('in_img').value, 
                 link_url: document.getElementById('in_link')?.value,
-                // প্রতিটি সাইজের পৃথক স্টক ডাটা পাঠানো হচ্ছে
                 stock_s: parseInt(document.getElementById('in_stock_s')?.value) || 0,
                 stock_m: parseInt(document.getElementById('in_stock_m')?.value) || 0,
                 stock_l: parseInt(document.getElementById('in_stock_l')?.value) || 0,
@@ -108,8 +131,9 @@
             document.getElementById('edit_id').value = item.id;
             document.getElementById('in_name').value = item.name || '';
             if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
+            if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
+            if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
             
-            // এডিটের সময় প্রতিটি সাইজের স্টক রিলোড করা হচ্ছে
             if(document.getElementById('in_stock_s')) document.getElementById('in_stock_s').value = item.stock_s || 0;
             if(document.getElementById('in_stock_m')) document.getElementById('in_stock_m').value = item.stock_m || 0;
             if(document.getElementById('in_stock_l')) document.getElementById('in_stock_l').value = item.stock_l || 0;
@@ -121,7 +145,7 @@
             if(document.getElementById('in_link')) document.getElementById('in_link').value = item.link_url || '';
         }
 
-        async function deleteItem(id) { await fetch('/api/admin-data?type=' + currentType, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        async function deleteItem(id) { await fetch('/api/admin-data?type=currentType', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
         
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
