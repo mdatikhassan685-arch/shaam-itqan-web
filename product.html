@@ -14,10 +14,10 @@
 <body class="bg-[#FDF8EF] p-4 font-sans pb-10">
     <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E] rounded">
         
-        <!-- স্লাইড ইমেজ স্লাইডার (Swipe Carousel) -->
+        <!-- Swipe Carousel Slider -->
         <div class="relative w-full h-80 border border-[#C1A44E]/30 rounded overflow-hidden">
             <div id="p-slider" class="flex overflow-x-auto h-full snap-x snap-mandatory scrollbar-hide scroll-smooth">
-                <!-- ইমেজ সমূহ এখানে ডাইনামিক্যালি স্লাইডার আকারে রেন্ডার হবে -->
+                <!-- ডাইনামিক স্লাইড ইমেজ লোড হবে -->
             </div>
         </div>
         
@@ -25,7 +25,8 @@
         <div class="flex justify-between items-start mt-4">
             <div>
                 <h1 id="p-name" class="text-xl font-bold tracking-widest luxury-font uppercase text-gray-800"></h1>
-                <p id="p-price" class="text-lg text-[#C1A44E] font-bold mt-1"></p>
+                <!-- আসল অরিজিনাল ডিসকাউন্টেড প্রাইস রেন্ডার এরিয়া -->
+                <div id="price-container" class="mt-1"></div>
             </div>
             <!-- স্টক স্ট্যাটাস ডিসপ্লে এরিয়া -->
             <div id="stock-badge" class="mt-1"></div>
@@ -83,7 +84,6 @@
                 productData = products.find(prod => prod.id == pid);
                 
                 if (productData) {
-                    // ইমেজ স্লাইডার রেন্ডারিং (কমা দিয়ে ভাগ করে)
                     const images = productData.image_url.split(',');
                     const sliderContainer = document.getElementById('p-slider');
                     sliderContainer.innerHTML = images.map(img => `
@@ -93,10 +93,18 @@
                     `).join('');
 
                     document.getElementById('p-name').innerText = productData.name;
-                    document.getElementById('p-price').innerText = '৳ ' + productData.price;
+                    
+                    // ডিসকাউন্ট প্রাইসের কাস্টম রেন্ডারিং (স্ক্রিনশটের মতো)
+                    const originalPriceVal = parseFloat(productData.original_price) || 0;
+                    const priceContainer = document.getElementById('price-container');
+                    if (originalPriceVal > 0) {
+                        priceContainer.innerHTML = `<span class="line-through text-gray-400 text-sm mr-2 font-normal">৳ ${Math.round(originalPriceVal)}</span> <span class="text-lg text-[#C1A44E] font-bold">৳ ${productData.price}</span>`;
+                    } else {
+                        priceContainer.innerHTML = `<span class="text-lg text-[#C1A44E] font-bold">৳ ${productData.price}</span>`;
+                    }
+
                     document.getElementById('p-desc').innerText = productData.description || "No description available.";
                     
-                    // ৫টি পৃথক সাইজের স্টক ম্যাপ
                     stockMap = {
                         'S': parseInt(productData.stock_s) || 0,
                         'M': parseInt(productData.stock_m) || 0,
@@ -105,12 +113,11 @@
                         'XXL': parseInt(productData.stock_xxl) || 0
                     };
 
-                    // স্টক এভেইলেবল থাকা প্রথম ভ্যালিড সাইজটি ডিফল্ট সিলেক্ট হবে
                     const availableSizes = ['S', 'M', 'L', 'XL', 'XXL'].filter(sz => stockMap[sz] > 0);
                     if (availableSizes.length > 0) {
                         selectedSize = availableSizes[0];
                     } else {
-                        selectedSize = ''; // সম্পূর্ণ স্টক আউট
+                        selectedSize = ''; 
                     }
 
                     renderSizeSelector();
@@ -121,7 +128,6 @@
             }
         }
 
-        // সাইজ বাটন রেন্ডার করার ফাংশন (স্টক জিরো হলে বাটন স্ক্রিনশটের মতো ক্রস ও ডিসেবল হবে)
         function renderSizeSelector() {
             const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
             const selector = document.getElementById('size-selector');
@@ -129,7 +135,6 @@
             selector.innerHTML = sizes.map(sz => {
                 const stock = stockMap[sz];
                 if (stock <= 0) {
-                    // কাস্টমার যাতে সোল্ড আউট সাইজে ক্লিক করতে না পারে (ক্রস বাটন)
                     return `<button disabled class="border border-gray-200 text-gray-300 w-10 h-10 text-xs font-bold rounded line-through cursor-not-allowed bg-gray-50">${sz}</button>`;
                 } else if (sz === selectedSize) {
                     return `<button onclick="selectSize('${sz}')" class="size-btn border-2 border-black bg-black text-white w-10 h-10 text-xs font-bold rounded transition">${sz}</button>`;
@@ -141,31 +146,33 @@
 
         function selectSize(size) {
             selectedSize = size;
-            quantity = 1; // সাইজ পরিবর্তন করলে কোয়ান্টিটি পুনরায় ১ হবে
+            quantity = 1;
             document.getElementById('qty-val').innerText = quantity;
             renderSizeSelector();
             updateStockBadge();
         }
 
-        // সাইজ পরিবর্তনের সাথে সাথে স্টক ব্যাজ আপডেট করার ফাংশন
         function updateStockBadge() {
             const badge = document.getElementById('stock-badge');
             
-            // যদি সব সাইজই স্টক আউট হয়
+            // কাস্টম ট্যাগ যদি 'Coming Soon' বা সরাসরি সোল্ড আউট হয়
             const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
+            
+            if (productData.tag === 'Coming Soon') {
+                badge.innerHTML = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
+                disableActionButtons();
+                return;
+            }
+
             if (totalStock <= 0) {
-                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[9px] font-bold px-2.5 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
                 disableActionButtons();
                 return;
             }
 
             const activeStock = stockMap[selectedSize];
-            if (activeStock < 0) {
-                badge.innerHTML = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
-                disableActionButtons();
-            } else if (activeStock == 0) {
+            if (activeStock == 0) {
                 badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Sold Out</span>`;
-                // শুধুমাত্র এই সাইজের জন্য অর্ডার বাটন ধূসর হবে
                 document.getElementById('buy-btn').disabled = true;
                 document.getElementById('buy-btn').className = "w-full bg-gray-300 text-gray-500 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
                 document.getElementById('bag-btn').disabled = true;
