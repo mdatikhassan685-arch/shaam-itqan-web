@@ -76,31 +76,36 @@
                 document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
                 
                 document.getElementById('product-grid').innerHTML = prods.map(p => {
-                    // স্লাইডারের কারণে প্রথম ছবিটি থাম্বনেইল হিসেবে নিয়ে আসা হচ্ছে
                     const images = p.image_url.split(',');
                     const firstImage = images[0] ? images[0].trim() : 'https://via.placeholder.com/300';
 
-                    // ৫টি সাইজের সম্মিলিত স্টক জিরো কি না চেক করা হচ্ছে
                     const totalStock = (parseInt(p.stock_s) || 0) + (parseInt(p.stock_m) || 0) + (parseInt(p.stock_l) || 0) + (parseInt(p.stock_xl) || 0) + (parseInt(p.stock_xxl) || 0);
                     
                     let badge = "";
-                    let isClickable = true;
+                    let cardLink = `product.html?id=${p.id}`;
 
                     if (totalStock <= 0) {
                         badge = `<span class="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">Sold Out</span>`;
-                        isClickable = false;
                     } else {
-                        // স্টক থাকলে স্ক্রিনশটের মতো চমৎকার 'Sale' ব্যাজ দেখাবে
                         badge = `<span class="absolute top-2 right-2 bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">Sale</span>`;
                     }
 
+                    // স্ক্রিনশটের সাথে মিলিয়ে ২৫% বাড়তি মূল্য ধরে কাটা প্রাইস (line-through) তৈরি করা হচ্ছে
+                    const originalPrice = Math.round(parseFloat(p.price) * 1.25);
+
                     return `
-                        <a href="product.html?id=${p.id}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded">
+                        <a href="${cardLink}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
                             ${badge}
-                            <img src="${firstImage}" class="w-full h-40 object-cover rounded">
-                            <!-- ফন্ট সাইজ এবং টাইটেল বোল্ড ও প্রিমিয়াম করা হয়েছে -->
-                            <h3 class="text-xs font-bold mt-2 truncate text-gray-800 hover:text-[#D4AF37] tracking-wide">${p.name}</h3>
-                            <p class="font-bold text-sm text-[#D4AF37] mt-1">৳ ${p.price}</p>
+                            <!-- aspect-[3/4] ক্লাসটি ইমেজটিকে চমৎকার লম্বাটে ও প্রিমিয়াম সাইজ দেবে -->
+                            <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
+                                <img src="${firstImage}" class="w-full h-full object-cover">
+                            </div>
+                            <!-- ফন্ট সাইজ বড় এবং line-clamp-2 দিয়ে কার্ডগুলোর উচ্চতা সমান রাখা হয়েছে -->
+                            <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
+                            <div class="flex items-center gap-2 mt-2 pt-1 border-t border-gray-100">
+                                <span class="line-through text-gray-400 text-[11px]">৳ ${originalPrice}</span>
+                                <span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>
+                            </div>
                         </a>`;
                 }).join('');
             } catch(e) { console.log(e); }
