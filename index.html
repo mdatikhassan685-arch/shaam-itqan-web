@@ -75,25 +75,32 @@
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 document.getElementById('category-grid').innerHTML = cats.map(c => `<a href="${c.link_url}" class="flex-shrink-0 text-center"><div class="w-16 h-16 bg-black rounded-full border-2 border-[#D4AF37] overflow-hidden flex items-center justify-center"><img src="${c.image_url}" class="w-full h-full object-cover"></div><p class="text-[9px] mt-2 font-bold">${c.name}</p></a>`).join('');
                 
-                // কাস্টমারদের ইনভেন্টরি স্টেট বোঝানোর জন্য ডাইনামিক ব্যাজ যুক্ত করা হয়েছে
                 document.getElementById('product-grid').innerHTML = prods.map(p => {
-                    let stockBadge = "";
-                    if (p.stock < 0) {
-                        stockBadge = `<span class="text-[8px] font-bold text-blue-600 tracking-wider">COMING SOON</span>`;
-                    } else if (p.stock == 0) {
-                        stockBadge = `<span class="text-[8px] font-bold text-red-600 tracking-wider">STOCK OUT</span>`;
+                    // স্লাইডারের কারণে প্রথম ছবিটি থাম্বনেইল হিসেবে নিয়ে আসা হচ্ছে
+                    const images = p.image_url.split(',');
+                    const firstImage = images[0] ? images[0].trim() : 'https://via.placeholder.com/300';
+
+                    // ৫টি সাইজের সম্মিলিত স্টক জিরো কি না চেক করা হচ্ছে
+                    const totalStock = (parseInt(p.stock_s) || 0) + (parseInt(p.stock_m) || 0) + (parseInt(p.stock_l) || 0) + (parseInt(p.stock_xl) || 0) + (parseInt(p.stock_xxl) || 0);
+                    
+                    let badge = "";
+                    let isClickable = true;
+
+                    if (totalStock <= 0) {
+                        badge = `<span class="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">Sold Out</span>`;
+                        isClickable = false;
                     } else {
-                        stockBadge = `<span class="text-[8px] font-bold text-green-600 tracking-wider">STOCK: ${p.stock}</span>`;
+                        // স্টক থাকলে স্ক্রিনশটের মতো চমৎকার 'Sale' ব্যাজ দেখাবে
+                        badge = `<span class="absolute top-2 right-2 bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">Sale</span>`;
                     }
 
                     return `
-                        <a href="product.html?id=${p.id}" class="block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded">
-                            <img src="${p.image_url}" class="w-full h-40 object-cover rounded">
-                            <h3 class="text-[11px] font-bold mt-2 truncate text-gray-800 hover:text-[#D4AF37]">${p.name}</h3>
-                            <div class="flex items-center justify-between mt-1.5">
-                                <p class="font-bold text-xs text-[#D4AF37]">৳ ${p.price}</p>
-                                ${stockBadge}
-                            </div>
+                        <a href="product.html?id=${p.id}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded">
+                            ${badge}
+                            <img src="${firstImage}" class="w-full h-40 object-cover rounded">
+                            <!-- ফন্ট সাইজ এবং টাইটেল বোল্ড ও প্রিমিয়াম করা হয়েছে -->
+                            <h3 class="text-xs font-bold mt-2 truncate text-gray-800 hover:text-[#D4AF37] tracking-wide">${p.name}</h3>
+                            <p class="font-bold text-sm text-[#D4AF37] mt-1">৳ ${p.price}</p>
                         </a>`;
                 }).join('');
             } catch(e) { console.log(e); }
