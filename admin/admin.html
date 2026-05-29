@@ -54,7 +54,6 @@
                     </div>
                 </div>
                 
-                <!-- আপনার দেওয়া আকর্ষণীয় ট্যাগসমূহের তালিকা ড্রপডাউনে যুক্ত করা হয়েছে -->
                 <div>
                     <label class="text-[9px] font-bold text-gray-500 uppercase">Product Tag Badge</label>
                     <select id="in_tag" class="w-full p-2 border text-sm rounded bg-white">
@@ -66,6 +65,12 @@
                         <option value="Hot Sale">Hot Sale (হট সেল)</option>
                         <option value="Coming Soon">Coming Soon (শীঘ্রই আসছে)</option>
                     </select>
+                </div>
+
+                <!-- ক্যাটাগরি ইনপুট ফিল্ড যুক্ত করা হলো -->
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Category Name (e.g. Drop Shoulder, Regular Fit)</label>
+                    <input type="text" id="in_category" placeholder="Category Name" class="w-full p-2 border text-sm rounded">
                 </div>
 
                 <div class="space-y-1">
@@ -95,6 +100,7 @@
                 price: document.getElementById('in_price')?.value, 
                 original_price: document.getElementById('in_original_price')?.value || 0,
                 tag: document.getElementById('in_tag')?.value || 'none',
+                category: document.getElementById('in_category')?.value || 'General', // ক্যাটাগরি ডাটা পাঠানো হচ্ছে
                 description: document.getElementById('in_desc')?.value, 
                 image_url: document.getElementById('in_img').value, 
                 link_url: document.getElementById('in_link')?.value,
@@ -133,6 +139,7 @@
             if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
             if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
             if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
+            if(document.getElementById('in_category')) document.getElementById('in_category').value = item.category || 'General'; // ক্যাটাগরি লোড করা হচ্ছে
             
             if(document.getElementById('in_stock_s')) document.getElementById('in_stock_s').value = item.stock_s || 0;
             if(document.getElementById('in_stock_m')) document.getElementById('in_stock_m').value = item.stock_m || 0;
