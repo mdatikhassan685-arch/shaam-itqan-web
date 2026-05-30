@@ -6,7 +6,6 @@
     <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
         if (localStorage.getItem('is_admin') !== 'true') {
             window.location.href = 'admin-login.html';
         }
@@ -16,7 +15,6 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
-        <!-- Tab Navigation Buttons -->
         <div class="flex gap-1 mb-4 flex-wrap">
             <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
@@ -24,7 +22,6 @@
             <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
-        <!-- Add/Edit Form Box -->
         <div class="bg-white p-4 shadow rounded mb-6">
             <h2 id="form-title" class="font-bold mb-3 border-b pb-1 uppercase text-sm">Select an Option</h2>
             <div id="fields" class="space-y-2"></div>
@@ -32,14 +29,11 @@
             <button onclick="saveItem()" id="save-btn" class="w-full bg-black text-white py-2 mt-4 hidden">SAVE / UPDATE</button>
         </div>
         
-        <!-- List Container -->
         <div id="item-list" class="space-y-3 pb-10"></div>
     </div>
 
     <script>
         let currentType = '';
-        
-        // ডাইনামিক ট্যাব লোডিং ফাংশন
         async function loadTab(type) {
             currentType = type;
             document.getElementById('form-title').innerText = "Add/Edit " + type;
@@ -47,25 +41,24 @@
             document.getElementById('edit_id').value = '';
             let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
             
-            if (type === 'product') {
-                // ডাটাবেজ থেকে অ্যাডমিনের আগে তৈরি করা ক্যাটাগরির তালিকা ফেচ করা হচ্ছে
+            if(type === 'product') {
                 let catOptions = `<option value="General">General (ডিফল্ট)</option>`;
                 try {
                     const catRes = await fetch('/api/admin-data?type=category');
                     const categories = await catRes.json();
                     catOptions += categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
                 } catch (e) {
-                    console.error("Failed to load categories for dropdown:", e);
+                    console.error(e);
                 }
 
                 f += `
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="text-[9px] font-bold text-gray-500 uppercase">Selling Price (৳১০০)</label>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Selling Price</label>
                         <input type="number" id="in_price" placeholder="Discount Price" class="w-full p-2 border text-sm rounded">
                     </div>
                     <div>
-                        <label class="text-[9px] font-bold text-gray-500 uppercase">Original Price (৳১২৫ - Optional)</label>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Original Price (Optional)</label>
                         <input type="number" id="in_original_price" placeholder="Crossed Price" class="w-full p-2 border text-sm rounded">
                     </div>
                 </div>
@@ -73,26 +66,25 @@
                 <div>
                     <label class="text-[9px] font-bold text-gray-500 uppercase">Product Tag Badge</label>
                     <select id="in_tag" class="w-full p-2 border text-sm rounded bg-white">
-                        <option value="none">None (কোনো ট্যাগ নেই)</option>
-                        <option value="Sale">Sale (সেল)</option>
-                        <option value="Best Sale">Best Sale (সেরা অফার)</option>
-                        <option value="Available">Available (স্টকে আছে)</option>
-                        <option value="New Arrival">New Arrival (নতুন কালেকশন)</option>
-                        <option value="Hot Sale">Hot Sale (হট সেল)</option>
-                        <option value="Coming Soon">Coming Soon (শীঘ্রই আসছে)</option>
+                        <option value="none">None</option>
+                        <option value="Sale">Sale</option>
+                        <option value="Best Sale">Best Sale</option>
+                        <option value="Available">Available</option>
+                        <option value="New Arrival">New Arrival</option>
+                        <option value="Hot Sale">Hot Sale</option>
+                        <option value="Coming Soon">Coming Soon</option>
                     </select>
                 </div>
 
-                <!-- পূর্বে তৈরি করা ক্যাটাগরি সমূহের ডাইনামিক ড্রপডাউন মেনু -->
                 <div>
-                    <label class="text-[9px] font-bold text-gray-500 uppercase">Product Category (সিলেক্ট করুন)</label>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Product Category</label>
                     <select id="in_category" class="w-full p-2 border text-sm rounded bg-white">
                         ${catOptions}
                     </select>
                 </div>
 
                 <div class="space-y-1">
-                    <p class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Stocks (S, M, L, XL, XXL) | Use -1 for Coming Soon</p>
+                    <p class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Stocks (S, M, L, XL, XXL)</p>
                     <div class="grid grid-cols-5 gap-1.5">
                         <input type="number" id="in_stock_s" placeholder="S" class="p-2 border text-xs text-center rounded">
                         <input type="number" id="in_stock_m" placeholder="M" class="p-2 border text-xs text-center rounded">
@@ -102,14 +94,10 @@
                     </div>
                 </div>
                 <input type="text" id="in_desc" placeholder="Description" class="w-full p-2 border text-sm">`;
-            } 
-            else if (type === 'banner') {
-                // ব্যানার লিংকের জন্য ইনপুট ফিল্ড থাকবে
+            } else {
                 f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm rounded">`;
             }
-            // কুইক সেটিং: ক্যাটাগরি তৈরির সময় কোনো লিংক ইনপুটের প্রয়োজন নেই
-            f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate for multiple: url1, url2)" class="w-full p-2 border text-sm rounded">`;
-            
+            f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate)" class="w-full p-2 border text-sm rounded">`;
             document.getElementById('fields').innerHTML = f;
             renderList(type);
         }
@@ -143,7 +131,7 @@
         }
 
         async function renderList(type) {
-            const res = await fetch('/api/admin-data?type=' + type);
+            const res = await fetch('/api/admin-data?type=currentType');
             const items = await res.json();
             document.getElementById('item-list').innerHTML = items.map(item => `
                 <div class="bg-white p-3 shadow flex justify-between items-center text-sm">
@@ -155,18 +143,13 @@
                 </div>`).join('');
         }
 
-        // এডিট ট্র্রিগারের সময় ডাটা লোডিং লজিক
-        async function editItem(item) {
+        function editItem(item) {
             document.getElementById('edit_id').value = item.id;
             document.getElementById('in_name').value = item.name || '';
             if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
             if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
             if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
-            
-            // প্রোডাক্ট এডিটের সময় আগে থেকে লোড হওয়া ড্রপডাউন ভ্যালু ম্যাচ করানো হচ্ছে
-            if(document.getElementById('in_category')) {
-                document.getElementById('in_category').value = item.category || 'General';
-            }
+            if(document.getElementById('in_category')) document.getElementById('in_category').value = item.category || 'General';
             
             if(document.getElementById('in_stock_s')) document.getElementById('in_stock_s').value = item.stock_s || 0;
             if(document.getElementById('in_stock_m')) document.getElementById('in_stock_m').value = item.stock_m || 0;
@@ -181,6 +164,7 @@
 
         async function deleteItem(id) { await fetch(`/api/admin-data?type=${currentType}`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
         
+        // ডাইনামিক মাল্টি-স্ট্যাটাস এবং ক্যানসেল অ্যাকশন বাটন রেন্ডারিং
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
             document.getElementById('save-btn').classList.add('hidden');
@@ -195,11 +179,35 @@
                 const area = addressParts.find(p => p.startsWith('Area:')) || 'Area: N/A';
                 const method = addressParts.find(p => p.startsWith('Method:')) || 'Method: COD';
 
+                // স্ট্যাটাস অনুযায়ী অ্যাডমিনের অ্যাকশন বাটনসমূহ
+                let actionButtons = '';
+                if (o.status === 'Pending') {
+                    actionButtons = `
+                        <button onclick="updateStatus(${o.id}, 'confirm')" class="mt-3 w-full bg-green-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-green-700 transition">Confirm Order</button>
+                        <button onclick="updateStatus(${o.id}, 'cancel')" class="mt-2 w-full bg-red-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-red-700 transition">Cancel Order</button>
+                    `;
+                } else if (o.status === 'Confirmed') {
+                    actionButtons = `
+                        <button onclick="updateStatus(${o.id}, 'ship')" class="mt-3 w-full bg-purple-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-purple-700 transition">Mark as Shipped</button>
+                        <button onclick="updateStatus(${o.id}, 'cancel')" class="mt-2 w-full bg-red-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-red-700 transition">Cancel Order</button>
+                    `;
+                } else if (o.status === 'Shipped') {
+                    actionButtons = `
+                        <button onclick="updateStatus(${o.id}, 'deliver')" class="mt-3 w-full bg-blue-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-blue-700 transition">Mark as Delivered</button>
+                    `;
+                }
+
+                let badgeColor = "text-orange-600 bg-orange-50";
+                if (o.status === 'Confirmed') badgeColor = "text-blue-600 bg-blue-50";
+                if (o.status === 'Shipped') badgeColor = "text-purple-600 bg-purple-50";
+                if (o.status === 'Delivered') badgeColor = "text-green-600 bg-green-50";
+                if (o.status === 'Cancelled') badgeColor = "text-red-600 bg-red-50";
+
                 return `
                     <div class="bg-white p-4 shadow rounded mb-4 border border-gray-200 text-sm leading-relaxed">
                         <div class="flex justify-between items-center border-b pb-2 mb-2 font-bold">
                             <span class="text-gray-800">Order ID: #${o.id}</span>
-                            <span class="${o.status === 'Confirmed' ? 'text-green-600 bg-green-50' : 'text-orange-600 bg-orange-50'} px-2 py-0.5 rounded text-[9px] tracking-wider uppercase">${o.status}</span>
+                            <span class="${badgeColor} px-2 py-0.5 rounded text-[9px] tracking-wider uppercase">${o.status}</span>
                         </div>
                         
                         <p class="text-[10px] text-gray-400 uppercase font-bold mt-2 tracking-wider">Customer Info</p>
@@ -227,20 +235,20 @@
                             <span class="text-base text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
                         </div>
 
-                        ${o.status === 'Pending' ? `
-                            <button onclick="confirmOrder(${o.id})" class="mt-4 w-full bg-green-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded hover:bg-green-700 transition duration-300">
-                                Confirm Order & Ship
-                            </button>
-                        ` : ''}
+                        <!-- ডাইনামিক স্ট্যাটাস বাটন গ্রিল -->
+                        ${actionButtons}
                     </div>`;
             }).join('');
         }
 
-        async function confirmOrder(id) { 
+        // এপিআই-তে মাল্টিপল স্ট্যাটাস রিকোয়েস্ট পাঠানোর ফাংশন
+        async function updateStatus(id, action) { 
+            if (action === 'cancel' && !confirm("Are you sure you want to cancel this order? Stock will be restored.")) return;
+
             const res = await fetch('/api/orders', { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ action: 'confirm', id }) 
+                body: JSON.stringify({ action: action, id: id }) 
             }); 
             if(res.ok) loadOrders(); 
         }
