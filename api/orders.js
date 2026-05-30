@@ -47,7 +47,8 @@ export default async function handler(req, res) {
                 });
                 const combinedProducts = productDetailsArray.join(', ');
 
-                // কুপন ভ্যালিডেশন এবং ডিসকাউন্ট ক্যালকুলেশন (ব্যাকএন্ড সিকিউরিটি চেক)
+                const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
+                
                 let discountAmount = 0;
                 let couponNotice = '';
                 
@@ -55,7 +56,6 @@ export default async function handler(req, res) {
                     const [cpRows] = await db.execute('SELECT * FROM coupons WHERE code = ?', [b.coupon_code]);
                     if (cpRows.length > 0) {
                         const cp = cpRows[0];
-                        // চেকআউট এমাউন্ট কুপনের নূন্যতম অর্ডারের সমান বা বেশি কি না চেক
                         if (subtotal >= parseFloat(cp.min_order_amount)) {
                             if (cp.discount_type === 'percentage') {
                                 discountAmount = (subtotal * parseFloat(cp.discount_value)) / 100;
@@ -68,9 +68,6 @@ export default async function handler(req, res) {
                     }
                 }
 
-                const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
-                
-                // গ্র্যান্ড টোটাল = সাবটোটাল - কুপন ডিসকাউন্ট + শিপিং চার্জ
                 const grandTotal = subtotal - discountAmount + shippingFee; 
 
                 const combinedPhones = `Primary: ${b.phone} | Alt: ${b.phone_backup} (${b.phone_backup_relation})`;
@@ -79,7 +76,6 @@ export default async function handler(req, res) {
                     : 'Full Cash on Delivery (COD)';
                 const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}${couponNotice}`;
 
-                // সাইজ-ভিত্তিক স্টক বিয়োগ করার ডাইনামিক ম্যাপিং
                 const sizeColumnMap = { 'S': 'stock_s', 'M': 'stock_m', 'L': 'stock_l', 'XL': 'stock_xl', 'XXL': 'stock_xxl' };
                 for (const item of cartItems) {
                     const buyQty = parseInt(item.quantity) || 1;
@@ -96,9 +92,17 @@ export default async function handler(req, res) {
                     }
                 }
 
-                await db.execute(
+                // ৫.১. অর্ডার স্থায়ীভাবে সেভ করা হচ্ছে
+                const [orderInsertResult] = await db.execute(
                     'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
                     [b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
+                );
+                const newOrderId = orderInsertResult.insertId;
+
+                // ৫.২. অর্ডারের সফল নোটিফিকেশন কাস্টমার প্রোফাইলে পাঠানো হচ্ছে (অটো-ট্রিগার)
+                await db.execute(
+                    'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                    [b.email, "Order Placed successfully! 🛍️", `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`]
                 );
 
                 await db.execute(
@@ -108,18 +112,43 @@ export default async function handler(req, res) {
 
                 return res.status(200).json({ status: "Success" });
             } 
+            // ১. অর্ডার কনফার্ম নোটিফিকেশন ট্রিগার (Pending -> Confirmed)
             else if (b.action === 'confirm') {
                 await db.execute('UPDATE orders SET status = "Confirmed" WHERE id = ?', [b.id]);
+                const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
+                if (ord.length > 0) {
+                    await db.execute(
+                        'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                        [ord[0].email, "Order Confirmed! 🚚", `Great news! Your order #${b.id} has been confirmed by the admin and is being packed.`]
+                    );
+                }
                 return res.status(200).json({ status: "Success" });
             }
+            // ২. অর্ডার কুরিয়ারে বুকিং নোটিফিকেশন ট্রিগার (Confirmed -> Shipped)
             else if (b.action === 'ship') {
                 await db.execute('UPDATE orders SET status = "Shipped" WHERE id = ?', [b.id]);
+                const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
+                if (ord.length > 0) {
+                    await db.execute(
+                        'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                        [ord[0].email, "Order Shipped! 📦", `Your order #${b.id} has been handed over to the courier. Please keep your phone active!`]
+                    );
+                }
                 return res.status(200).json({ status: "Success" });
             }
+            // ৩. অর্ডার ডেলিভারি সম্পন্ন নোটিফিকেশন ট্রিগার (Shipped -> Delivered)
             else if (b.action === 'deliver') {
                 await db.execute('UPDATE orders SET status = "Delivered" WHERE id = ?', [b.id]);
+                const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
+                if (ord.length > 0) {
+                    await db.execute(
+                        'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                        [ord[0].email, "Order Delivered! 🎉", `Your order #${b.id} has been delivered. Thank you so much for shopping with SHAAM ITQAN!`]
+                    );
+                }
                 return res.status(200).json({ status: "Success" });
             }
+            // ৪. অর্ডার বাতিল নোটিফিকেশন ট্রিগার (Cancel & Restore Stock)
             else if (b.action === 'cancel') {
                 const [orderRows] = await db.execute('SELECT * FROM orders WHERE id = ?', [b.id]);
                 
@@ -144,6 +173,11 @@ export default async function handler(req, res) {
                         }
 
                         await db.execute('UPDATE orders SET status = "Cancelled" WHERE id = ?', [b.id]);
+                        // বাতিল নোটিফিকেশন ট্রিগার
+                        await db.execute(
+                            'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                            [order.email, "Order Cancelled! ❌", `Your order #${b.id} has been cancelled. Your cart stock has been successfully restored.`]
+                        );
                         return res.status(200).json({ status: "Success" });
                     } else {
                         return res.status(400).json({ error: "Cannot cancel order. It has already shipped!" });
