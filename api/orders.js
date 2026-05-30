@@ -47,16 +47,39 @@ export default async function handler(req, res) {
                 });
                 const combinedProducts = productDetailsArray.join(', ');
 
+                // কুপন ভ্যালিডেশন এবং ডিসকাউন্ট ক্যালকুলেশন (ব্যাকএন্ড সিকিউরিটি চেক)
+                let discountAmount = 0;
+                let couponNotice = '';
+                
+                if (b.coupon_code) {
+                    const [cpRows] = await db.execute('SELECT * FROM coupons WHERE code = ?', [b.coupon_code]);
+                    if (cpRows.length > 0) {
+                        const cp = cpRows[0];
+                        // চেকআউট এমাউন্ট কুপনের নূন্যতম অর্ডারের সমান বা বেশি কি না চেক
+                        if (subtotal >= parseFloat(cp.min_order_amount)) {
+                            if (cp.discount_type === 'percentage') {
+                                discountAmount = (subtotal * parseFloat(cp.discount_value)) / 100;
+                            } else {
+                                discountAmount = parseFloat(cp.discount_value);
+                            }
+                            if (discountAmount > subtotal) discountAmount = subtotal;
+                            couponNotice = ` [Coupon Used: ${b.coupon_code} -৳${discountAmount.toFixed(2)}]`;
+                        }
+                    }
+                }
+
                 const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
-                const grandTotal = subtotal + shippingFee; 
+                
+                // গ্র্যান্ড টোটাল = সাবটোটাল - কুপন ডিসকাউন্ট + শিপিং চার্জ
+                const grandTotal = subtotal - discountAmount + shippingFee; 
 
                 const combinedPhones = `Primary: ${b.phone} | Alt: ${b.phone_backup} (${b.phone_backup_relation})`;
                 const paymentInfo = b.payment_method === 'advance_charge' 
                     ? `Advance Paid (TrxID: ${b.trxid || 'N/A'})` 
                     : 'Full Cash on Delivery (COD)';
-                const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}`;
+                const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}${couponNotice}`;
 
-                // স্টক কমানো হচ্ছে
+                // সাইজ-ভিত্তিক স্টক বিয়োগ করার ডাইনামিক ম্যাপিং
                 const sizeColumnMap = { 'S': 'stock_s', 'M': 'stock_m', 'L': 'stock_l', 'XL': 'stock_xl', 'XXL': 'stock_xxl' };
                 for (const item of cartItems) {
                     const buyQty = parseInt(item.quantity) || 1;
@@ -85,40 +108,29 @@ export default async function handler(req, res) {
 
                 return res.status(200).json({ status: "Success" });
             } 
-            // ১. অর্ডার কনফার্ম (Pending -> Confirmed)
             else if (b.action === 'confirm') {
                 await db.execute('UPDATE orders SET status = "Confirmed" WHERE id = ?', [b.id]);
                 return res.status(200).json({ status: "Success" });
             }
-            // ২. অর্ডার কুরিয়ারে পাঠানো (Confirmed -> Shipped)
             else if (b.action === 'ship') {
                 await db.execute('UPDATE orders SET status = "Shipped" WHERE id = ?', [b.id]);
                 return res.status(200).json({ status: "Success" });
             }
-            // ৩. অর্ডার ডেলিভারি সম্পন্ন (Shipped -> Delivered)
             else if (b.action === 'deliver') {
                 await db.execute('UPDATE orders SET status = "Delivered" WHERE id = ?', [b.id]);
                 return res.status(200).json({ status: "Success" });
             }
-            // ৪. অর্ডার বাতিল ও স্টক পুনরায় আগের জায়গায় ফেরত (Cancel & Restore Stock)
             else if (b.action === 'cancel') {
-                // অর্ডারের তথ্য আগে ডাটাবেজ থেকে নিয়ে আসা
                 const [orderRows] = await db.execute('SELECT * FROM orders WHERE id = ?', [b.id]);
                 
                 if (orderRows.length > 0) {
                     const order = orderRows[0];
-                    
-                    // কুরিয়ারে শিফট হওয়ার আগে কেবল ক্যানসেল করা যাবে
                     if (order.status === 'Pending' || order.status === 'Confirmed') {
-                        
-                        // প্রোডাক্ট স্ট্রিং পার্স করার জটিল ও নিখুঁত ম্যাজিক লজিক (RegEx)
                         const productParts = order.products.split(', ');
                         const sizeColumnMap = { 'S': 'stock_s', 'M': 'stock_m', 'L': 'stock_l', 'XL': 'stock_xl', 'XXL': 'stock_xxl' };
                         
                         for (const part of productParts) {
-                            // উদাহরণ: "EARTH MAP T-SHIRT (Size: M, Qty: 2)" থেকে নাম, সাইজ ও কোয়ান্টিটি আলাদা করা হচ্ছে
                             const match = part.match(/^(.+)\s\(Size:\s(S|M|L|XL|XXL),\sQty:\s(\d+)\)$/i);
-                            
                             if (match) {
                                 const productName = match[1].trim();
                                 const size = match[2].toUpperCase();
@@ -126,16 +138,11 @@ export default async function handler(req, res) {
                                 const colName = sizeColumnMap[size];
 
                                 if (colName) {
-                                    // স্টক পুনরায় ডাটাবেজে আগের জায়গায় যোগ করা হচ্ছে (+ করা হচ্ছে)
-                                    await db.execute(
-                                        `UPDATE products SET ${colName} = ${colName} + ? WHERE name = ?`, 
-                                        [qty, productName]
-                                    );
+                                    await db.execute(`UPDATE products SET ${colName} = ${colName} + ? WHERE name = ?`, [qty, productName]);
                                 }
                             }
                         }
 
-                        // অর্ডারের স্ট্যাটাস 'Cancelled' করা হলো
                         await db.execute('UPDATE orders SET status = "Cancelled" WHERE id = ?', [b.id]);
                         return res.status(200).json({ status: "Success" });
                     } else {
