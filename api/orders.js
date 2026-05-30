@@ -76,6 +76,7 @@ export default async function handler(req, res) {
                     : 'Full Cash on Delivery (COD)';
                 const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}${couponNotice}`;
 
+                // সাইজ-ভিত্তিক স্টক বিয়োগ করা
                 const sizeColumnMap = { 'S': 'stock_s', 'M': 'stock_m', 'L': 'stock_l', 'XL': 'stock_xl', 'XXL': 'stock_xxl' };
                 for (const item of cartItems) {
                     const buyQty = parseInt(item.quantity) || 1;
@@ -92,17 +93,18 @@ export default async function handler(req, res) {
                     }
                 }
 
-                // ৫.১. অর্ডার স্থায়ীভাবে সেভ করা হচ্ছে
-                const [orderInsertResult] = await db.execute(
-                    'INSERT INTO orders (customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
-                );
-                const newOrderId = orderInsertResult.insertId;
+                // ৫. ডিস্ট্রিবিউটেড ক্লাউড ডাটাবেজের আইডি লাফানো ঠেকাতে ব্যাকএন্ডে ম্যানুয়াল অর্ডার আইডি জেনারেশন লজিক
+                const [maxRow] = await db.execute('SELECT MAX(id) as max_id FROM orders');
+                let newOrderId = 1001; // ডিফল্ট প্রথম অর্ডার আইডি
+                if (maxRow.length > 0 && maxRow[0].max_id) {
+                    // সর্বোচ্চ আইডির সাথে স্বয়ংক্রিয়ভাবে গাণিতিক নিয়মে কেবল ১ যোগ হবে (১০০১, ১০০২, ১০০৩...)
+                    newOrderId = parseInt(maxRow[0].max_id) + 1; 
+                }
 
-                // ৫.২. অর্ডারের সফল নোটিফিকেশন কাস্টমার প্রোফাইলে পাঠানো হচ্ছে (অটো-ট্রিগার)
+                // ৬. ডাটাবেজে আমাদের তৈরি করা এই নির্দিষ্ট 'newOrderId' আইডি সহ অর্ডার সেভ করা হচ্ছে
                 await db.execute(
-                    'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                    [b.email, "Order Placed successfully! 🛍️", `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`]
+                    'INSERT INTO orders (id, customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [newOrderId, b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
                 );
 
                 await db.execute(
@@ -110,9 +112,14 @@ export default async function handler(req, res) {
                     [b.email, ...checkedIds]
                 );
 
+                // ৭. অর্ডারের সফল নোটিফিকেশন কাস্টমার প্রোফাইলে পাঠানো হচ্ছে
+                await db.execute(
+                    'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                    [b.email, "Order Placed successfully! 🛍️", `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`]
+                );
+
                 return res.status(200).json({ status: "Success" });
             } 
-            // ১. অর্ডার কনফার্ম নোটিফিকেশন ট্রিগার (Pending -> Confirmed)
             else if (b.action === 'confirm') {
                 await db.execute('UPDATE orders SET status = "Confirmed" WHERE id = ?', [b.id]);
                 const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
@@ -124,7 +131,6 @@ export default async function handler(req, res) {
                 }
                 return res.status(200).json({ status: "Success" });
             }
-            // ২. অর্ডার কুরিয়ারে বুকিং নোটিফিকেশন ট্রিগার (Confirmed -> Shipped)
             else if (b.action === 'ship') {
                 await db.execute('UPDATE orders SET status = "Shipped" WHERE id = ?', [b.id]);
                 const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
@@ -136,7 +142,6 @@ export default async function handler(req, res) {
                 }
                 return res.status(200).json({ status: "Success" });
             }
-            // ৩. অর্ডার ডেলিভারি সম্পন্ন নোটিফিকেশন ট্রিগার (Shipped -> Delivered)
             else if (b.action === 'deliver') {
                 await db.execute('UPDATE orders SET status = "Delivered" WHERE id = ?', [b.id]);
                 const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
@@ -148,7 +153,6 @@ export default async function handler(req, res) {
                 }
                 return res.status(200).json({ status: "Success" });
             }
-            // ৪. অর্ডার বাতিল নোটিফিকেশন ট্রিগার (Cancel & Restore Stock)
             else if (b.action === 'cancel') {
                 const [orderRows] = await db.execute('SELECT * FROM orders WHERE id = ?', [b.id]);
                 
@@ -173,7 +177,6 @@ export default async function handler(req, res) {
                         }
 
                         await db.execute('UPDATE orders SET status = "Cancelled" WHERE id = ?', [b.id]);
-                        // বাতিল নোটিফিকেশন ট্রিগার
                         await db.execute(
                             'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
                             [order.email, "Order Cancelled! ❌", `Your order #${b.id} has been cancelled. Your cart stock has been successfully restored.`]
