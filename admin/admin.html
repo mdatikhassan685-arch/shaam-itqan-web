@@ -15,13 +15,14 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
-        <!-- Tab Navigation (COUPONS ট্যাব যুক্ত করা হয়েছে) -->
-        <div class="flex gap-1 mb-4 flex-wrap">
-            <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
-            <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
-            <button onclick="loadTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-[10px] rounded font-bold">CATEGORY</button>
-            <button onclick="loadTab('coupon')" class="flex-1 bg-teal-600 text-white py-2 text-[10px] rounded font-bold">COUPONS</button>
-            <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
+        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট (NOTIFS বাটনসহ) -->
+        <div class="grid grid-cols-3 gap-1 mb-4">
+            <button onclick="loadTab('product')" class="bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
+            <button onclick="loadTab('banner')" class="bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
+            <button onclick="loadTab('category')" class="bg-purple-600 text-white py-2 text-[10px] rounded font-bold">CATEGORY</button>
+            <button onclick="loadTab('coupon')" class="bg-teal-600 text-white py-2 text-[10px] rounded font-bold">COUPONS</button>
+            <button onclick="loadTab('notif_send')" class="bg-indigo-600 text-white py-2 text-[10px] rounded font-bold">NOTIFS</button>
+            <button onclick="loadOrders()" class="bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
         <div class="bg-white p-4 shadow rounded mb-6">
@@ -42,8 +43,41 @@
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
             
-            // কুপন কোড ফিল্ডের নাম হিসেবে in_name টাইটেলকে ব্যবহার করা হচ্ছে
-            let f = `<input type="text" id="in_name" placeholder="Coupon Code (e.g. SHAAM10)" class="w-full p-2 border text-sm rounded uppercase">`;
+            // ১. নোটিফিকেশন পাঠানোর কাস্টম ট্যাব মেকানিজম
+            if (type === 'notif_send') {
+                document.getElementById('form-title').innerText = "Send Custom Notification";
+                document.getElementById('save-btn').classList.add('hidden'); // সেভ বাটন হাইড থাকবে
+                
+                let f = `
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Target Audience</label>
+                    <select id="notif_target_type" onchange="toggleNotifEmailField()" class="w-full p-2 border text-sm rounded bg-white">
+                        <option value="all">All Registered Users (সবাইকে একসাথে)</option>
+                        <option value="single">Single User (নির্দিষ্ট কাস্টমারকে)</option>
+                    </select>
+                </div>
+                <div id="notif_email_div" class="hidden">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Target Customer Email</label>
+                    <input type="email" id="notif_email" placeholder="e.g. customer@email.com" class="w-full p-2 border text-sm rounded">
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Title</label>
+                    <input type="text" id="notif_title" placeholder="e.g. Eid Mubarak Offer! 🎉" class="w-full p-2 border text-sm rounded">
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Message</label>
+                    <textarea id="notif_message" placeholder="Write your notification message here..." rows="3" class="w-full p-2 border text-sm rounded"></textarea>
+                </div>
+                <button onclick="sendAdminNotification()" class="w-full bg-indigo-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded hover:bg-indigo-700 transition duration-300 mt-2">
+                    Send Notification
+                </button>
+                `;
+                document.getElementById('fields').innerHTML = f;
+                document.getElementById('item-list').innerHTML = ""; // লিস্ট খালি থাকবে
+                return;
+            }
+
+            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
             
             if(type === 'product') {
                 let catOptions = `<option value="General">General (ডিফল্ট)</option>`;
@@ -103,7 +137,6 @@
             else if (type === 'banner') {
                 f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm rounded">`;
             }
-            // কুপন ফিল্ডের জন্য ডাইনামিক রেন্ডারিং
             else if (type === 'coupon') {
                 f = `
                 <input type="text" id="in_name" placeholder="Coupon Code (e.g. SHAAM10)" class="w-full p-2 border text-sm rounded uppercase">
@@ -134,12 +167,74 @@
             renderList(type);
         }
 
+        // নোটিফিকেশন ফর্মে সিঙ্গেল বনাম অল ইউজার ইমেইল ফিল্ড টগল
+        function toggleNotifEmailField() {
+            const target = document.getElementById('notif_target_type').value;
+            const emailDiv = document.getElementById('notif_email_div');
+            if (target === 'single') {
+                emailDiv.classList.remove('hidden');
+            } else {
+                emailDiv.classList.add('hidden');
+            }
+        }
+
+        // অ্যাডমিন থেকে নোটিফিকেশন পাঠানোর রিয়েল-টাইম এপিআই রিকোয়েস্ট ফাংশন
+        async function sendAdminNotification() {
+            const targetType = document.getElementById('notif_target_type').value;
+            const email = document.getElementById('notif_email').value.trim();
+            const title = document.getElementById('notif_title').value.trim();
+            const message = document.getElementById('notif_message').value.trim();
+
+            if (!title || !message) {
+                alert("Please fill in Title and Message!");
+                return;
+            }
+
+            if (targetType === 'single' && !email) {
+                alert("Please enter the target customer email!");
+                return;
+            }
+
+            // লোকালস্টোরেজ থেকে সিকিউরড অ্যাডমিন ক্রেডেনশিয়াল নেওয়া হচ্ছে
+            const token = localStorage.getItem('admin_token');
+            const pin = localStorage.getItem('admin_pin');
+
+            try {
+                const res = await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'send_admin_notif',
+                        target_type: targetType,
+                        email: email,
+                        title: title,
+                        message: message,
+                        token: token,
+                        pin: pin
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Notification sent successfully!");
+                    document.getElementById('notif_title').value = "";
+                    document.getElementById('notif_message').value = "";
+                    document.getElementById('notif_email').value = "";
+                } else {
+                    const data = await res.json();
+                    alert(data.error || "Failed to send notification.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error sending notification.");
+            }
+        }
+
         async function saveItem() {
             const id = document.getElementById('edit_id').value;
             let data = { id: id };
 
             if (currentType === 'coupon') {
-                data.name = document.getElementById('in_name').value.trim().toUpperCase(); // কুপন কোড সর্বদা ক্যাপিটাল লেটার হবে
+                data.name = document.getElementById('in_name').value.trim().toUpperCase(); 
                 data.discount_type = document.getElementById('in_discount_type').value;
                 data.discount_value = parseFloat(document.getElementById('in_discount_value').value) || 0;
                 data.min_order_amount = parseFloat(document.getElementById('in_min_amount').value) || 0;
