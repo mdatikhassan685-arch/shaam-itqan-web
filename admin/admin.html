@@ -15,10 +15,12 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
+        <!-- Tab Navigation (COUPONS ট্যাব যুক্ত করা হয়েছে) -->
         <div class="flex gap-1 mb-4 flex-wrap">
             <button onclick="loadTab('product')" class="flex-1 bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="flex-1 bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
             <button onclick="loadTab('category')" class="flex-1 bg-purple-600 text-white py-2 text-[10px] rounded font-bold">CATEGORY</button>
+            <button onclick="loadTab('coupon')" class="flex-1 bg-teal-600 text-white py-2 text-[10px] rounded font-bold">COUPONS</button>
             <button onclick="loadOrders()" class="flex-1 bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
@@ -39,7 +41,9 @@
             document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
-            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
+            
+            // কুপন কোড ফিল্ডের নাম হিসেবে in_name টাইটেলকে ব্যবহার করা হচ্ছে
+            let f = `<input type="text" id="in_name" placeholder="Coupon Code (e.g. SHAAM10)" class="w-full p-2 border text-sm rounded uppercase">`;
             
             if(type === 'product') {
                 let catOptions = `<option value="General">General (ডিফল্ট)</option>`;
@@ -51,7 +55,8 @@
                     console.error(e);
                 }
 
-                f += `
+                f = `
+                <input type="text" id="in_name" placeholder="Product Name" class="w-full p-2 border text-sm rounded">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[9px] font-bold text-gray-500 uppercase">Selling Price</label>
@@ -94,32 +99,65 @@
                     </div>
                 </div>
                 <input type="text" id="in_desc" placeholder="Description" class="w-full p-2 border text-sm">`;
-            } else {
+            } 
+            else if (type === 'banner') {
                 f += `<input type="text" id="in_link" placeholder="Link URL" class="w-full p-2 border text-sm rounded">`;
             }
-            f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate)" class="w-full p-2 border text-sm rounded">`;
+            // কুপন ফিল্ডের জন্য ডাইনামিক রেন্ডারিং
+            else if (type === 'coupon') {
+                f = `
+                <input type="text" id="in_name" placeholder="Coupon Code (e.g. SHAAM10)" class="w-full p-2 border text-sm rounded uppercase">
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Discount Type</label>
+                    <select id="in_discount_type" class="w-full p-2 border text-sm rounded bg-white">
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="flat">Flat Discount (৳)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Discount Value (e.g. 10 for 10% / 100 for ৳100)</label>
+                    <input type="number" id="in_discount_value" placeholder="Discount Value" class="w-full p-2 border text-sm rounded">
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Minimum Order Amount (Optional)</label>
+                    <input type="number" id="in_min_amount" placeholder="Minimum Amount to apply coupon" class="w-full p-2 border text-sm rounded">
+                </div>`;
+            }
+            
+            if (type !== 'coupon' && type !== 'product') {
+                f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate)" class="w-full p-2 border text-sm rounded">`;
+            } else if (type === 'product') {
+                f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate)" class="w-full p-2 border text-sm rounded">`;
+            }
+            
             document.getElementById('fields').innerHTML = f;
             renderList(type);
         }
 
         async function saveItem() {
             const id = document.getElementById('edit_id').value;
-            const data = { 
-                id: id,
-                name: document.getElementById('in_name')?.value, 
-                price: document.getElementById('in_price')?.value, 
-                original_price: document.getElementById('in_original_price')?.value || 0,
-                tag: document.getElementById('in_tag')?.value || 'none',
-                category: document.getElementById('in_category')?.value || 'General', 
-                description: document.getElementById('in_desc')?.value, 
-                image_url: document.getElementById('in_img').value, 
-                link_url: document.getElementById('in_link')?.value,
-                stock_s: parseInt(document.getElementById('in_stock_s')?.value) || 0,
-                stock_m: parseInt(document.getElementById('in_stock_m')?.value) || 0,
-                stock_l: parseInt(document.getElementById('in_stock_l')?.value) || 0,
-                stock_xl: parseInt(document.getElementById('in_stock_xl')?.value) || 0,
-                stock_xxl: parseInt(document.getElementById('in_stock_xxl')?.value) || 0
-            };
+            let data = { id: id };
+
+            if (currentType === 'coupon') {
+                data.name = document.getElementById('in_name').value.trim().toUpperCase(); // কুপন কোড সর্বদা ক্যাপিটাল লেটার হবে
+                data.discount_type = document.getElementById('in_discount_type').value;
+                data.discount_value = parseFloat(document.getElementById('in_discount_value').value) || 0;
+                data.min_order_amount = parseFloat(document.getElementById('in_min_amount').value) || 0;
+            } else {
+                data.name = document.getElementById('in_name')?.value;
+                data.price = document.getElementById('in_price')?.value;
+                data.original_price = document.getElementById('in_original_price')?.value || 0;
+                data.tag = document.getElementById('in_tag')?.value || 'none';
+                data.category = document.getElementById('in_category')?.value || 'General';
+                data.description = document.getElementById('in_desc')?.value;
+                data.image_url = document.getElementById('in_img')?.value || '';
+                data.link_url = document.getElementById('in_link')?.value;
+                data.stock_s = parseInt(document.getElementById('in_stock_s')?.value) || 0;
+                data.stock_m = parseInt(document.getElementById('in_stock_m')?.value) || 0;
+                data.stock_l = parseInt(document.getElementById('in_stock_l')?.value) || 0;
+                data.stock_xl = parseInt(document.getElementById('in_stock_xl')?.value) || 0;
+                data.stock_xxl = parseInt(document.getElementById('in_stock_xxl')?.value) || 0;
+            }
             
             const method = id ? 'PUT' : 'POST';
             const res = await fetch(`/api/admin-data?type=${currentType}`, { 
@@ -131,11 +169,11 @@
         }
 
         async function renderList(type) {
-            const res = await fetch('/api/admin-data?type=currentType');
+            const res = await fetch('/api/admin-data?type=' + type);
             const items = await res.json();
             document.getElementById('item-list').innerHTML = items.map(item => `
                 <div class="bg-white p-3 shadow flex justify-between items-center text-sm">
-                    <span>${item.name || item.image_url.substring(0,15)+'...'}</span>
+                    <span>${item.code || item.name || item.image_url.substring(0,15)+'...'}</span>
                     <div>
                         <button onclick='editItem(${JSON.stringify(item)})' class="text-blue-500 font-bold mr-2">Edit</button>
                         <button onclick="deleteItem(${item.id})" class="text-red-500 font-bold">Delete</button>
@@ -145,26 +183,32 @@
 
         function editItem(item) {
             document.getElementById('edit_id').value = item.id;
-            document.getElementById('in_name').value = item.name || '';
-            if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
-            if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
-            if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
-            if(document.getElementById('in_category')) document.getElementById('in_category').value = item.category || 'General';
+            document.getElementById('in_name').value = item.code || item.name || '';
             
-            if(document.getElementById('in_stock_s')) document.getElementById('in_stock_s').value = item.stock_s || 0;
-            if(document.getElementById('in_stock_m')) document.getElementById('in_stock_m').value = item.stock_m || 0;
-            if(document.getElementById('in_stock_l')) document.getElementById('in_stock_l').value = item.stock_l || 0;
-            if(document.getElementById('in_stock_xl')) document.getElementById('in_stock_xl').value = item.stock_xl || 0;
-            if(document.getElementById('in_stock_xxl')) document.getElementById('in_stock_xxl').value = item.stock_xxl || 0;
-            
-            if(document.getElementById('in_desc')) document.getElementById('in_desc').value = item.description || '';
-            document.getElementById('in_img').value = item.image_url || '';
-            if(document.getElementById('in_link')) document.getElementById('in_link').value = item.link_url || '';
+            if (currentType === 'coupon') {
+                document.getElementById('in_discount_type').value = item.discount_type || 'percentage';
+                document.getElementById('in_discount_value').value = item.discount_value || 0;
+                document.getElementById('in_min_amount').value = item.min_order_amount || 0;
+            } else {
+                if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
+                if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
+                if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
+                if(document.getElementById('in_category')) document.getElementById('in_category').value = item.category || 'General';
+                
+                if(document.getElementById('in_stock_s')) document.getElementById('in_stock_s').value = item.stock_s || 0;
+                if(document.getElementById('in_stock_m')) document.getElementById('in_stock_m').value = item.stock_m || 0;
+                if(document.getElementById('in_stock_l')) document.getElementById('in_stock_l').value = item.stock_l || 0;
+                if(document.getElementById('in_stock_xl')) document.getElementById('in_stock_xl').value = item.stock_xl || 0;
+                if(document.getElementById('in_stock_xxl')) document.getElementById('in_stock_xxl').value = item.stock_xxl || 0;
+                
+                if(document.getElementById('in_desc')) document.getElementById('in_desc').value = item.description || '';
+                if(document.getElementById('in_img')) document.getElementById('in_img').value = item.image_url || '';
+                if(document.getElementById('in_link')) document.getElementById('in_link').value = item.link_url || '';
+            }
         }
 
         async function deleteItem(id) { await fetch(`/api/admin-data?type=${currentType}`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
         
-        // ডাইনামিক মাল্টি-স্ট্যাটাস এবং ক্যানসেল অ্যাকশন বাটন রেন্ডারিং
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
             document.getElementById('save-btn').classList.add('hidden');
@@ -179,7 +223,6 @@
                 const area = addressParts.find(p => p.startsWith('Area:')) || 'Area: N/A';
                 const method = addressParts.find(p => p.startsWith('Method:')) || 'Method: COD';
 
-                // স্ট্যাটাস অনুযায়ী অ্যাডমিনের অ্যাকশন বাটনসমূহ
                 let actionButtons = '';
                 if (o.status === 'Pending') {
                     actionButtons = `
@@ -235,13 +278,11 @@
                             <span class="text-base text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
                         </div>
 
-                        <!-- ডাইনামিক স্ট্যাটাস বাটন গ্রিল -->
                         ${actionButtons}
                     </div>`;
             }).join('');
         }
 
-        // এপিআই-তে মাল্টিপল স্ট্যাটাস রিকোয়েস্ট পাঠানোর ফাংশন
         async function updateStatus(id, action) { 
             if (action === 'cancel' && !confirm("Are you sure you want to cancel this order? Stock will be restored.")) return;
 
