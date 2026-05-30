@@ -29,16 +29,24 @@
         <div class="bg-white p-4 shadow rounded mb-6 border border-gray-100">
             <h2 class="font-bold mb-3 border-b pb-2 tracking-widest uppercase text-xs">Order Summary</h2>
             
-            <!-- সিলেক্টেড প্রোডাক্ট লিস্ট এরিয়া -->
+            <!-- চেকআউট প্রোডাক্ট লিস্ট এরিয়া -->
             <div id="checkout-items-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto scrollbar-hide">
                 <p class="text-center py-4 text-xs text-gray-400">Loading items...</p>
             </div>
 
+            <!-- ডিসকাউন্ট ভ্যালুসহ বিলিং সামারি -->
             <div class="space-y-2 text-sm text-gray-600 border-t pt-3">
                 <div class="flex justify-between">
                     <span>Subtotal:</span>
                     <span>৳ <span id="summary-subtotal">0.00</span></span>
                 </div>
+                
+                <!-- কুপন ডিসকাউন্ট প্রদর্শনের ঘর (ডাইনামিক শো হবে) -->
+                <div class="flex justify-between text-red-600 font-semibold">
+                    <span>Coupon Discount:</span>
+                    <span>- ৳ <span id="summary-discount">0.00</span></span>
+                </div>
+
                 <div class="flex justify-between">
                     <span>Delivery Charge:</span>
                     <span>৳ <span id="summary-shipping">80.00</span></span>
@@ -47,6 +55,12 @@
                     <span>Total Amount:</span>
                     <span class="text-[#D4AF37]">৳ <span id="summary-total">0.00</span></span>
                 </div>
+            </div>
+
+            <!-- কুপন বা প্রোমো কোড অ্যাপ্লাই সেকশন -->
+            <div class="mt-4 pt-3 border-t flex gap-2">
+                <input type="text" id="coupon-code" placeholder="PROMO CODE (e.g. SHAAM10)" class="flex-grow p-2.5 border text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-[#D4AF37] rounded bg-gray-50">
+                <button onclick="applyCoupon()" class="bg-black text-white px-4 text-xs font-bold uppercase tracking-widest rounded hover:bg-[#D4AF37] transition duration-300">Apply</button>
             </div>
         </div>
 
@@ -131,12 +145,13 @@
     <script>
         let subtotal = 0;
         let captchaResult = 0;
+        let discountAmount = 0;     // গ্লোবাল ডিসকাউন্ট ট্র্যাকার
+        let appliedCouponCode = ""; // কাস্টমারের কুপন কোড ট্র্যাকার
 
         async function loadSummary() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { window.location.href = 'login.html'; return; }
 
-            // ব্রাউজার মেমোরি থেকে শুধুমাত্র সিলেক্ট করা আইডিগুলো নেওয়া হচ্ছে
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
             if (checkedIds.length === 0) {
                 alert("No items selected for checkout! Redirecting to Bag.");
@@ -148,7 +163,6 @@
                 const res = await fetch('/api/bag?email=' + user.email);
                 const cartItems = await res.json();
 
-                // কেবল সিলেক্ট করা প্রোডাক্টগুলো ফিল্টার করা হচ্ছে
                 const checkedItems = cartItems.filter(item => checkedIds.includes(item.id));
                 if (checkedItems.length === 0) {
                     alert("Selected items not found! Redirecting to Bag.");
@@ -182,6 +196,29 @@
             }
         }
 
+        // কুপন অ্যাপ্লাই এবং লাইভ রিকোয়েস্ট ভেরিফিকেশন ফাংশন
+        async function applyCoupon() {
+            const codeInput = document.getElementById('coupon-code').value.trim().toUpperCase();
+            if (!codeInput) return alert("Please enter a Coupon Code!");
+
+            try {
+                const res = await fetch(`/api/coupon?code=${codeInput}&subtotal=${subtotal}`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    discountAmount = parseFloat(data.discount_amount) || 0;
+                    appliedCouponCode = codeInput; // কুপন কোড ট্র্যাক করা হলো
+                    alert(`Success! Coupon Applied. You got ৳${discountAmount.toFixed(2)} discount!`);
+                    updateShipping(); // কুপন অ্যাড হওয়ার সাথে সাথে গ্র্যান্ড টোটাল লাইভ আপডেট হবে
+                } else {
+                    alert(data.error || "Failed to apply coupon.");
+                }
+            } catch (error) {
+                console.error("Coupon Error:", error);
+                alert("Error verifying coupon.");
+            }
+        }
+
         function generateCaptcha() {
             const num1 = Math.floor(Math.random() * 9) + 1;
             const num2 = Math.floor(Math.random() * 9) + 1;
@@ -202,8 +239,11 @@
         function updateShipping() {
             const area = document.getElementById('delivery-area').value;
             const shippingFee = area === 'inside_dhaka' ? 80 : 150;
-            const grandTotal = subtotal + shippingFee;
+            
+            // সর্বমোট হিসাব: সাবটোটাল - কুপন ডিসকাউন্ট + ডেলিভারি চার্জ
+            const grandTotal = subtotal - discountAmount + shippingFee;
 
+            document.getElementById('summary-discount').innerText = discountAmount.toFixed(2);
             document.getElementById('summary-shipping').innerText = shippingFee.toFixed(2);
             document.getElementById('summary-total').innerText = grandTotal.toFixed(2);
             document.getElementById('notice-charge').innerText = '৳' + shippingFee;
@@ -258,7 +298,6 @@
                 return;
             }
 
-            // অর্ডারের জন্য মেমোরি থেকে আইডিগুলো নেওয়া হচ্ছে
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
 
             const finalAddress = trxid 
@@ -273,7 +312,8 @@
                 phone_backup_relation: relation,
                 address: finalAddress, 
                 delivery_area: area,
-                checked_item_ids: checkedIds, // এপিআই-তে কেবল সিলেক্টেড আইডি পাঠানো হচ্ছে
+                checked_item_ids: checkedIds,
+                coupon_code: appliedCouponCode, // এপিআই-তে সফলভাবে প্রোমো কোড পাঠানো হচ্ছে
                 email: user.email
             };
             
@@ -286,7 +326,7 @@
                 
                 if (res.ok) { 
                     alert('Order Placed Successfully!'); 
-                    localStorage.removeItem('checkout_item_ids'); // সেশন ক্লিয়ার
+                    localStorage.removeItem('checkout_item_ids');
                     window.location.href = 'index.html'; 
                 } else {
                     alert('Failed to place order.');
