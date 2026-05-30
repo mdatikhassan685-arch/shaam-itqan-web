@@ -6,7 +6,7 @@
     <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -14,25 +14,22 @@
 </head>
 <body class="bg-white text-black font-sans pb-24">
 
-    <!-- Navbar: নোটিফিকেশন ও ব্যাগ আইকনে ডাইনামিক কাউন্টার ব্যাজ যুক্ত করা হয়েছে -->
+    <!-- Navbar -->
     <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
         <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
         <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
         
         <div class="flex items-center gap-3">
-            <!-- নোটিফিকেশন বেল আইকন (১ নং পয়েন্টের সমাধান: কাউন্টার ব্যাজ) -->
+            <!-- নোটিফিকেশন বেল আইকন (১ নং পয়েন্টের সমাধান: লাল ব্যাজ ডট মুছে ফেলা হয়েছে) -->
             <button class="relative focus:outline-none" onclick="showNotifications()">
                 <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                <!-- ২ টি নোটিফিকেশন ব্যাজ দেখাবে -->
-                <span id="notif-count-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">2</span>
             </button>
 
-            <!-- ব্যাগ বা কার্ট আইকন (২ নং পয়েন্টের সমাধান: ডাইনামিক আইটেম কাউন্টার) -->
+            <!-- ব্যাগ বা কার্ট আইকন (২ নং পয়েন্টের সমাধান: লাল ডাইনামিক ব্যাজ কাউন্টার) -->
             <a href="bag.html" class="relative">
                 <svg class="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                <!-- কার্ট আইটেমের সংখ্যা দেখানোর লাল ডাইনামিক ব্যাজ (শুরুতে হাইড থাকবে) -->
                 <span id="bag-count-badge" class="absolute -top-1 -right-1.5 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white hidden">0</span>
             </a>
         </div>
@@ -53,7 +50,7 @@
     <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
 
-    <!-- Categories -->
+    <!-- Categories (নতুন প্রিমিয়াম স্লাইডার লেআউট) -->
     <div class="px-4 py-4">
         <h2 class="text-xs font-bold mb-4 uppercase tracking-widest text-gray-700">Popular Categories</h2>
         <div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div>
@@ -128,15 +125,14 @@
                 const res = await fetch('/api/bag?email=' + email);
                 if (res.ok) {
                     const cartItems = await res.json();
-                    // কার্টে থাকা প্রতিটা প্রোডাক্টের মোট সংখ্যা (Quantity) যোগ করা হচ্ছে
                     const totalQty = cartItems.reduce((acc, item) => acc + (parseInt(item.quantity) || 1), 0);
                     
                     const badge = document.getElementById('bag-count-badge');
                     if (totalQty > 0) {
                         badge.innerText = totalQty;
-                        badge.classList.remove('hidden'); // আইটেম থাকলে লাল কাউন্টার শো করবে
+                        badge.classList.remove('hidden'); 
                     } else {
-                        badge.classList.add('hidden');    // আইটেম না থাকলে হাইড থাকবে
+                        badge.classList.add('hidden');    
                     }
                 }
             } catch (e) {
@@ -144,7 +140,6 @@
             }
         }
 
-        // ১ নং পয়েন্টের সমাধান: নোটিফিকেশন বেল ক্লিক করলে প্রিমিয়াম পপ-আপ মেসেজ শো করার ফাংশন
         function showNotifications() {
             alert("🔔 SHAAM ITQAN Notifications:\n\n1. Welcome to SHAAM ITQAN! Enjoy your shopping.\n2. Use Code: SI10 to get 10% Discount on your first order!");
         }
@@ -152,13 +147,15 @@
         function renderCategoryGrid() {
             const container = document.getElementById('category-grid');
             const isAllActive = activeCategory === 'All';
+            
+            // ৩ নং পয়েন্টের সমাধান: "ALL PRODUCT" লেখা যুক্ত করা হয়েছে
             let catHTML = `
                 <button onclick="filterProducts('All')" class="flex-shrink-0 w-24 h-32 bg-white rounded-xl border-2 ${isAllActive ? 'border-[#D4AF37]' : 'border-gray-100'} shadow flex flex-col overflow-hidden focus:outline-none transition duration-300">
                     <div class="w-full h-24 overflow-hidden bg-black p-3.5 flex items-center justify-center">
                         <img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full h-full object-contain">
                     </div>
                     <div class="flex-grow flex items-center justify-center p-1 bg-white">
-                        <p class="text-[11px] font-bold ${isAllActive ? 'text-[#D4AF37]' : 'text-gray-500'} uppercase tracking-wide leading-none">ALL</p>
+                        <p class="text-[10px] font-bold ${isAllActive ? 'text-[#D4AF37]' : 'text-gray-500'} uppercase tracking-wide leading-none">ALL PRODUCT</p>
                     </div>
                 </button>
             `;
@@ -279,6 +276,9 @@
                     authText.innerText = 'PROFILE';
                     authLink.href = 'profile.html';
                 }
+                
+                // ডাইনামিক কার্ট কাউন্ট লোড হওয়া নিশ্চিত করার জন্য এখানেও কল দেওয়া হলো
+                updateBagCount(JSON.parse(localStorage.getItem('user_session')).email);
             }
         });
     </script>
