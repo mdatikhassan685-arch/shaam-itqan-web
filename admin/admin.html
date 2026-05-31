@@ -6,7 +6,6 @@
     <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // sessionStorage সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
         if (sessionStorage.getItem('is_admin') !== 'true') {
             window.location.href = 'admin-login.html';
         }
@@ -16,7 +15,6 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
-        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট -->
         <div class="grid grid-cols-3 gap-1 mb-4">
             <button onclick="loadTab('product')" class="bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
@@ -38,18 +36,15 @@
 
     <script>
         let currentType = '';
-        
-        // ডাইনামিক ট্যাব লোডিং ফাংশন
         async function loadTab(type) {
             currentType = type;
             document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
-            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
             
             if (type === 'notif_send') {
                 document.getElementById('form-title').innerText = "Send Custom Notification";
-                document.getElementById('save-btn').classList.add('hidden'); // সেভ বাটন হাইড থাকবে
+                document.getElementById('save-btn').classList.add('hidden');
                 
                 let f = `
                 <div>
@@ -67,6 +62,19 @@
                     <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Title</label>
                     <input type="text" id="notif_title" placeholder="e.g. Eid Mubarak Offer! 🎉" class="w-full p-2 border text-sm rounded">
                 </div>
+                
+                <!-- নতুন দুটি প্রমোশনাল ইমেজ ও ডাইনামিক লিংক ইনপুট ফিল্ড যুক্ত করা হলো -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Promo Image URL (Optional)</label>
+                        <input type="text" id="notif_img_url" placeholder="e.g. https://i.ibb.co/img.png" class="w-full p-2 border text-sm rounded">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Redirect Link URL (Optional)</label>
+                        <input type="text" id="notif_link_url" placeholder="e.g. https://domain/product" class="w-full p-2 border text-sm rounded">
+                    </div>
+                </div>
+
                 <div>
                     <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Message</label>
                     <textarea id="notif_message" placeholder="Write your notification message here..." rows="3" class="w-full p-2 border text-sm rounded"></textarea>
@@ -80,6 +88,8 @@
                 return;
             }
 
+            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
+            
             if(type === 'product') {
                 let catOptions = `<option value="General">General (ডিফল্ট)</option>`;
                 try {
@@ -184,6 +194,10 @@
             const email = emailInput ? emailInput.value.trim() : "";
             const title = document.getElementById('notif_title').value.trim();
             const message = document.getElementById('notif_message').value.trim();
+            
+            // নতুন কাস্টম ইমেজ ও লিংক ভ্যালু গ্র্যাব করা হচ্ছে
+            const imageUrl = document.getElementById('notif_img_url').value.trim();
+            const linkUrl = document.getElementById('notif_link_url').value.trim();
 
             if (!title || !message) {
                 alert("Please fill in Title and Message!");
@@ -195,7 +209,6 @@
                 return;
             }
 
-            // sessionStorage থেকে অ্যাডমিন টোকেন ও পিন সংগ্রহ করা হচ্ছে
             const token = sessionStorage.getItem('admin_token');
             const pin = sessionStorage.getItem('admin_pin');
 
@@ -214,6 +227,8 @@
                         email: email,
                         title: title,
                         message: message,
+                        image_url: imageUrl, // ইমেজ পাঠানো হচ্ছে
+                        link_url: linkUrl,   // লিংক পাঠানো হচ্ছে
                         token: token,
                         pin: pin
                     })
@@ -223,6 +238,8 @@
                     alert("Notification sent successfully!");
                     document.getElementById('notif_title').value = "";
                     document.getElementById('notif_message').value = "";
+                    document.getElementById('notif_img_url').value = "";
+                    document.getElementById('notif_link_url').value = "";
                     if (emailInput) emailInput.value = "";
                 } else {
                     const data = await res.json();
