@@ -14,16 +14,16 @@
 <body class="bg-gray-50 p-4 font-sans pb-10">
 
     <div class="max-w-md mx-auto">
-        <!-- Header -->
-        <div class="relative flex items-center justify-center mb-6 border-b pb-3 h-10">
-            <a href="index.html" class="text-xs font-bold tracking-widest uppercase hover:underline flex items-center gap-1 text-gray-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        <!-- Header (মোবাইল ওভারল্যাপ এড়াতে ব্যাক বাটনটি কেবল আইকন করা হয়েছে এবং পারফেক্ট স্পেসিং দেওয়া হয়েছে) -->
+        <div class="relative flex items-center justify-center mb-6 border-b pb-4 h-12">
+            <a href="index.html" class="absolute left-0 p-1 text-gray-600 hover:text-[#D4AF37] transition focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
                 </svg>
-                Back
             </a>
-            <h1 class="text-sm font-bold tracking-widest luxury-font uppercase">Notifications</h1>
+            <h1 class="text-xs font-bold tracking-widest luxury-font uppercase text-gray-800">Notifications</h1>
             
+            <!-- সব নোটিফিকেশন একসাথে ডিলিট করার বাটন (Clear All) -->
             <button onclick="clearAllNotifications()" id="clear-all-btn" class="absolute right-0 text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline hidden">
                 Clear All
             </button>
@@ -52,10 +52,10 @@
                 <!-- প্রোমো ইমেজ রেন্ডারিং এরিয়া -->
                 <img id="modal-image" class="w-full h-44 object-cover rounded border border-gray-100 hidden">
                 
-                <p id="modal-message" class="text-gray-600 text-xs leading-relaxed whitespace-pre-line"></p>
+                <p id="modal-message" class="text-gray-500 text-xs leading-relaxed whitespace-pre-line"></p>
             </div>
 
-            <!-- Modal Action Buttons (Open Link বাটন সহ) -->
+            <!-- Modal Action Buttons -->
             <div class="mt-6 pt-3 border-t border-gray-100 space-y-2">
                 <button id="modal-link-btn" class="w-full bg-black text-white py-3 uppercase tracking-widest text-[10px] font-bold hover:bg-[#D4AF37] transition duration-300 rounded hidden">
                     Open Link
@@ -88,38 +88,32 @@
 
                 clearBtn.classList.remove('hidden');
 
-                // গোল্ডেন বর্ডার ও বড় ইমেজ কার্ড ডিজাইন (সরাসরি স্লাইড ছবির ওপর ডাইনামিক ফিল্টার)
+                // গোল্ডেন বর্ডারযুক্ত প্রফেশনাল ব্যানার কার্ড ডিজাইন
                 container.innerHTML = allNotifications.map(n => {
                     const unreadClass = !n.is_read ? 'border-l-4 border-[#D4AF37]' : '';
                     
                     return `
                         <div onclick="openModal(${n.id})" class="bg-white shadow rounded-xl border-2 border-[#D4AF37] flex flex-col overflow-hidden cursor-pointer hover:shadow-md transition duration-300 ${unreadClass}">
-                            <!-- ছবি থাকলে কার্ডের ওপর বড় ব্যানার ইমেজ দেখাবে -->
+                            <!-- বড় ব্যানার ইমেজ -->
                             ${n.image_url ? `
                                 <div class="w-full h-44 overflow-hidden bg-gray-50">
                                     <img src="${n.image_url.split(',')[0].trim()}" class="w-full h-full object-cover">
                                 </div>
                             ` : ''}
                             
-                            <!-- টেক্সট ও বাটন সেকশন -->
-                            <div class="p-4 flex flex-col justify-between flex-grow">
-                                <div class="flex justify-between items-center gap-4">
-                                    <h3 class="font-bold text-xs text-gray-800 uppercase tracking-wider line-clamp-1">${n.title}</h3>
-                                    
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[9px] font-bold text-[#D4AF37] uppercase tracking-widest shrink-0 flex items-center gap-0.5">
-                                            See More
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                        </span>
-                                        <!-- ডিলিট বাটন -->
-                                        <button onclick="event.stopPropagation(); deleteNotification(${n.id})" class="text-gray-400 hover:text-red-500 transition focus:outline-none p-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                        </button>
-                                    </div>
+                            <!-- নিচের ইনফো সেকশন (SEE MORE বাদ দিয়ে অত্যন্ত পরিচ্ছন্ন এলাইনমেন্ট দেওয়া হয়েছে) -->
+                            <div class="p-4 flex items-center justify-between gap-4">
+                                <div class="flex-grow">
+                                    <h3 class="font-extrabold text-xs text-gray-800 uppercase tracking-widest leading-snug">${n.title}</h3>
+                                    <span class="text-[9px] text-gray-400 font-mono block mt-1">${new Date(n.created_at).toLocaleString()}</span>
                                 </div>
-                                <span class="text-[9px] text-gray-400 font-mono block mt-2.5">${new Date(n.created_at).toLocaleString()}</span>
+                                
+                                <!-- ডিলিট করার জন্য চমৎকার মিনিমালিস্ট ট্র্যাশ বিন (Trash Bin) আইকন -->
+                                <button onclick="event.stopPropagation(); deleteNotification(${n.id})" class="text-gray-400 hover:text-red-500 transition duration-200 p-1.5 focus:outline-none shrink-0" title="Delete Notification">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     `;
