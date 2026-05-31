@@ -24,7 +24,7 @@
             </a>
             <h1 class="text-sm font-bold tracking-widest luxury-font uppercase">Notifications</h1>
             
-            <!-- সব নোটিফিকেশন একসাথে ডিলিট করার বাটন (Clear All) -->
+            <!-- Clear All Button -->
             <button onclick="clearAllNotifications()" id="clear-all-btn" class="absolute right-0 text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline hidden">
                 Clear All
             </button>
@@ -57,16 +57,26 @@
                 clearBtn.classList.remove('hidden');
 
                 container.innerHTML = notifications.map(n => {
-                    // না পড়া বা Unread নোটিফিকেশনগুলোর পাশে সুন্দর গোল্ডেন বর্ডার দেখাবে
                     const unreadClass = !n.is_read ? 'border-l-4 border-[#D4AF37]' : '';
+                    const isLongMessage = n.message.length > 100; // ১০০ অক্ষরের বেশি হলে Read More দেখাবে
+
                     return `
                         <div class="bg-white p-4 shadow rounded border border-gray-100 flex justify-between items-start gap-4 transition duration-200 ${unreadClass}">
                             <div class="flex-grow">
-                                <h3 class="font-bold text-xs text-gray-800 uppercase tracking-wider">${n.title}</h3>
-                                <p class="text-gray-600 text-xs mt-1 leading-relaxed">${n.message}</p>
-                                <span class="text-[9px] text-gray-400 font-mono block mt-2">${new Date(n.created_at).toLocaleString()}</span>
+                                <!-- টাইটেল ফন্ট বড় ও স্পষ্ট করা হয়েছে -->
+                                <h3 class="font-bold text-sm text-gray-900 tracking-wide">${n.title}</h3>
+                                
+                                <!-- মেসেজ বডি (ডিফল্টভাবে ২ লাইনে লক থাকবে) -->
+                                <p id="desc-${n.id}" class="text-gray-500 text-xs mt-1.5 leading-relaxed line-clamp-2 whitespace-pre-line">${n.message}</p>
+                                
+                                <!-- Read More বাটন (মেসেজ বড় হলেই কেবল এটি দেখাবে) -->
+                                ${isLongMessage ? `
+                                    <button onclick="toggleReadMore(${n.id})" id="btn-${n.id}" class="text-[9px] font-bold text-[#D4AF37] mt-1.5 uppercase tracking-widest focus:outline-none hover:underline block">Read More</button>
+                                ` : ''}
+                                
+                                <span class="text-[9px] text-gray-400 font-mono block mt-2.5">${new Date(n.created_at).toLocaleString()}</span>
                             </div>
-                            <!-- নির্দিষ্ট নোটিফিকেশন ডিলিট করার বাটন (X) -->
+                            <!-- ডিলিট বাটন (X) -->
                             <button onclick="deleteNotification(${n.id})" class="text-gray-400 hover:text-red-500 transition focus:outline-none p-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -76,7 +86,6 @@
                     `;
                 }).join('');
 
-                // পেজ লোড হয়ে লিস্ট প্রদর্শিত হওয়া মাত্রই ব্যাকএন্ডে সব নোটিফিকেশনকে 'Read' মার্ক করে দেওয়া হচ্ছে
                 await fetch('/api/notifications', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -87,7 +96,20 @@
             }
         }
 
-        // নির্দিষ্ট নোটিফিকেশন ডিলিট করার ফাংশন
+        // রিড মোর টগল ফাংশন
+        function toggleReadMore(id) {
+            const desc = document.getElementById(`desc-${id}`);
+            const btn = document.getElementById(`btn-${id}`);
+            
+            if (desc.classList.contains('line-clamp-2')) {
+                desc.classList.remove('line-clamp-2'); // ক্ল্যাম্প তুলে দেওয়া হলো (সম্পূর্ণ শো করবে)
+                btn.innerText = "Read Less";
+            } else {
+                desc.classList.add('line-clamp-2');    // পুনরায় ২ লাইনে সংকুচিত করা হলো
+                btn.innerText = "Read More";
+            }
+        }
+
         async function deleteNotification(id) {
             try {
                 const res = await fetch('/api/notifications', {
@@ -96,14 +118,13 @@
                     body: JSON.stringify({ id: id })
                 });
                 if (res.ok) {
-                    loadNotifications(); // রিয়েল-টাইমে রিলোড হবে
+                    loadNotifications();
                 }
             } catch (error) {
                 console.error(error);
             }
         }
 
-        // সব নোটিফিকেশন এক ক্লিকে একবারে ডিলিট করার ফাংশন
         async function clearAllNotifications() {
             if (!confirm("Are you sure you want to delete all notifications?")) return;
 
