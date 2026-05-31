@@ -4,15 +4,21 @@ export default async function handler(req, res) {
     const db = await getDb();
     const url = new URL(req.url, `http://${req.headers.host}`);
     const type = url.searchParams.get('type');
-    
-    // ডাটাবেজ টেবিল ম্যাপিংয়ে নোটিফিকেশন কলাম যুক্ত করা হলো
     const tableMap = { 'product': 'products', 'banner': 'banners', 'category': 'categories', 'coupon': 'coupons', 'notification': 'notifications' };
     const tableName = tableMap[type];
 
     try {
         if (req.method === 'GET') {
-            const [rows] = await db.execute(`SELECT * FROM ${tableName} ORDER BY id DESC`);
-            res.status(200).json(rows);
+            // প্রোডাক্টের ক্ষেত্রে ডাইনামিক্যালি উইশলিস্ট কাউন্টার (Likes count) হিসাব করা হচ্ছে SQL SUBQUERY দিয়ে
+            if (type === 'product') {
+                const [rows] = await db.execute(
+                    'SELECT p.*, (SELECT COUNT(*) FROM wishlist WHERE product_id = p.id) as wishlist_count FROM products p ORDER BY p.id DESC'
+                );
+                return res.status(200).json(rows);
+            } else {
+                const [rows] = await db.execute(`SELECT * FROM ${tableName} ORDER BY id DESC`);
+                return res.status(200).json(rows);
+            }
         } else if (req.method === 'POST') {
             const b = req.body;
             if (type === 'product') {
@@ -46,7 +52,6 @@ export default async function handler(req, res) {
                     [b.name, b.discount_type, b.discount_value, b.min_order_amount, b.id]
                 );
             }
-            // নোটিফিকেশন আপডেট করার ডাইনামিক কুয়েরি যুক্ত করা হলো
             else if (type === 'notification') {
                 await db.execute(
                     'UPDATE notifications SET title=?, message=?, image_url=?, link_url=? WHERE id=?', 
