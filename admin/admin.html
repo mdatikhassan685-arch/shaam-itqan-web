@@ -6,6 +6,7 @@
     <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
         if (sessionStorage.getItem('is_admin') !== 'true') {
             window.location.href = 'admin-login.html';
         }
@@ -15,12 +16,13 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
+        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট -->
         <div class="grid grid-cols-3 gap-1 mb-4">
             <button onclick="loadTab('product')" class="bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
             <button onclick="loadTab('category')" class="bg-purple-600 text-white py-2 text-[10px] rounded font-bold">CATEGORY</button>
             <button onclick="loadTab('coupon')" class="bg-teal-600 text-white py-2 text-[10px] rounded font-bold">COUPONS</button>
-            <button onclick="loadTab('notif_send')" class="bg-indigo-600 text-white py-2 text-[10px] rounded font-bold">NOTIFS</button>
+            <button onclick="loadTab('notification')" class="bg-indigo-600 text-white py-2 text-[10px] rounded font-bold">NOTIFS</button>
             <button onclick="loadOrders()" class="bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
@@ -36,58 +38,13 @@
 
     <script>
         let currentType = '';
+        
         async function loadTab(type) {
             currentType = type;
             document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
             
-            if (type === 'notif_send') {
-                document.getElementById('form-title').innerText = "Send Custom Notification";
-                document.getElementById('save-btn').classList.add('hidden');
-                
-                let f = `
-                <div>
-                    <label class="text-[9px] font-bold text-gray-500 uppercase">Target Audience</label>
-                    <select id="notif_target_type" onchange="toggleNotifEmailField()" class="w-full p-2 border text-sm rounded bg-white">
-                        <option value="all">All Registered Users (সবাইকে একসাথে)</option>
-                        <option value="single">Single User (নির্দিষ্ট কাস্টমারকে)</option>
-                    </select>
-                </div>
-                <div id="notif_email_div" class="hidden">
-                    <label class="text-[9px] font-bold text-gray-500 uppercase">Target Customer Email</label>
-                    <input type="email" id="notif_email" placeholder="e.g. customer@email.com" class="w-full p-2 border text-sm rounded">
-                </div>
-                <div>
-                    <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Title</label>
-                    <input type="text" id="notif_title" placeholder="e.g. Eid Mubarak Offer! 🎉" class="w-full p-2 border text-sm rounded">
-                </div>
-                
-                <!-- নতুন দুটি প্রমোশনাল ইমেজ ও ডাইনামিক লিংক ইনপুট ফিল্ড যুক্ত করা হলো -->
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[9px] font-bold text-gray-500 uppercase">Promo Image URL (Optional)</label>
-                        <input type="text" id="notif_img_url" placeholder="e.g. https://i.ibb.co/img.png" class="w-full p-2 border text-sm rounded">
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-gray-500 uppercase">Redirect Link URL (Optional)</label>
-                        <input type="text" id="notif_link_url" placeholder="e.g. https://domain/product" class="w-full p-2 border text-sm rounded">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Message</label>
-                    <textarea id="notif_message" placeholder="Write your notification message here..." rows="3" class="w-full p-2 border text-sm rounded"></textarea>
-                </div>
-                <button onclick="sendAdminNotification()" class="w-full bg-indigo-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded hover:bg-indigo-700 transition duration-300 mt-2">
-                    Send Notification
-                </button>
-                `;
-                document.getElementById('fields').innerHTML = f;
-                document.getElementById('item-list').innerHTML = ""; 
-                return;
-            }
-
             let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
             
             if(type === 'product') {
@@ -167,8 +124,41 @@
                     <input type="number" id="in_min_amount" placeholder="Minimum Amount to apply coupon" class="w-full p-2 border text-sm rounded">
                 </div>`;
             }
+            // নোটিফিকেশন এডিটর এবং সেন্ডার ফর্ম একীভূত করা হলো
+            else if (type === 'notification') {
+                f = `
+                <div id="notif-target-wrapper">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Target Audience</label>
+                    <select id="notif_target_type" onchange="toggleNotifEmailField()" class="w-full p-2 border text-sm rounded bg-white">
+                        <option value="all">All Registered Users (সবাইকে একসাথে)</option>
+                        <option value="single">Single User (নির্দিষ্ট কাস্টমারকে)</option>
+                    </select>
+                </div>
+                <div id="notif_email_div" class="hidden">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Target Customer Email</label>
+                    <input type="email" id="notif_email" placeholder="e.g. customer@email.com" class="w-full p-2 border text-sm rounded">
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Title</label>
+                    <input type="text" id="notif_title" placeholder="e.g. Eid Mubarak Offer! 🎉" class="w-full p-2 border text-sm rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Promo Image URL (Optional)</label>
+                        <input type="text" id="notif_img_url" placeholder="e.g. https://i.ibb.co/img.png" class="w-full p-2 border text-sm rounded">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Redirect Link URL (Optional)</label>
+                        <input type="text" id="notif_link_url" placeholder="e.g. https://domain/product" class="w-full p-2 border text-sm rounded">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Notification Message</label>
+                    <textarea id="notif_message" placeholder="Write your notification message here..." rows="3" class="w-full p-2 border text-sm rounded"></textarea>
+                </div>`;
+            }
             
-            if (type !== 'coupon' && type !== 'product') {
+            if (type !== 'coupon' && type !== 'product' && type !== 'notification') {
                 f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate)" class="w-full p-2 border text-sm rounded">`;
             } else if (type === 'product') {
                 f += `<input type="text" id="in_img" placeholder="Image URL (Comma separate)" class="w-full p-2 border text-sm rounded">`;
@@ -194,8 +184,6 @@
             const email = emailInput ? emailInput.value.trim() : "";
             const title = document.getElementById('notif_title').value.trim();
             const message = document.getElementById('notif_message').value.trim();
-            
-            // নতুন কাস্টম ইমেজ ও লিংক ভ্যালু গ্র্যাব করা হচ্ছে
             const imageUrl = document.getElementById('notif_img_url').value.trim();
             const linkUrl = document.getElementById('notif_link_url').value.trim();
 
@@ -227,8 +215,8 @@
                         email: email,
                         title: title,
                         message: message,
-                        image_url: imageUrl, // ইমেজ পাঠানো হচ্ছে
-                        link_url: linkUrl,   // লিংক পাঠানো হচ্ছে
+                        image_url: imageUrl,
+                        link_url: linkUrl,
                         token: token,
                         pin: pin
                     })
@@ -241,6 +229,7 @@
                     document.getElementById('notif_img_url').value = "";
                     document.getElementById('notif_link_url').value = "";
                     if (emailInput) emailInput.value = "";
+                    renderList('notification'); // পাঠানোর পর সাথে সাথে লিস্ট রিলোড হবে
                 } else {
                     const data = await res.json();
                     alert(data.error || "Failed to send notification.");
@@ -253,6 +242,13 @@
 
         async function saveItem() {
             const id = document.getElementById('edit_id').value;
+            
+            // নোটিফিকেশন নতুন তৈরি করা হলে এটি সরাসরি sendAdminNotification() কে ফায়ার করবে
+            if (currentType === 'notification' && !id) {
+                sendAdminNotification();
+                return;
+            }
+
             let data = { id: id };
 
             if (currentType === 'coupon') {
@@ -260,7 +256,15 @@
                 data.discount_type = document.getElementById('in_discount_type').value;
                 data.discount_value = parseFloat(document.getElementById('in_discount_value').value) || 0;
                 data.min_order_amount = parseFloat(document.getElementById('in_min_amount').value) || 0;
-            } else {
+            } 
+            // এডিটের সময় নোটিফিকেশনের নতুন ডাটা অবজেক্ট তৈরি করা হচ্ছে
+            else if (currentType === 'notification' && id) {
+                data.title = document.getElementById('notif_title').value.trim();
+                data.message = document.getElementById('notif_message').value.trim();
+                data.image_url = document.getElementById('notif_img_url').value.trim();
+                data.link_url = document.getElementById('notif_link_url').value.trim();
+            }
+            else {
                 data.name = document.getElementById('in_name')?.value;
                 data.price = document.getElementById('in_price')?.value;
                 data.original_price = document.getElementById('in_original_price')?.value || 0;
@@ -290,7 +294,8 @@
             const items = await res.json();
             document.getElementById('item-list').innerHTML = items.map(item => `
                 <div class="bg-white p-3 shadow flex justify-between items-center text-sm">
-                    <span>${item.code || item.name || item.image_url.substring(0,15)+'...'}</span>
+                    <!-- নোটিফিকেশনের ক্ষেত্রে কোডের টাইটেল দেখাবে -->
+                    <span>${item.title || item.code || item.name || item.image_url.substring(0,15)+'...'}</span>
                     <div>
                         <button onclick='editItem(${JSON.stringify(item)})' class="text-blue-500 font-bold mr-2">Edit</button>
                         <button onclick="deleteItem(${item.id})" class="text-red-500 font-bold">Delete</button>
@@ -300,13 +305,24 @@
 
         function editItem(item) {
             document.getElementById('edit_id').value = item.id;
-            document.getElementById('in_name').value = item.code || item.name || '';
             
-            if (currentType === 'coupon') {
+            // নোটিফিকেশন এডিটের সময় ফর্মে ডাটা সেট করার মেকানিজম (টার্গেট অডিয়েন্স অটো হাইড হয়ে যাবে)
+            if (currentType === 'notification') {
+                document.getElementById('notif-target-wrapper').classList.add('hidden');
+                document.getElementById('notif_email_div').classList.add('hidden');
+                
+                document.getElementById('notif_title').value = item.title || '';
+                document.getElementById('notif_message').value = item.message || '';
+                document.getElementById('notif_img_url').value = item.image_url || '';
+                document.getElementById('notif_link_url').value = item.link_url || '';
+            }
+            else if (currentType === 'coupon') {
+                document.getElementById('in_name').value = item.code || '';
                 document.getElementById('in_discount_type').value = item.discount_type || 'percentage';
                 document.getElementById('in_discount_value').value = item.discount_value || 0;
                 document.getElementById('in_min_amount').value = item.min_order_amount || 0;
             } else {
+                document.getElementById('in_name').value = item.name || '';
                 if(document.getElementById('in_price')) document.getElementById('in_price').value = item.price || '';
                 if(document.getElementById('in_original_price')) document.getElementById('in_original_price').value = item.original_price || 0;
                 if(document.getElementById('in_tag')) document.getElementById('in_tag').value = item.tag || 'none';
