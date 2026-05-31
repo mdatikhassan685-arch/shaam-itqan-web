@@ -5,8 +5,8 @@ export default async function handler(req, res) {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const type = url.searchParams.get('type');
     
-    // কুপন টেবিল ম্যাপিং যুক্ত করা হলো
-    const tableMap = { 'product': 'products', 'banner': 'banners', 'category': 'categories', 'coupon': 'coupons' };
+    // ডাটাবেজ টেবিল ম্যাপিংয়ে নোটিফিকেশন কলাম যুক্ত করা হলো
+    const tableMap = { 'product': 'products', 'banner': 'banners', 'category': 'categories', 'coupon': 'coupons', 'notification': 'notifications' };
     const tableName = tableMap[type];
 
     try {
@@ -23,7 +23,6 @@ export default async function handler(req, res) {
             }
             else if (type === 'banner') await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
             else if (type === 'category') await db.execute('INSERT INTO categories (name, image_url) VALUES (?, ?)', [b.name, b.image_url]);
-            // নতুন কুপন তৈরি করার কুয়েরি
             else if (type === 'coupon') {
                 await db.execute(
                     'INSERT INTO coupons (code, discount_type, discount_value, min_order_amount) VALUES (?, ?, ?, ?)', 
@@ -41,11 +40,17 @@ export default async function handler(req, res) {
             }
             else if (type === 'banner') await db.execute('UPDATE banners SET name=?, image_url=?, link_url=? WHERE id=?', [b.name, b.image_url, b.link_url, b.id]);
             else if (type === 'category') await db.execute('UPDATE categories SET name=?, image_url=? WHERE id=?', [b.name, b.image_url, b.id]);
-            // কুপন এডিট বা আপডেট করার কুয়েরি
             else if (type === 'coupon') {
                 await db.execute(
                     'UPDATE coupons SET code=?, discount_type=?, discount_value=?, min_order_amount=? WHERE id=?', 
                     [b.name, b.discount_type, b.discount_value, b.min_order_amount, b.id]
+                );
+            }
+            // নোটিফিকেশন আপডেট করার ডাইনামিক কুয়েরি যুক্ত করা হলো
+            else if (type === 'notification') {
+                await db.execute(
+                    'UPDATE notifications SET title=?, message=?, image_url=?, link_url=? WHERE id=?', 
+                    [b.title, b.message, b.image_url, b.link_url, b.id]
                 );
             }
             res.status(200).json({ status: "Updated" });
