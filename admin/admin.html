@@ -6,6 +6,7 @@
     <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
         if (localStorage.getItem('is_admin') !== 'true') {
             window.location.href = 'admin-login.html';
         }
@@ -15,7 +16,7 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
-        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট (NOTIFS বাটনসহ) -->
+        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট -->
         <div class="grid grid-cols-3 gap-1 mb-4">
             <button onclick="loadTab('product')" class="bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
@@ -37,13 +38,15 @@
 
     <script>
         let currentType = '';
+        
+        // ডাইনামিক ট্যাব লোডিং ফাংশন
         async function loadTab(type) {
             currentType = type;
             document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
             
-            // ১. নোটিফিকেশন পাঠানোর কাস্টম ট্যাব মেকানিজম
+            // নোটিফিকেশন পাঠানোর কাস্টম ট্যাব
             if (type === 'notif_send') {
                 document.getElementById('form-title').innerText = "Send Custom Notification";
                 document.getElementById('save-btn').classList.add('hidden'); // সেভ বাটন হাইড থাকবে
@@ -73,7 +76,7 @@
                 </button>
                 `;
                 document.getElementById('fields').innerHTML = f;
-                document.getElementById('item-list').innerHTML = ""; // লিস্ট খালি থাকবে
+                document.getElementById('item-list').innerHTML = ""; 
                 return;
             }
 
@@ -178,10 +181,11 @@
             }
         }
 
-        // অ্যাডমিন থেকে নোটিফিকেশন পাঠানোর রিয়েল-টাইম এপিআই রিকোয়েস্ট ফাংশন
+        // অ্যাডমিন থেকে নোটিফিকেশন পাঠানোর রিয়েল-টাইমে সুরক্ষিত ভেরিফিকেশন ফাংশন
         async function sendAdminNotification() {
             const targetType = document.getElementById('notif_target_type').value;
-            const email = document.getElementById('notif_email').value.trim();
+            const emailInput = document.getElementById('notif_email');
+            const email = emailInput ? emailInput.value.trim() : "";
             const title = document.getElementById('notif_title').value.trim();
             const message = document.getElementById('notif_message').value.trim();
 
@@ -195,9 +199,15 @@
                 return;
             }
 
-            // লোকালস্টোরেজ থেকে সিকিউরড অ্যাডমিন ক্রেডেনশিয়াল নেওয়া হচ্ছে
+            // সেশন ভেরিফিকেশন কি-সমূহ রিড করা হচ্ছে
             const token = localStorage.getItem('admin_token');
             const pin = localStorage.getItem('admin_pin');
+
+            // যদি পিন বা টোকেন ব্রাউজার সেশনে না থাকে তবে সরাসরি অ্যালার্ট দিয়ে জানিয়ে দেবে
+            if (!token || !pin) {
+                alert("⚠️ Security Error: Admin session not verified!\n\nPlease log out and log in again through the Admin Login page to restore your secure session.");
+                return;
+            }
 
             try {
                 const res = await fetch('/api/notifications', {
@@ -218,7 +228,7 @@
                     alert("Notification sent successfully!");
                     document.getElementById('notif_title').value = "";
                     document.getElementById('notif_message').value = "";
-                    document.getElementById('notif_email').value = "";
+                    if (emailInput) emailInput.value = "";
                 } else {
                     const data = await res.json();
                     alert(data.error || "Failed to send notification.");
