@@ -6,8 +6,8 @@
     <title>Master Admin Panel | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
-        if (localStorage.getItem('is_admin') !== 'true') {
+        // sessionStorage সিকিউরিটি চেক: অ্যাডমিন লগইন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট করবে
+        if (sessionStorage.getItem('is_admin') !== 'true') {
             window.location.href = 'admin-login.html';
         }
     </script>
@@ -45,8 +45,8 @@
             document.getElementById('form-title').innerText = "Add/Edit " + type;
             document.getElementById('save-btn').classList.remove('hidden');
             document.getElementById('edit_id').value = '';
+            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
             
-            // নোটিফিকেশন পাঠানোর কাস্টম ট্যাব
             if (type === 'notif_send') {
                 document.getElementById('form-title').innerText = "Send Custom Notification";
                 document.getElementById('save-btn').classList.add('hidden'); // সেভ বাটন হাইড থাকবে
@@ -80,8 +80,6 @@
                 return;
             }
 
-            let f = `<input type="text" id="in_name" placeholder="Name/Title" class="w-full p-2 border text-sm rounded">`;
-            
             if(type === 'product') {
                 let catOptions = `<option value="General">General (ডিফল্ট)</option>`;
                 try {
@@ -170,7 +168,6 @@
             renderList(type);
         }
 
-        // নোটিফিকেশন ফর্মে সিঙ্গেল বনাম অল ইউজার ইমেইল ফিল্ড টগল
         function toggleNotifEmailField() {
             const target = document.getElementById('notif_target_type').value;
             const emailDiv = document.getElementById('notif_email_div');
@@ -181,7 +178,6 @@
             }
         }
 
-        // অ্যাডমিন থেকে নোটিফিকেশন পাঠানোর রিয়েল-টাইমে সুরক্ষিত ভেরিফিকেশন ফাংশন
         async function sendAdminNotification() {
             const targetType = document.getElementById('notif_target_type').value;
             const emailInput = document.getElementById('notif_email');
@@ -199,11 +195,10 @@
                 return;
             }
 
-            // সেশন ভেরিফিকেশন কি-সমূহ রিড করা হচ্ছে
-            const token = localStorage.getItem('admin_token');
-            const pin = localStorage.getItem('admin_pin');
+            // sessionStorage থেকে অ্যাডমিন টোকেন ও পিন সংগ্রহ করা হচ্ছে
+            const token = sessionStorage.getItem('admin_token');
+            const pin = sessionStorage.getItem('admin_pin');
 
-            // যদি পিন বা টোকেন ব্রাউজার সেশনে না থাকে তবে সরাসরি অ্যালার্ট দিয়ে জানিয়ে দেবে
             if (!token || !pin) {
                 alert("⚠️ Security Error: Admin session not verified!\n\nPlease log out and log in again through the Admin Login page to restore your secure session.");
                 return;
