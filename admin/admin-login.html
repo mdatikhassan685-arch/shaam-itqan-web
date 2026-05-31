@@ -38,7 +38,10 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    localStorage.setItem('is_admin', 'true');
+                    // sessionStorage ব্যবহার করা হচ্ছে চরম নিরাপত্তার জন্য (ট্যাব বন্ধ করলেই সব মুছে যাবে)
+                    sessionStorage.setItem('is_admin', 'true');
+                    sessionStorage.setItem('admin_token', token);
+                    sessionStorage.setItem('admin_pin', pin);
                     window.location.href = 'admin.html';
                 } else {
                     alert(data.message || "Invalid Credentials!");
