@@ -30,7 +30,6 @@ export default async function handler(req, res) {
 
                 const placeholders = checkedIds.map(() => '?').join(',');
 
-                // ১. শুধুমাত্র সিলেক্টেড কার্ট আইটেমগুলো ডাটাবেজ থেকে রিড করা হচ্ছে
                 const [cartItems] = await db.execute(
                     `SELECT * FROM bag WHERE email = ? AND id IN (${placeholders})`,
                     [b.email, ...checkedIds]
@@ -40,21 +39,16 @@ export default async function handler(req, res) {
                     return res.status(400).json({ error: "Selected items not found in bag" });
                 }
 
-                // সাইজ-ভিত্তিক স্টক চেক ও ওভারসেলিং ভেরিফিকেশন লজিক
+                // স্টক ভেরিফিকেশন লক
                 const sizeColumnMap = { 'S': 'stock_s', 'M': 'stock_m', 'L': 'stock_l', 'XL': 'stock_xl', 'XXL': 'stock_xxl' };
-                
-                // ২. ডাটাবেজে অর্ডার সেভ করার আগেই রিয়েল-টাইমে স্টক চেক করা হচ্ছে
                 for (const item of cartItems) {
                     const buyQty = parseInt(item.quantity) || 1;
                     const colName = sizeColumnMap[item.size.toUpperCase()];
 
                     if (colName) {
-                        // ডাটাবেজের রিয়েল-টাইম কারেন্ট স্টক রিড করা হচ্ছে
                         const [prodRow] = await db.execute(`SELECT ${colName} FROM products WHERE name = ?`, [item.product_name]);
                         if (prodRow.length > 0) {
                             const currentStock = prodRow[0][colName] || 0;
-                            
-                            // যদি কাস্টমারের চাহিদা অনুযায়ী পর্যাপ্ত স্টক ডাটাবেজে না থাকে তবে অর্ডারটি সাথে সাথে ব্লক হবে
                             if (currentStock < buyQty) {
                                 return res.status(400).json({ 
                                     error: `Sorry, "${item.product_name}" (Size: ${item.size}) has insufficient stock in database! Available Stock: ${currentStock}` 
@@ -66,7 +60,6 @@ export default async function handler(req, res) {
                     }
                 }
 
-                // ৩. পর্যাপ্ত স্টক থাকলে প্রোডাক্টের বিবরণ ও সাবটোটাল হিসাব করা হচ্ছে
                 let subtotal = 0;
                 const productDetailsArray = cartItems.map(item => {
                     const itemQty = parseInt(item.quantity) || 1;
@@ -75,7 +68,8 @@ export default async function handler(req, res) {
                 });
                 const combinedProducts = productDetailsArray.join(', ');
 
-                // ৪. কুপন ডিসকাউন্ট হিসাব করা
+                const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
+                
                 let discountAmount = 0;
                 let couponNotice = '';
                 if (b.coupon_code) {
@@ -94,7 +88,6 @@ export default async function handler(req, res) {
                     }
                 }
 
-                const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
                 const grandTotal = subtotal - discountAmount + shippingFee; 
 
                 const combinedPhones = `Primary: ${b.phone} | Alt: ${b.phone_backup} (${b.phone_backup_relation})`;
@@ -103,18 +96,65 @@ export default async function handler(req, res) {
                     : 'Full Cash on Delivery (COD)';
                 const detailedAddress = `${b.address} | Landmark: ${b.landmark} | Area: ${b.delivery_area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'} | Method: ${paymentInfo}${couponNotice}`;
 
-                // ৫. স্টক থেকে কাস্টমারের ক্রয়কৃত সংখ্যা বিয়োগ করা (স্টক ভেরিফিকেশন সাকসেস হওয়ার পর)
+                // কাস্টমারদের জন্য স্বয়ংক্রিয় প্রমোশনাল কম-স্টক নোটিফিকেশন ট্রিগার লজিক (ক্লান্তিহীন ফিল্টার ও বায়ার এক্সক্লুশন সহ)
                 for (const item of cartItems) {
                     const buyQty = parseInt(item.quantity) || 1;
                     const colName = sizeColumnMap[item.size.toUpperCase()];
 
                     if (colName) {
-                        const [prodRow] = await db.execute(`SELECT ${colName} FROM products WHERE name = ?`, [item.product_name]);
+                        const [prodRow] = await db.execute(`SELECT id, ${colName} FROM products WHERE name = ?`, [item.product_name]);
                         if (prodRow.length > 0) {
+                            const prodId = prodRow[0].id;
                             const currentStock = prodRow[0][colName] || 0;
                             let newStock = currentStock - buyQty;
                             if (newStock < 0) newStock = 0;
+                            
+                            // নতুন স্টক মাইনাস আপডেট করা হচ্ছে
                             await db.execute(`UPDATE products SET ${colName} = ? WHERE name = ?`, [newStock, item.product_name]);
+
+                            // স্টক যদি ৫ পিস বা তার নিচে নেমে আসে (কিন্তু ০ এর বেশি থাকে)
+                            if (newStock > 0 && newStock <= 5) {
+                                
+                                // ১. উইশলিস্টে থাকা কাস্টমারদের নোটিফিকেশন পাঠানো (বায়ার নিজে নোটিফিকেশন পাবে না)
+                                const [wishlistUsers] = await db.execute('SELECT email FROM wishlist WHERE product_id = ?', [prodId]);
+                                for (const u of wishlistUsers) {
+                                    if (u.email !== b.email) { // বায়ার এক্সক্লুশন চেক
+                                        
+                                        // নোটিফিকেশন ক্লান্তি বা স্প্যাম প্রতিরোধ করতে পূর্বে পাঠানো হয়েছে কি না চেক করা হচ্ছে
+                                        const [alreadyNotified] = await db.execute(
+                                            'SELECT id FROM notifications WHERE email = ? AND title = ?',
+                                            [u.email, "Hurry! Item in your Wishlist is running out! ⏳"]
+                                        );
+
+                                        if (alreadyNotified.length === 0) {
+                                            await db.execute(
+                                                'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                                                [u.email, "Hurry! Item in your Wishlist is running out! ⏳", `The "${item.product_name}" (Size: ${item.size}) in your Wishlist is running low! Only ${newStock} items left in stock. Grab it before it's gone!`]
+                                            );
+                                        }
+                                    }
+                                }
+
+                                // ২. ব্যাগে (কার্টে) রেখে দেওয়া কাস্টমারদের নোটিফিকেশন পাঠানো (বায়ার নিজে নোটিফিকেশন পাবে না)
+                                const [bagUsers] = await db.execute('SELECT DISTINCT email FROM bag WHERE product_name = ? AND size = ?', [item.product_name, item.size]);
+                                for (const u of bagUsers) {
+                                    if (u.email !== b.email) { // বায়ার এক্সক্লুশন চেক
+                                        
+                                        // স্প্যাম প্রতিরোধক চেক
+                                        const [alreadyNotifiedBag] = await db.execute(
+                                            'SELECT id FROM notifications WHERE email = ? AND title = ?',
+                                            [u.email, "Hurry! Item in your Bag is almost sold out! ⚠️"]
+                                        );
+
+                                        if (alreadyNotifiedBag.length === 0) {
+                                            await db.execute(
+                                                'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
+                                                [u.email, "Hurry! Item in your Bag is almost sold out! ⚠️", `The "${item.product_name}" (Size: ${item.size}) in your Bag is almost sold out! Only ${newStock} items left in stock. Checkout now before someone else buys it!`]
+                                            );
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -126,19 +166,18 @@ export default async function handler(req, res) {
                     newOrderId = parseInt(maxRow[0].max_id) + 1; 
                 }
 
-                // ৭. ডাটাবেজে ফাইনাল গ্র্যান্ড টোটালসহ সফল অর্ডার সেভ করা
+                // ৭. ডাটাবেজে সফল অর্ডার সেভ করা
                 await db.execute(
                     'INSERT INTO orders (id, customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                     [newOrderId, b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
                 );
 
-                // ৮. সফলভাবে সেভ করার পর কেবল সিলেক্ট করা আইটেমগুলো কার্ট থেকে ডিলিট করা হচ্ছে
                 await db.execute(
                     `DELETE FROM bag WHERE email = ? AND id IN (${placeholders})`,
                     [b.email, ...checkedIds]
                 );
 
-                // ৯. অর্ডারের সফল নোটিফিকেশন কাস্টমার প্রোফাইলে পাঠানো হচ্ছে
+                // ৮. অর্ডারের সফল নোটিফিকেশন কাস্টমার প্রোফাইলে পাঠানো হচ্ছে
                 await db.execute(
                     'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
                     [b.email, "Order Placed successfully! 🛍️", `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`]
