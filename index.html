@@ -6,7 +6,7 @@
     <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -14,13 +14,13 @@
 </head>
 <body class="bg-white text-black font-sans pb-24">
 
-    <!-- Navbar: টাইটেল বড় করা হয়েছে এবং আইকনগুলোর সাইজ বাড়িয়ে w-7 h-7 করা হয়েছে -->
+    <!-- Navbar -->
     <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
         <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
-        <h1 class="text-xl md:text-2xl font-extrabold tracking-[0.15em] luxury-font text-gray-900">SHAAM ITQAN</h1>
+        <h1 class="text-lg font-bold tracking-widest luxury-font">SHAAM ITQAN</h1>
         
         <div class="flex items-center gap-3.5">
-            <!-- নোটিফিকেশন বেল আইকন (w-7 h-7 সাইজ) -->
+            <!-- নোটিফিকেশন বেল আইকন -->
             <a href="notifications.html" class="relative focus:outline-none">
                 <svg class="w-7 h-7 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -28,7 +28,7 @@
                 <span id="notif-count-badge" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white hidden">0</span>
             </a>
 
-            <!-- ব্যাগ বা কার্ট আইকন (w-7 h-7 সাইজ) -->
+            <!-- ব্যাগ বা কার্ট আইকন -->
             <a href="bag.html" class="relative">
                 <svg class="w-7 h-7 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                 <span id="bag-count-badge" class="absolute -top-0.5 -right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white hidden">0</span>
@@ -51,19 +51,19 @@
     <!-- Slider -->
     <div class="px-4 py-2"><div id="banner-slider" class="flex overflow-x-auto w-full h-40 snap-x snap-mandatory scrollbar-hide scroll-smooth rounded-lg gold-border"></div></div>
 
-    <!-- Categories: হেডিং ফন্ট বড় ও কুচকুচে কালো (text-sm font-extrabold text-black) করা হয়েছে -->
+    <!-- Categories -->
     <div class="px-4 py-4">
-        <h2 class="text-sm font-extrabold mb-4 uppercase tracking-widest text-black">Popular Categories</h2>
+        <h2 class="text-xs font-bold mb-4 uppercase tracking-widest text-gray-700">Popular Categories</h2>
         <div id="category-grid" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"></div>
     </div>
 
-    <!-- Products: হেডিং ফন্ট বড় ও কুচকুচে কালো (text-sm font-extrabold text-black) করা হয়েছে -->
+    <!-- Products -->
     <main class="px-4 py-2">
-        <h2 id="product-section-title" class="text-sm font-extrabold mb-4 uppercase tracking-widest text-black">New Arrivals</h2>
+        <h2 id="product-section-title" class="text-xs font-bold mb-4 uppercase tracking-widest text-gray-700">New Arrivals</h2>
         <div id="product-grid" class="grid grid-cols-2 gap-4"></div>
     </main>
 
-    <!-- Bottom Nav: FAV পরিবর্তন করে প্রফেশনাল "WISHLIST" করা হয়েছে -->
+    <!-- Bottom Nav: WISHLIST লিংক সচল করা হয়েছে -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="text-[#D4AF37] flex flex-col items-center">
             <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,7 +71,7 @@
             </svg>
             HOME
         </a>
-        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+        <a href="wishlist.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
@@ -95,6 +95,7 @@
         let allProducts = [];       
         let categoriesData = [];    
         let activeCategory = 'All'; 
+        let wishlistIds = [];       // ইউজারের পছন্দের প্রোডাক্ট আইডি সংরক্ষণের গ্লোবাল ভ্যারিয়েবল
 
         async function loadData() {
             try {
@@ -116,6 +117,7 @@
                 if (user) {
                     updateBagCount(user.email);
                     updateNotificationCount(user.email); 
+                    await loadWishlistIds(user.email); // উইশলিস্ট আইডি লোড করা হচ্ছে
                 }
             } catch(e) { console.log(e); }
         }
@@ -160,6 +162,63 @@
             }
         }
 
+        // উইশলিস্ট আইডি সমূহের তালিকা ডাটাবেজ থেকে আনার ফাংশন
+        async function loadWishlistIds(email) {
+            try {
+                const res = await fetch('/api/wishlist?email=' + email);
+                if (res.ok) {
+                    const items = await res.json();
+                    wishlistIds = items.map(item => item.id); // শুধুমাত্র আইডি ট্র্যাকিং
+                    updateHeartIcons();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // হোমপেজে কার্ট বা প্রোডাক্ট সচল থাকলে উইশলিস্টে থাকা হার্ট বাটনগুলো লাল ফিল করার ফাংশন
+        function updateHeartIcons() {
+            wishlistIds.forEach(id => {
+                const icon = document.getElementById(`heart-icon-${id}`);
+                if (icon) {
+                    icon.setAttribute('fill', '#EF4444');
+                    icon.setAttribute('stroke', '#EF4444');
+                    icon.classList.remove('text-gray-400');
+                    icon.classList.add('text-red-500');
+                }
+            });
+        }
+
+        // কাস্টমার এক ক্লিকে কার্ডের ওপরে থাকা হার্ট বাটন টগল করার মেকানিজম
+        async function toggleWishlist(pid) {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+
+            try {
+                const res = await fetch('/api/wishlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, product_id: pid })
+                });
+                const data = await res.json();
+                
+                const icon = document.getElementById(`heart-icon-${pid}`);
+                if (data.status === 'Added') {
+                    icon.setAttribute('fill', '#EF4444');
+                    icon.setAttribute('stroke', '#EF4444');
+                    icon.classList.remove('text-gray-400');
+                    icon.classList.add('text-red-500');
+                } else {
+                    icon.setAttribute('fill', 'none');
+                    icon.setAttribute('stroke', 'currentColor');
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-gray-400');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         function showNotifications() {
             alert("🔔 SHAAM ITQAN Notifications:\n\n1. Welcome to SHAAM ITQAN! Enjoy your shopping.\n2. Use Code: SI10 to get 10% Discount on your first order!");
         }
@@ -167,7 +226,6 @@
         function renderCategoryGrid() {
             const container = document.getElementById('category-grid');
             const isAllActive = activeCategory === 'All';
-            
             let catHTML = `
                 <button onclick="filterProducts('All')" class="flex-shrink-0 w-24 h-32 bg-white rounded-xl border-2 ${isAllActive ? 'border-[#D4AF37]' : 'border-gray-100'} shadow flex flex-col overflow-hidden focus:outline-none transition duration-300">
                     <div class="w-full h-24 overflow-hidden bg-black p-3.5 flex items-center justify-center">
@@ -237,16 +295,26 @@
                     : `<span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`;
 
                 return `
-                    <a href="${cardLink}" class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
+                    <div class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
                         ${badge}
-                        <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
-                            <img src="${firstImage}" class="w-full h-full object-cover">
-                        </div>
-                        <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
-                        <div class="flex items-center gap-2 mt-2 pt-1 border-t border-gray-100">
-                            ${priceDisplay}
-                        </div>
-                    </a>`;
+                        
+                        <!-- টগল উইশলিস্ট বাটন (floating on top-left of image) -->
+                        <button onclick="event.stopPropagation(); event.preventDefault(); toggleWishlist(${p.id})" class="absolute top-4 left-4 bg-white/85 backdrop-blur-sm p-1.5 rounded-full shadow hover:scale-110 active:scale-95 transition duration-200 z-20 focus:outline-none">
+                            <svg id="heart-icon-${p.id}" class="w-4 h-4 text-gray-400 hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                        </button>
+
+                        <a href="${cardLink}" class="block">
+                            <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
+                                <img src="${firstImage}" class="w-full h-full object-cover">
+                            </div>
+                            <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
+                            <div class="flex items-center gap-2 mt-2 pt-1 border-t border-gray-100">
+                                ${priceDisplay}
+                            </div>
+                        </a>
+                    </div>`;
             }).join('');
         }
 
@@ -265,6 +333,7 @@
                 const filtered = allProducts.filter(p => p.category && p.category.toLowerCase() === categoryName.toLowerCase());
                 renderProductGrid(filtered);
             }
+            updateHeartIcons(); // ফিল্টার হওয়ার পর পুনরায় হার্ট বাটনগুলো আপডেট করা হচ্ছে
         }
 
         function searchProducts() {
@@ -283,6 +352,7 @@
                 );
                 renderProductGrid(filtered);
             }
+            updateHeartIcons(); // সার্চের পর পুনরায় হার্ট বাটনগুলো আপডেট করা হচ্ছে
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
