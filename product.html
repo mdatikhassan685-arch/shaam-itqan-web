@@ -14,7 +14,7 @@
 <body class="bg-[#FDF8EF] p-4 font-sans pb-10">
     <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E] rounded relative">
         
-        <!-- স্লাইড ইমেজ স্লাইডার -->
+        <!-- Swipe Carousel Slider -->
         <div class="relative w-full h-80 border border-[#C1A44E]/30 rounded overflow-hidden">
             <!-- ডিটেইলস পেজে ছবির ওপরে উইশলিস্ট বাটন -->
             <button onclick="toggleProductWishlist()" class="absolute top-4 left-4 bg-white/85 backdrop-blur-sm p-2 rounded-full shadow hover:scale-110 active:scale-95 transition duration-200 z-[110] focus:outline-none">
@@ -31,19 +31,24 @@
         <!-- থাম্বনেইল এরিয়া -->
         <div id="p-thumbnails" class="flex gap-2 mt-3 overflow-x-auto scrollbar-hide hidden"></div>
         
-        <!-- Title and Price -->
-        <div class="flex justify-between items-start mt-4">
-            <div>
-                <h1 id="p-name" class="text-xl font-bold mt-4 tracking-widest luxury-font uppercase text-gray-800"></h1>
-                <div id="price-container" class="mt-1"></div>
-            </div>
-            <div id="stock-badge" class="mt-1"></div>
+        <!-- Title: টাইটেলকে আলাদাভাবে উপরে রাখা হয়েছে যাতে এটি স্বাধীনভাবে লাইনের জায়গা পায় -->
+        <h1 id="p-name" class="text-xl font-bold mt-5 tracking-widest luxury-font uppercase text-gray-800 leading-snug"></h1>
+        
+        <!-- দাম ও স্টক ব্যাজ একই লাইনে ডান পাশে সুন্দরভাবে এলাইন করা হয়েছে (price-container এবং stock-badge) -->
+        <div class="flex justify-between items-center mt-3 border-t pt-3 border-gray-100">
+            <!-- Price on Left -->
+            <div id="price-container"></div>
+            
+            <!-- Badges on Right (কখনো ভাঙবে না, সোজা লাইনে থাকবে) -->
+            <div id="stock-badge" class="flex items-center gap-1.5 shrink-0"></div>
         </div>
         
         <!-- Size Selection Section -->
         <div class="mt-6 border-t pt-4">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">Select Size</p>
-            <div class="flex gap-2" id="size-selector"></div>
+            <div class="flex gap-2" id="size-selector">
+                <!-- ডাইনামিক সাইজ বাটন লোড হবে -->
+            </div>
         </div>
 
         <!-- Quantity Selector -->
@@ -138,7 +143,7 @@
                     renderSizeSelector();
                     updateStockBadge();
                     setupSwipeListener();
-                    checkProductWishlist(); // উইশলিস্টে অলরেডি আছে কি না চেক
+                    checkProductWishlist();
                 }
             } catch (error) {
                 console.error("Failed to load product details:", error);
@@ -249,20 +254,20 @@
             const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
             
             if (productData.tag === 'Coming Soon') {
-                badge.innerHTML = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
+                badge.innerHTML = `<span class="bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase">Coming Soon</span>`;
                 disableActionButtons();
                 return;
             }
 
             if (totalStock <= 0) {
-                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[9px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">Sold Out</span>`;
                 disableActionButtons();
                 return;
             }
 
             const activeStock = stockMap[selectedSize];
             if (activeStock == 0) {
-                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Sold Out</span>`;
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase">Sold Out</span>`;
                 document.getElementById('buy-btn').disabled = true;
                 document.getElementById('buy-btn').className = "w-full bg-gray-300 text-gray-500 py-3.5 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed";
                 document.getElementById('bag-btn').disabled = true;
@@ -275,9 +280,10 @@
                     if (productData.tag === 'New Arrival') badgeBg = "bg-teal-600";
                     if (productData.tag === 'Hot Sale') badgeBg = "bg-orange-600";
 
-                    badge.innerHTML = `<span class="${badgeBg} text-white text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase mr-1">${productData.tag}</span> <span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                    // ব্যাজগুলোকে ডানে এক লাইনে সমান সমান্তরালে রেন্ডার করার কোড
+                    badge.innerHTML = `<span class="${badgeBg} text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase">${productData.tag}</span> <span class="bg-green-100 text-green-800 text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
                 } else {
-                    badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                    badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
                 }
                 enableActionButtons();
             }
@@ -355,7 +361,6 @@
             const resData = await saveToBagApi();
             if (resData.success) {
                 alert("Added to Bag successfully!");
-                // ব্যাগ কাউন্ট রিয়েল-টাইমে আপডেট করার জন্য index.html এর মত এখানেও করা যেতে পারে
             }
         }
 
