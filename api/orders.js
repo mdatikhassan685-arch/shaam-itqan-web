@@ -123,13 +123,13 @@ export default async function handler(req, res) {
                                         // নোটিফিকেশন ক্লান্তি বা স্প্যাম প্রতিরোধ করতে পূর্বে পাঠানো হয়েছে কি না চেক করা হচ্ছে
                                         const [alreadyNotified] = await db.execute(
                                             'SELECT id FROM notifications WHERE email = ? AND title = ?',
-                                            [u.email, "Hurry! Item in your Wishlist is running out! ⏳"]
+                                             [u.email, "তাড়াতাড়ি করুন! আপনার পছন্দের তালিকার আইটেমটি ফুরিয়ে যাচ্ছে! ⏳"]
                                         );
 
                                         if (alreadyNotified.length === 0) {
                                             await db.execute(
                                                 'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                                                [u.email, "Hurry! Item in your Wishlist is running out! ⏳", `The "${item.product_name}" (Size: ${item.size}) in your Wishlist is running low! Only ${newStock} items left in stock. Grab it before it's gone!`]
+                                                [u.email, "তাড়াতাড়ি করুন! আপনার পছন্দের তালিকার আইটেমটি ফুরিয়ে যাচ্ছে! ⏳", `আপনার পছন্দের তালিকায় থাকা "${item.product_name}" (Size: ${item.size})-এর স্টক ফুরিয়ে আসছে! স্টকে মাত্র ${newStock}টি আইটেম বাকি আছে। ফুরিয়ে যাওয়ার আগেই নিয়ে নিন!`]
                                             );
                                         }
                                     }
@@ -143,13 +143,12 @@ export default async function handler(req, res) {
                                         // স্প্যাম প্রতিরোধক চেক
                                         const [alreadyNotifiedBag] = await db.execute(
                                             'SELECT id FROM notifications WHERE email = ? AND title = ?',
-                                            [u.email, "Hurry! Item in your Bag is almost sold out! ⚠️"]
+                                            [u.email, "তাড়াতাড়ি করুন! আপনার ব্যাগে থাকা আইটেমটি ফুরিয়ে যাচ্ছে! ⚠️"]
                                         );
-
                                         if (alreadyNotifiedBag.length === 0) {
                                             await db.execute(
                                                 'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                                                [u.email, "Hurry! Item in your Bag is almost sold out! ⚠️", `The "${item.product_name}" (Size: ${item.size}) in your Bag is almost sold out! Only ${newStock} items left in stock. Checkout now before someone else buys it!`]
+                                                [u.email, "তাড়াতাড়ি করুন! আপনার ব্যাগে থাকা আইটেমটি ফুরিয়ে যাচ্ছে! ⚠️", `আপনার ব্যাগে (কার্টে) থাকা "${item.product_name}" (Size: ${item.size})-এর স্টক ফুরিয়ে আসছে! স্টকে মাত্র ${newStock}টি আইটেম বাকি আছে। অন্য কেউ কেনার আগেই নিয়ে নিন!`]
                                             );
                                         }
                                     }
