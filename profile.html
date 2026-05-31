@@ -35,7 +35,7 @@
             </div>
         </div>
 
-        <!-- My Orders Section (অর্ডার ট্র্যাকিং ও ইতিহাস) -->
+        <!-- My Orders Section -->
         <div class="bg-white p-5 rounded shadow-xl border border-gray-100 mb-6">
             <h3 class="font-bold text-xs uppercase tracking-widest border-b pb-2 mb-4 text-gray-800 flex items-center gap-2">
                 <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,9 +44,8 @@
                 My Orders
             </h3>
             
-            <!-- অর্ডার সমূহের ডাইনামিক লিস্ট এরিয়া -->
             <div id="user-orders-list" class="space-y-4 max-h-[350px] overflow-y-auto scrollbar-hide">
-                <p class="text-center py-6 text-xs text-gray-400">Loading your orders...</p>
+                <p class="text-center py-10 text-gray-500 text-sm">Loading your orders...</p>
             </div>
         </div>
 
@@ -58,7 +57,7 @@
         </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- Bottom Nav (WISHLIST লিংকসহ) -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,11 +65,11 @@
             </svg>
             HOME
         </a>
-        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+        <a href="wishlist.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
-            FAV
+            WISHLIST
         </a>
         <a href="profile.html" class="text-[#D4AF37] flex flex-col items-center">
             <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,7 +110,6 @@
                 container.innerHTML = orders.map(o => {
                     const primaryPhone = o.phone.split(' | ')[0]?.replace('Primary: ', '') || 'N/A';
                     
-                    // কাস্টমার পেন্ডিং অর্ডার স্ট্যাটাসে থাকা অবস্থায় বাতিল করতে পারবেন
                     const isPending = o.status === 'Pending';
                     const cancelBtn = isPending 
                         ? `<button onclick="cancelOrder(${o.id})" class="mt-2 text-red-500 font-bold hover:underline transition text-[10px] uppercase tracking-wider block">Cancel Order</button>` 
@@ -152,20 +150,19 @@
             }
         }
 
-        // কাস্টমারের নিজের অর্ডার নিজে বাতিল করার ডাইনামিক ফাংশন
         async function cancelOrder(id) {
             if (!confirm("Are you sure you want to cancel this order?")) return;
 
             try {
                 const res = await fetch('/api/orders', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'cancel', id: id })
                 });
 
                 if (res.ok) {
-                    alert("Order cancelled successfully. Stock has been restored.");
-                    loadUserOrders(); // স্ট্যাটাস লাইভ আপডেট হবে
+                    alert("Order cancelled successfully.");
+                    loadUserOrders(); 
                 } else {
                     alert("Failed to cancel order.");
                 }
