@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>My Wishlist | SHAAM ITQAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-white text-black font-sans pb-24">
+
+    <!-- Header -->
+    <div class="p-4 border-b border-gray-100 sticky top-0 bg-white z-[100] flex justify-between items-center h-16">
+        <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
+        <h1 class="text-lg font-bold tracking-widest luxury-font uppercase">My Wishlist</h1>
+        <div class="w-8"></div>
+    </div>
+
+    <!-- Wishlist Products Grid -->
+    <main class="px-4 py-6">
+        <div id="wishlist-grid" class="grid grid-cols-2 gap-4">
+            <p class="col-span-2 text-center py-10 text-gray-500 text-sm">Loading your wishlist...</p>
+        </div>
+    </main>
+
+    <!-- Bottom Nav (WISHLIST ট্যাবটি এখানে হাইলাইটেড থাকবে) -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
+        <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            HOME
+        </a>
+        <a href="wishlist.html" class="text-[#D4AF37] flex flex-col items-center">
+            <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            WISHLIST
+        </a>
+        <a href="login.html" id="auth-link" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span id="auth-text">ACCOUNT</span>
+        </a>
+        <a href="#" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            MENU
+        </a>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user_session'));
+
+        async function loadWishlist() {
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            try {
+                const res = await fetch('/api/wishlist?email=' + user.email);
+                const products = await res.json();
+                const grid = document.getElementById('wishlist-grid');
+
+                if (products.length === 0) {
+                    grid.innerHTML = `<p class="col-span-2 text-center py-12 text-xs text-gray-400">Your wishlist is empty.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = products.map(p => {
+                    const firstImage = p.image_url.split(',')[0].trim();
+                    const originalPrice = Math.round(parseFloat(p.original_price) || 0);
+                    const priceDisplay = originalPrice > 0 
+                        ? `<span class="line-through text-gray-400 text-[11px] mr-1.5">৳ ${originalPrice}</span> <span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`
+                        : `<span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`;
+
+                    return `
+                        <div class="relative block p-2 border-2 border-[#D4AF37] rounded bg-white">
+                            <!-- রিমুভ করার চমৎকার লাল হার্ট বাটন -->
+                            <button onclick="removeFromWishlist(${p.id})" class="absolute top-2 left-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-sm hover:scale-110 active:scale-95 transition duration-200 z-20 focus:outline-none">
+                                <svg class="w-4 h-4 text-red-500" fill="#EF4444" stroke="#EF4444" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                            </button>
+
+                            <a href="product.html?id=${p.id}" class="block">
+                                <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
+                                    <img src="${firstImage}" class="w-full h-full object-cover">
+                                </div>
+                                <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:underline tracking-wide line-clamp-2 h-8">${p.name}</h3>
+                                <div class="flex items-center mt-2 pt-1 border-t border-gray-100">
+                                    ${priceDisplay}
+                                </div>
+                            </a>
+                        </div>`;
+                }).join('');
+            } catch (error) {
+                console.error("Failed to load wishlist:", error);
+            }
+        }
+
+        // উইশলিস্ট থেকে ইনস্ট্যান্ট রিমুভ করার ফাংশন
+        async function removeFromWishlist(pid) {
+            try {
+                const res = await fetch('/api/wishlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, product_id: pid })
+                });
+                if (res.ok) {
+                    loadWishlist(); // রিয়েল-টাইমে আপডেট হবে
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWishlist();
+            if (user) {
+                const authLink = document.getElementById('auth-link');
+                const authText = document.getElementById('auth-text');
+                if (authLink && authText) {
+                    authText.innerText = 'PROFILE';
+                    authLink.href = 'profile.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
