@@ -12,35 +12,38 @@
     </style>
 </head>
 <body class="bg-[#FDF8EF] p-4 font-sans pb-10">
-    <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E] rounded">
+    <div id="product-detail" class="max-w-md mx-auto bg-white p-6 shadow-xl border border-[#C1A44E] rounded relative">
         
-        <!-- Swipe Carousel Slider -->
+        <!-- স্লাইড ইমেজ স্লাইডার -->
         <div class="relative w-full h-80 border border-[#C1A44E]/30 rounded overflow-hidden">
+            <!-- ডিটেইলস পেজে ছবির ওপরে উইশলিস্ট বাটন -->
+            <button onclick="toggleProductWishlist()" class="absolute top-4 left-4 bg-white/85 backdrop-blur-sm p-2 rounded-full shadow hover:scale-110 active:scale-95 transition duration-200 z-[110] focus:outline-none">
+                <svg id="detail-heart-icon" class="w-5 h-5 text-gray-400 hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </button>
+
             <div id="p-slider" class="flex overflow-x-auto h-full snap-x snap-mandatory scrollbar-hide scroll-smooth">
-                <!-- ডাইনামিক স্লাইড ইমেজ লোড হবে -->
+                <!-- স্লাইড ইমেজ লোড হবে -->
             </div>
         </div>
 
-        <!-- ১ নং পয়েন্টের সমাধান: ক্লিকযোগ্য ছোট ছোট থাম্বনেইল ইমেজ এরিয়া -->
-        <div id="p-thumbnails" class="flex gap-2 mt-3 overflow-x-auto scrollbar-hide hidden">
-            <!-- থাম্বনেইল ছবিগুলো এখানে রেন্ডার হবে -->
-        </div>
+        <!-- থাম্বনেইল এরিয়া -->
+        <div id="p-thumbnails" class="flex gap-2 mt-3 overflow-x-auto scrollbar-hide hidden"></div>
         
-        <!-- Title (উপরে শুধু টাইটেল থাকবে) -->
-        <h1 id="p-name" class="text-xl font-bold mt-5 tracking-widest luxury-font uppercase text-gray-800"></h1>
-        
-        <!-- ২ নং পয়েন্টের সমাধান: দাম ও স্টক ব্যাজ একই লাইনে সমান সমান্তরালে থাকবে -->
-        <div class="flex justify-between items-center mt-2.5">
-            <div id="price-container"></div>
-            <div id="stock-badge"></div>
+        <!-- Title and Price -->
+        <div class="flex justify-between items-start mt-4">
+            <div>
+                <h1 id="p-name" class="text-xl font-bold mt-4 tracking-widest luxury-font uppercase text-gray-800"></h1>
+                <div id="price-container" class="mt-1"></div>
+            </div>
+            <div id="stock-badge" class="mt-1"></div>
         </div>
         
         <!-- Size Selection Section -->
         <div class="mt-6 border-t pt-4">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">Select Size</p>
-            <div class="flex gap-2" id="size-selector">
-                <!-- ডাইনামিক সাইজ বাটন লোড হবে -->
-            </div>
+            <div class="flex gap-2" id="size-selector"></div>
         </div>
 
         <!-- Quantity Selector -->
@@ -88,8 +91,6 @@
                 
                 if (productData) {
                     const images = productData.image_url.split(',');
-                    
-                    // বড় স্লাইড ইমেজ রেন্ডার
                     const sliderContainer = document.getElementById('p-slider');
                     sliderContainer.innerHTML = images.map(img => `
                         <div class="flex-shrink-0 w-full h-full snap-center">
@@ -97,14 +98,13 @@
                         </div>
                     `).join('');
 
-                    // ছোট থাম্বনেইল ইমেজ রেন্ডার (একাধিক ছবি থাকলে তবেই দেখাবে)
                     const thumbContainer = document.getElementById('p-thumbnails');
                     if (images.length > 1) {
                         thumbContainer.innerHTML = images.map((img, index) => `
-    <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-[#D4AF37] border-2 opacity-100' : 'opacity-50 border-gray-200'}">
-        <img src="${img.trim()}" class="w-full h-full object-cover">
-    </button>
-`).join('');
+                            <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-[#D4AF37] border-2 opacity-100' : 'opacity-50 border-gray-200'}">
+                                <img src="${img.trim()}" class="w-full h-full object-cover">
+                            </button>
+                        `).join('');
                         thumbContainer.classList.remove('hidden');
                     }
 
@@ -137,14 +137,60 @@
 
                     renderSizeSelector();
                     updateStockBadge();
-                    setupSwipeListener(); // সোয়াইপ লিসেনার সচল করা হলো
+                    setupSwipeListener();
+                    checkProductWishlist(); // উইশলিস্টে অলরেডি আছে কি না চেক
                 }
             } catch (error) {
                 console.error("Failed to load product details:", error);
             }
         }
 
-        // থাম্বনেইল ছবিতে ক্লিক করলে স্লাইড পরিবর্তন করার ফাংশন
+        async function checkProductWishlist() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (user) {
+                try {
+                    const res = await fetch('/api/wishlist?email=' + user.email);
+                    if (res.ok) {
+                        const items = await res.json();
+                        const isExist = items.some(item => item.id == pid);
+                        const icon = document.getElementById('detail-heart-icon');
+                        if (isExist) {
+                            icon.setAttribute('fill', '#EF4444');
+                            icon.setAttribute('stroke', '#EF4444');
+                            icon.classList.remove('text-gray-400');
+                            icon.classList.add('text-red-500');
+                        }
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        async function toggleProductWishlist() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
+
+            try {
+                const res = await fetch('/api/wishlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, product_id: pid })
+                });
+                const data = await res.json();
+                const icon = document.getElementById('detail-heart-icon');
+                if (data.status === 'Added') {
+                    icon.setAttribute('fill', '#EF4444');
+                    icon.setAttribute('stroke', '#EF4444');
+                    icon.classList.remove('text-gray-400');
+                    icon.classList.add('text-red-500');
+                } else {
+                    icon.setAttribute('fill', 'none');
+                    icon.setAttribute('stroke', 'currentColor');
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-gray-400');
+                }
+            } catch (e) { console.error(e); }
+        }
+
         function scrollToSlide(index) {
             const slider = document.getElementById('p-slider');
             const slideWidth = slider.clientWidth;
@@ -155,19 +201,17 @@
             updateActiveThumbnail(index);
         }
 
-        // সক্রিয় বা একটিভ থাম্বনেইল বর্ডার হাইলাইট করার ফাংশন
         function updateActiveThumbnail(activeIndex) {
-    const thumbnails = document.querySelectorAll('.thumb-btn');
-    thumbnails.forEach((thumb, idx) => {
-        if (idx === activeIndex) {
-            thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 border-[#D4AF37] border-2 opacity-100";
-        } else {
-            thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 opacity-50 border-gray-200";
-        }
-    });
+            const thumbnails = document.querySelectorAll('.thumb-btn');
+            thumbnails.forEach((thumb, idx) => {
+                if (idx === activeIndex) {
+                    thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 border-[#D4AF37] border-2 opacity-100";
+                } else {
+                    thumb.className = "thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 opacity-50 border-gray-200";
+                }
+            });
         }
 
-        // কাস্টমার হাত দিয়ে স্লাইড করলে নিচের একটিভ থাম্বনেইল অটো আপডেট হওয়ার লিসেনার
         function setupSwipeListener() {
             const slider = document.getElementById('p-slider');
             slider.addEventListener('scroll', () => {
@@ -205,13 +249,13 @@
             const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
             
             if (productData.tag === 'Coming Soon') {
-                badge.innerHTML = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
+                badge.innerHTML = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Coming Soon</span>`;
                 disableActionButtons();
                 return;
             }
 
             if (totalStock <= 0) {
-                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2.5 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
+                badge.innerHTML = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">Sold Out</span>`;
                 disableActionButtons();
                 return;
             }
@@ -231,9 +275,9 @@
                     if (productData.tag === 'New Arrival') badgeBg = "bg-teal-600";
                     if (productData.tag === 'Hot Sale') badgeBg = "bg-orange-600";
 
-                    badge.innerHTML = `<span class="${badgeBg} text-white text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase mr-1">${productData.tag}</span> <span class="bg-green-100 text-green-800 text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                    badge.innerHTML = `<span class="${badgeBg} text-white text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase mr-1">${productData.tag}</span> <span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
                 } else {
-                    badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2.5 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
+                    badge.innerHTML = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">Available (${activeStock})</span>`;
                 }
                 enableActionButtons();
             }
@@ -311,6 +355,7 @@
             const resData = await saveToBagApi();
             if (resData.success) {
                 alert("Added to Bag successfully!");
+                // ব্যাগ কাউন্ট রিয়েল-টাইমে আপডেট করার জন্য index.html এর মত এখানেও করা যেতে পারে
             }
         }
 
