@@ -24,7 +24,6 @@
             </a>
             <h1 class="text-sm font-bold tracking-widest luxury-font uppercase">Notifications</h1>
             
-            <!-- Clear All Button -->
             <button onclick="clearAllNotifications()" id="clear-all-btn" class="absolute right-0 text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline hidden">
                 Clear All
             </button>
@@ -36,19 +35,52 @@
         </div>
     </div>
 
+    <!-- ৩ নং পয়েন্টের সমাধান: প্রিমিয়াম ব্যাকড্রপ ব্লার মডাল (Popup Modal) -->
+    <div id="notif-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-xl border-2 border-[#D4AF37] shadow-2xl relative flex flex-col max-h-[85vh]">
+            <!-- Close Button (X) -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black transition focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <!-- Modal Contents -->
+            <div class="overflow-y-auto scrollbar-hide pr-1 space-y-4">
+                <h2 id="modal-title" class="text-base font-bold tracking-widest luxury-font uppercase text-gray-800 border-b pb-2"></h2>
+                
+                <!-- প্রোমো ইমেজ রেন্ডারিং এরিয়া -->
+                <img id="modal-image" class="w-full h-44 object-cover rounded border border-gray-100 hidden">
+                
+                <p id="modal-message" class="text-gray-500 text-xs leading-relaxed whitespace-pre-line"></p>
+            </div>
+
+            <!-- Modal Action Buttons (Open Link বাটন সহ) -->
+            <div class="mt-6 pt-3 border-t border-gray-100 space-y-2">
+                <button id="modal-link-btn" class="w-full bg-black text-white py-3 uppercase tracking-widest text-[10px] font-bold hover:bg-[#D4AF37] transition duration-300 rounded hidden">
+                    Open Link
+                </button>
+                <button onclick="closeModal()" class="w-full border border-gray-300 text-gray-600 py-3 uppercase tracking-widest text-[10px] font-bold hover:bg-gray-50 transition rounded">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const user = JSON.parse(localStorage.getItem('user_session'));
+        let allNotifications = []; // গ্লোবাল নোটিফিকেশন এরে ট্র্যাকার
 
         async function loadNotifications() {
             if (!user) { window.location.href = 'login.html'; return; }
 
             try {
                 const res = await fetch('/api/notifications?email=' + user.email);
-                const notifications = await res.json();
+                allNotifications = await res.json();
                 const container = document.getElementById('notif-list');
                 const clearBtn = document.getElementById('clear-all-btn');
 
-                if (notifications.length === 0) {
+                if (allNotifications.length === 0) {
                     container.innerHTML = '<p class="text-center py-10 text-gray-500 text-sm">No notifications yet.</p>';
                     clearBtn.classList.add('hidden');
                     return;
@@ -56,32 +88,29 @@
 
                 clearBtn.classList.remove('hidden');
 
-                container.innerHTML = notifications.map(n => {
+                // গোল্ডেন বর্ডার ও ইমেজ থাম্বনেইলসহ কম্প্যাক্ট কার্ড ডিজাইন (See More চাপলে পপ-আপ ওপেন হবে)
+                container.innerHTML = allNotifications.map(n => {
                     const unreadClass = !n.is_read ? 'border-l-4 border-[#D4AF37]' : '';
-                    const isLongMessage = n.message.length > 100; // ১০০ অক্ষরের বেশি হলে Read More দেখাবে
-
+                    
                     return `
-                        <div class="bg-white p-4 shadow rounded border border-gray-100 flex justify-between items-start gap-4 transition duration-200 ${unreadClass}">
-                            <div class="flex-grow">
-                                <!-- টাইটেল ফন্ট বড় ও স্পষ্ট করা হয়েছে -->
-                                <h3 class="font-bold text-sm text-gray-900 tracking-wide">${n.title}</h3>
-                                
-                                <!-- মেসেজ বডি (ডিফল্টভাবে ২ লাইনে লক থাকবে) -->
-                                <p id="desc-${n.id}" class="text-gray-500 text-xs mt-1.5 leading-relaxed line-clamp-2 whitespace-pre-line">${n.message}</p>
-                                
-                                <!-- Read More বাটন (মেসেজ বড় হলেই কেবল এটি দেখাবে) -->
-                                ${isLongMessage ? `
-                                    <button onclick="toggleReadMore(${n.id})" id="btn-${n.id}" class="text-[9px] font-bold text-[#D4AF37] mt-1.5 uppercase tracking-widest focus:outline-none hover:underline block">Read More</button>
-                                ` : ''}
-                                
-                                <span class="text-[9px] text-gray-400 font-mono block mt-2.5">${new Date(n.created_at).toLocaleString()}</span>
+                        <div onclick="openModal(${n.id})" class="bg-white p-4 shadow rounded border-2 border-[#D4AF37] flex justify-between items-center gap-4 cursor-pointer hover:shadow-md transition duration-300 ${unreadClass}">
+                            <div class="flex items-center gap-3">
+                                ${n.image_url ? `<img src="${n.image_url.split(',')[0]}" class="w-10 h-10 object-cover rounded border border-gray-100">` : ''}
+                                <h3 class="font-bold text-xs text-gray-800 uppercase tracking-wider line-clamp-1">${n.title}</h3>
                             </div>
-                            <!-- ডিলিট বাটন (X) -->
-                            <button onclick="deleteNotification(${n.id})" class="text-gray-400 hover:text-red-500 transition focus:outline-none p-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
+                            
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] font-bold text-[#D4AF37] uppercase tracking-widest shrink-0 flex items-center gap-0.5">
+                                    See More
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </span>
+                                <!-- ডিলিট বাটন (মডাল ওপেন হওয়া আটকাতে event.stopPropagation() যুক্ত করা হয়েছে) -->
+                                <button onclick="event.stopPropagation(); deleteNotification(${n.id})" class="text-gray-400 hover:text-red-500 transition focus:outline-none p-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -96,18 +125,41 @@
             }
         }
 
-        // রিড মোর টগল ফাংশন
-        function toggleReadMore(id) {
-            const desc = document.getElementById(`desc-${id}`);
-            const btn = document.getElementById(`btn-${id}`);
-            
-            if (desc.classList.contains('line-clamp-2')) {
-                desc.classList.remove('line-clamp-2'); // ক্ল্যাম্প তুলে দেওয়া হলো (সম্পূর্ণ শো করবে)
-                btn.innerText = "Read Less";
+        // মডাল বা পপ-আপ ওপেন করার ফাংশন (ডাইনামিক ইমেজ ও লিংক সাপোর্ট সহ)
+        function openModal(id) {
+            const n = allNotifications.find(item => item.id === id);
+            if (!n) return;
+
+            document.getElementById('modal-title').innerText = n.title;
+            document.getElementById('modal-message').innerText = n.message;
+
+            const modalImg = document.getElementById('modal-image');
+            if (n.image_url) {
+                modalImg.src = n.image_url.split(',')[0].trim();
+                modalImg.classList.remove('hidden');
             } else {
-                desc.classList.add('line-clamp-2');    // পুনরায় ২ লাইনে সংকুচিত করা হলো
-                btn.innerText = "Read More";
+                modalImg.classList.add('hidden');
             }
+
+            const linkBtn = document.getElementById('modal-link-btn');
+            if (n.link_url) {
+                linkBtn.onclick = () => window.open(n.link_url, '_blank');
+                linkBtn.classList.remove('hidden');
+            } else {
+                linkBtn.classList.add('hidden');
+            }
+
+            // মডাল শো করানো
+            const modal = document.getElementById('notif-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // মডাল ক্লোজ করার ফাংশন
+        function closeModal() {
+            const modal = document.getElementById('notif-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         async function deleteNotification(id) {
