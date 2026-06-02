@@ -27,7 +27,7 @@
         </div>
     </main>
 
-    <!-- Bottom Nav (WISHLIST ট্যাবটি এখানে হাইলাইটেড থাকবে) -->
+    <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,7 +72,11 @@
                 }
 
                 grid.innerHTML = products.map(p => {
-                    const firstImage = p.image_url.split(',')[0].trim();
+                    // প্রোডাক্ট ইমেজে নাল বা ফাক চেক করার সেফটি গার্ড লজিক (রিস্ক ক্র্যাশ রোধে)
+                    const firstImage = (p.image_url && p.image_url.includes(',')) 
+                        ? p.image_url.split(',')[0].trim() 
+                        : (p.image_url ? p.image_url.trim() : 'https://via.placeholder.com/300');
+
                     const originalPrice = Math.round(parseFloat(p.original_price) || 0);
                     const priceDisplay = originalPrice > 0 
                         ? `<span class="line-through text-gray-400 text-[11px] mr-1.5">৳ ${originalPrice}</span> <span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`
@@ -80,7 +84,6 @@
 
                     return `
                         <div class="relative block p-2 border-2 border-[#D4AF37] rounded bg-white">
-                            <!-- রিমুভ করার চমৎকার লাল হার্ট বাটন -->
                             <button onclick="removeFromWishlist(${p.id})" class="absolute top-2 left-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-sm hover:scale-110 active:scale-95 transition duration-200 z-20 focus:outline-none">
                                 <svg class="w-4 h-4 text-red-500" fill="#EF4444" stroke="#EF4444" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
@@ -103,7 +106,6 @@
             }
         }
 
-        // উইশলিস্ট থেকে ইনস্ট্যান্ট রিমুভ করার ফাংশন
         async function removeFromWishlist(pid) {
             try {
                 const res = await fetch('/api/wishlist', {
@@ -112,7 +114,7 @@
                     body: JSON.stringify({ email: user.email, product_id: pid })
                 });
                 if (res.ok) {
-                    loadWishlist(); // রিয়েল-টাইমে আপডেট হবে
+                    loadWishlist(); 
                 }
             } catch (e) {
                 console.error(e);
