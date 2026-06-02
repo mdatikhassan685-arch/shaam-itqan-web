@@ -57,7 +57,7 @@
         </div>
     </div>
 
-    <!-- Bottom Nav (WISHLIST লিংকসহ) -->
+    <!-- Bottom Nav -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
         <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,6 +96,50 @@
             loadUserOrders(); 
         }
 
+        // প্রিমিয়াম ভিজ্যুয়াল টাইমলাইন জেনারেট করার লজিক
+        function getTimelineHTML(status) {
+            if (status === 'Cancelled') {
+                return `
+                    <div class="bg-red-50 text-red-700 text-[10px] font-bold p-3 rounded-lg border border-red-100 mt-4 flex items-center gap-2 font-sans">
+                        <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>This order has been cancelled and stock has been restored.</span>
+                    </div>
+                `;
+            }
+
+            const steps = ['Pending', 'Confirmed', 'Shipped', 'Delivered'];
+            const currentIndex = steps.indexOf(status);
+
+            return `
+                <div class="mt-4 border-t pt-4">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3">Order Status Tracker</p>
+                    <div class="flex items-center justify-between relative px-2.5">
+                        
+                        <!-- কানেকশন প্রোগ্রেস লাইন -->
+                        <div class="absolute top-[11px] left-9 right-9 h-0.5 bg-gray-200 z-0"></div>
+                        <div class="absolute top-[11px] left-9 right-9 h-0.5 bg-[#D4AF37] z-0 transition-all duration-500" style="width: ${currentIndex > 0 ? (currentIndex / 3) * 100 : 0}%"></div>
+                        
+                        ${steps.map((step, idx) => {
+                            const isActive = idx <= currentIndex;
+                            const circleColor = isActive ? 'bg-[#D4AF37] border-[#D4AF37] text-white' : 'bg-white border-gray-300 text-gray-400';
+                            const textColor = isActive ? 'text-black font-extrabold' : 'text-gray-400 font-medium';
+                            
+                            return `
+                                <div class="flex flex-col items-center z-10 relative">
+                                    <div class="w-5 h-5 rounded-full border-2 ${circleColor} flex items-center justify-center text-[9px] font-bold shadow-sm transition-all duration-500">
+                                        ${idx + 1}
+                                    </div>
+                                    <span class="text-[8px] mt-1.5 uppercase tracking-wider ${textColor} text-center font-sans">${step}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         async function loadUserOrders() {
             try {
                 const res = await fetch('/api/orders?email=' + user.email);
@@ -112,7 +156,7 @@
                     
                     const isPending = o.status === 'Pending';
                     const cancelBtn = isPending 
-                        ? `<button onclick="cancelOrder(${o.id})" class="mt-2 text-red-500 font-bold hover:underline transition text-[10px] uppercase tracking-wider block">Cancel Order</button>` 
+                        ? `<button onclick="cancelOrder(${o.id})" class="mt-4 text-red-500 font-bold hover:underline transition text-[10px] uppercase tracking-wider block">Cancel Order</button>` 
                         : '';
 
                     let badgeColor = "text-orange-600 bg-orange-50";
@@ -140,6 +184,10 @@
                                 <span>Total Price:</span>
                                 <span class="text-sm text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
                             </div>
+                            
+                            <!-- প্রগতিশীল টাইমলাইন বার ডাইনামিক রেন্ডারিং -->
+                            ${getTimelineHTML(o.status)}
+
                             ${cancelBtn}
                         </div>
                     `;
@@ -150,7 +198,6 @@
             }
         }
 
-        // ক্যানসেল করার সময় ইউজারের ওনারশিপ ইমেইল ব্যাকএন্ডে পাঠানো হচ্ছে
         async function cancelOrder(id) {
             if (!confirm("Are you sure you want to cancel this order?")) return;
 
