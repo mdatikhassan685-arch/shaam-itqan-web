@@ -29,17 +29,27 @@ export default async function handler(req, res) {
                     'UPDATE bag SET quantity = ? WHERE id = ?',
                     [newQty, existing[0].id]
                 );
-                // সফলভাবে আপডেট হলে আইডি ফেরত পাঠানো হচ্ছে
                 return res.status(200).json({ status: "Success", id: existing[0].id });
             } else {
                 const [result] = await db.execute(
                     'INSERT INTO bag (email, product_name, price, image_url, size, quantity) VALUES (?, ?, ?, ?, ?, ?)',
                     [b.email, b.products, b.total_price, b.image_url, size, qty]
                 );
-                // নতুন আইটেম তৈরি হলে ডাটাবেজ থেকে পাওয়া insertId ফেরত পাঠানো হচ্ছে
                 return res.status(200).json({ status: "Success", id: result.insertId });
             }
         } 
+        // প্লাস/মাইনাস বাটনে ক্লিক করলে ডাটাবেজে সঠিক কোয়ান্টিটি সেভ করার এপিআই লজিক
+        else if (req.method === 'PUT') {
+            const { id, quantity } = req.body;
+            const qty = parseInt(quantity);
+            
+            if (!id || isNaN(qty) || qty < 1) {
+                return res.status(400).json({ error: "Invalid ID or quantity value!" });
+            }
+
+            await db.execute('UPDATE bag SET quantity = ? WHERE id = ?', [qty, id]);
+            return res.status(200).json({ status: "Updated" });
+        }
         else if (req.method === 'DELETE') {
             const { id } = req.body;
             await db.execute('DELETE FROM bag WHERE id = ?', [id]);
