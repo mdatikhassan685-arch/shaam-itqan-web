@@ -10,7 +10,15 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: "Email is required" });
             }
 
-            const [rows] = await db.execute('SELECT * FROM bag WHERE email = ? ORDER BY id DESC', [email]);
+            // LEFT JOIN ব্যবহার করে কার্ট আইটেম লোড করার সময় প্রোডাক্টের রিয়েল-টাইম সাইজ ভিত্তিক স্টকও রিট্রিভ করা হচ্ছে
+            const [rows] = await db.execute(`
+                SELECT b.*, p.stock_s, p.stock_m, p.stock_l, p.stock_xl, p.stock_xxl 
+                FROM bag b 
+                LEFT JOIN products p ON b.product_name = p.name 
+                WHERE b.email = ? 
+                ORDER BY b.id DESC
+            `, [email]);
+            
             return res.status(200).json(rows);
         } 
         else if (req.method === 'POST') {
@@ -38,16 +46,24 @@ export default async function handler(req, res) {
                 return res.status(200).json({ status: "Success", id: result.insertId });
             }
         } 
-        // প্লাস/মাইনাস বাটনে ক্লিক করলে ডাটাবেজে সঠিক কোয়ান্টিটি সেভ করার এপিআই লজিক
+        // PUT মেথড ডাইনামিক করা হলো যাতে কোয়ান্টিটি এবং সাইজ একই সাথে আপডেট করা যায়
         else if (req.method === 'PUT') {
-            const { id, quantity } = req.body;
-            const qty = parseInt(quantity);
+            const { id, quantity, size } = req.body;
             
-            if (!id || isNaN(qty) || qty < 1) {
-                return res.status(400).json({ error: "Invalid ID or quantity value!" });
+            if (!id) {
+                return res.status(400).json({ error: "Invalid ID!" });
             }
 
-            await db.execute('UPDATE bag SET quantity = ? WHERE id = ?', [qty, id]);
+            if (quantity !== undefined && size !== undefined) {
+                const qty = parseInt(quantity);
+                await db.execute('UPDATE bag SET quantity = ?, size = ? WHERE id = ?', [qty, size, id]);
+            } else if (quantity !== undefined) {
+                const qty = parseInt(quantity);
+                await db.execute('UPDATE bag SET quantity = ? WHERE id = ?', [qty, id]);
+            } else if (size !== undefined) {
+                await db.execute('UPDATE bag SET size = ? WHERE id = ?', [size, id]);
+            }
+
             return res.status(200).json({ status: "Updated" });
         }
         else if (req.method === 'DELETE') {
