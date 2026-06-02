@@ -83,8 +83,16 @@
                             <img src="${item.image_url || 'https://via.placeholder.com/64'}" class="w-16 h-16 object-cover border border-gray-100 rounded">
                             <div class="flex-grow">
                                 <h3 class="font-bold text-xs uppercase tracking-wider text-gray-800">${item.product_name}</h3>
-                                <p class="text-gray-500 text-[10px] mt-0.5 font-sans">Size: <b class="text-black">${item.size}</b> | Qty: <b class="text-black">${itemQty}</b></p>
-                                <p class="text-[#D4AF37] font-bold text-xs mt-1">৳ ${subtotal.toFixed(2)}</p>
+                                <p class="text-gray-500 text-[10px] mt-0.5 font-sans">Size: <b class="text-black">${item.size}</b></p>
+                                
+                                <!-- প্লাস-মাইনাস কোয়ান্টিটি চেঞ্জার বাটন মেকানিজম -->
+                                <div class="flex items-center gap-1.5 mt-2">
+                                    <button onclick="updateCartQty(${item.id}, ${itemQty - 1})" class="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">-</button>
+                                    <span class="text-xs font-bold px-1.5 min-w-[12px] text-center">${itemQty}</span>
+                                    <button onclick="updateCartQty(${item.id}, ${itemQty + 1})" class="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">+</button>
+                                </div>
+
+                                <p class="text-[#D4AF37] font-bold text-xs mt-2.5">৳ ${subtotal.toFixed(2)}</p>
                             </div>
                             <button onclick="removeItem(${item.id})" class="text-red-500 text-[10px] font-bold uppercase hover:underline tracking-widest px-2">
                                 Remove
@@ -92,11 +100,35 @@
                         </div>`;
                 }).join('');
                 
-                calculateSubtotal(); // ডাইনামিক সাবটোটাল প্রথমবার হিসাব করা হচ্ছে
+                calculateSubtotal(); 
                 checkoutSection.classList.remove('hidden');
             } catch (error) {
                 console.error("Failed to load bag:", error);
                 document.getElementById('bag-items').innerHTML = '<p class="text-center py-10 text-red-500 text-xs">Error loading cart items.</p>';
+            }
+        }
+
+        // রিয়েল-টাইমে ডাটাবেজে কার্টের কোয়ান্টিটি ডাইনামিক আপডেট করার ফাংশন
+        async function updateCartQty(id, newQty) {
+            if (newQty < 1) {
+                removeItem(id);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/bag', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, quantity: newQty })
+                });
+
+                if (res.ok) {
+                    loadBag(); // সফলভাবে আপডেট হলে ডাইনামিক্যালি কার্ট রি-রেন্ডার হবে
+                } else {
+                    alert("Failed to update quantity. Try again.");
+                }
+            } catch (error) {
+                console.error("Qty Update Error:", error);
             }
         }
 
@@ -137,7 +169,6 @@
             }
         }
 
-        // শুধুমাত্র চেকড থাকা প্রোডাক্টগুলোর আইডি নিয়ে চেকআউটে যাওয়া হচ্ছে
         function goToCheckout() {
             const checkedIds = [];
             const checkboxes = document.querySelectorAll('.cart-checkbox');
