@@ -239,15 +239,18 @@
             }
         }
 
+        // আইটেম সেভ করার সময় ব্রাউজার সেশন থেকে অ্যাডমিন ক্রেডেনশিয়াল পাঠানো নিশ্চিত করা হয়েছে
         async function saveItem() {
             const id = document.getElementById('edit_id').value;
+            const token = sessionStorage.getItem('admin_token');
+            const pin = sessionStorage.getItem('admin_pin');
             
             if (currentType === 'notification' && !id) {
                 sendAdminNotification();
                 return;
             }
 
-            let data = { id: id };
+            let data = { id: id, token: token, pin: pin };
 
             if (currentType === 'coupon') {
                 data.name = document.getElementById('in_name').value.trim().toUpperCase(); 
@@ -335,7 +338,22 @@
             }
         }
 
-        async function deleteItem(id) { await fetch(`/api/admin-data?type=${currentType}`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) }); renderList(currentType); }
+        // ডাটাবেজ ডিলিশন নিরাপদ করতে এপিআই-তে টোকেন ও পিন পাঠানো নিশ্চিত করা হয়েছে
+        async function deleteItem(id) { 
+            const token = sessionStorage.getItem('admin_token');
+            const pin = sessionStorage.getItem('admin_pin');
+            
+            await fetch(`/api/admin-data?type=${currentType}`, { 
+                method: 'DELETE', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify({
+                    id: id,
+                    token: token,
+                    pin: pin
+                }) 
+            }); 
+            renderList(currentType); 
+        }
         
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
@@ -411,7 +429,6 @@
             }).join('');
         }
 
-        // সিকিউর স্ট্যাটাস পরিবর্তন এবং ক্যানসেলেশন API কল (অ্যাডমিন সেশন টোকেন যুক্ত করা হয়েছে)
         async function updateStatus(id, action) { 
             if (action === 'cancel' && !confirm("Are you sure you want to cancel this order? Stock will be restored.")) return;
 
@@ -428,12 +445,7 @@
                     pin: pin
                 }) 
             }); 
-            if(res.ok) {
-                loadOrders(); 
-            } else {
-                const data = await res.json();
-                alert(data.error || "Failed to update status.");
-            }
+            if(res.ok) loadOrders(); 
         }
     </script>
 </body>
