@@ -150,6 +150,7 @@
             }
         }
 
+        // ক্যানসেল করার সময় ইউজারের ওনারশিপ ইমেইল ব্যাকএন্ডে পাঠানো হচ্ছে
         async function cancelOrder(id) {
             if (!confirm("Are you sure you want to cancel this order?")) return;
 
@@ -157,14 +158,19 @@
                 const res = await fetch('/api/orders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'cancel', id: id })
+                    body: JSON.stringify({ 
+                        action: 'cancel', 
+                        id: id,
+                        email: user.email
+                    })
                 });
 
                 if (res.ok) {
                     alert("Order cancelled successfully.");
                     loadUserOrders(); 
                 } else {
-                    alert("Failed to cancel order.");
+                    const data = await res.json();
+                    alert(data.error || "Failed to cancel order.");
                 }
             } catch (error) {
                 console.error("Cancel Order Error:", error);
