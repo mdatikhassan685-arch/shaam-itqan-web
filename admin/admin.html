@@ -124,7 +124,6 @@
                     <input type="number" id="in_min_amount" placeholder="Minimum Amount to apply coupon" class="w-full p-2 border text-sm rounded">
                 </div>`;
             }
-            // নোটিফিকেশন এডিটর এবং সেন্ডার ফর্ম একীভূত করা হলো
             else if (type === 'notification') {
                 f = `
                 <div id="notif-target-wrapper">
@@ -229,7 +228,7 @@
                     document.getElementById('notif_img_url').value = "";
                     document.getElementById('notif_link_url').value = "";
                     if (emailInput) emailInput.value = "";
-                    renderList('notification'); // পাঠানোর পর সাথে সাথে লিস্ট রিলোড হবে
+                    renderList('notification');
                 } else {
                     const data = await res.json();
                     alert(data.error || "Failed to send notification.");
@@ -243,7 +242,6 @@
         async function saveItem() {
             const id = document.getElementById('edit_id').value;
             
-            // নোটিফিকেশন নতুন তৈরি করা হলে এটি সরাসরি sendAdminNotification() কে ফায়ার করবে
             if (currentType === 'notification' && !id) {
                 sendAdminNotification();
                 return;
@@ -257,7 +255,6 @@
                 data.discount_value = parseFloat(document.getElementById('in_discount_value').value) || 0;
                 data.min_order_amount = parseFloat(document.getElementById('in_min_amount').value) || 0;
             } 
-            // এডিটের সময় নোটিফিকেশনের নতুন ডাটা অবজেক্ট তৈরি করা হচ্ছে
             else if (currentType === 'notification' && id) {
                 data.title = document.getElementById('notif_title').value.trim();
                 data.message = document.getElementById('notif_message').value.trim();
@@ -294,7 +291,6 @@
             const items = await res.json();
             document.getElementById('item-list').innerHTML = items.map(item => `
                 <div class="bg-white p-3 shadow flex justify-between items-center text-sm">
-                    <!-- নোটিফিকেশনের ক্ষেত্রে কোডের টাইটেল দেখাবে -->
                     <span>${item.title || item.code || item.name || item.image_url.substring(0,15)+'...'}</span>
                     <div>
                         <button onclick='editItem(${JSON.stringify(item)})' class="text-blue-500 font-bold mr-2">Edit</button>
@@ -306,7 +302,6 @@
         function editItem(item) {
             document.getElementById('edit_id').value = item.id;
             
-            // নোটিফিকেশন এডিটের সময় ফর্মে ডাটা সেট করার মেকানিজম (টার্গেট অডিয়েন্স অটো হাইড হয়ে যাবে)
             if (currentType === 'notification') {
                 document.getElementById('notif-target-wrapper').classList.add('hidden');
                 document.getElementById('notif_email_div').classList.add('hidden');
@@ -416,15 +411,29 @@
             }).join('');
         }
 
+        // সিকিউর স্ট্যাটাস পরিবর্তন এবং ক্যানসেলেশন API কল (অ্যাডমিন সেশন টোকেন যুক্ত করা হয়েছে)
         async function updateStatus(id, action) { 
             if (action === 'cancel' && !confirm("Are you sure you want to cancel this order? Stock will be restored.")) return;
+
+            const token = sessionStorage.getItem('admin_token');
+            const pin = sessionStorage.getItem('admin_pin');
 
             const res = await fetch('/api/orders', { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ action: action, id: id }) 
+                body: JSON.stringify({ 
+                    action: action, 
+                    id: id,
+                    token: token,
+                    pin: pin
+                }) 
             }); 
-            if(res.ok) loadOrders(); 
+            if(res.ok) {
+                loadOrders(); 
+            } else {
+                const data = await res.json();
+                alert(data.error || "Failed to update status.");
+            }
         }
     </script>
 </body>
