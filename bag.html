@@ -75,6 +75,23 @@
                     const itemPrice = parseFloat(item.price);
                     const subtotal = itemPrice * itemQty;
 
+                    // রিয়েল-টাইম সাইজ ভিত্তিক স্টকের অস্তিত্ব পরীক্ষা করা
+                    const hasStockData = item.stock_s !== undefined && item.stock_s !== null;
+
+                    // সাইজ ভিত্তিক ডাইনামিক ড্রপডাউন রেন্ডারিং লজিক (স্টক না থাকলে Sold Out দেখাবে)
+                    const sizeOptionsHtml = ['S', 'M', 'L', 'XL', 'XXL'].map(sz => {
+                        const isSelected = sz === item.size ? 'selected' : '';
+                        if (hasStockData) {
+                            const col = 'stock_' + sz.toLowerCase();
+                            const stock = parseInt(item[col]) || 0;
+                            const isDisabled = stock <= 0 ? 'disabled' : '';
+                            const label = stock <= 0 ? `${sz} (Sold Out)` : sz;
+                            return `<option value="${sz}" data-stock="${stock}" ${isSelected} ${isDisabled}>${label}</option>`;
+                        } else {
+                            return `<option value="${sz}" data-stock="999" ${isSelected}>${sz}</option>`;
+                        }
+                    }).join('');
+
                     return `
                         <div class="bg-white p-3 border border-gray-200 flex items-center gap-4 shadow-sm rounded">
                             <!-- সিলেক্টিভ চেকআউট চেকবক্স -->
@@ -83,13 +100,20 @@
                             <img src="${item.image_url || 'https://via.placeholder.com/64'}" class="w-16 h-16 object-cover border border-gray-100 rounded">
                             <div class="flex-grow">
                                 <h3 class="font-bold text-xs uppercase tracking-wider text-gray-800">${item.product_name}</h3>
-                                <p class="text-gray-500 text-[10px] mt-0.5 font-sans">Size: <b class="text-black">${item.size}</b></p>
                                 
-                                <!-- প্লাস-মাইনাস কোয়ান্টিটি চেঞ্জার বাটন মেকানিজম -->
-                                <div class="flex items-center gap-1.5 mt-2">
-                                    <button onclick="updateCartQty(${item.id}, ${itemQty - 1})" class="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">-</button>
+                                <!-- ডাইনামিক সাইজ সিলেকশন অপশন (ড্রপডাউন) -->
+                                <div class="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 font-sans">
+                                    <span>Size:</span>
+                                    <select onchange="updateCartSize(${item.id}, this.value, ${itemQty}, this.options[this.selectedIndex].getAttribute('data-stock'))" class="bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs font-bold text-black focus:outline-none focus:border-black shrink-0">
+                                        ${sizeOptionsHtml}
+                                    </select>
+                                </div>
+                                
+                                <!-- প্লাস-মাইনাস কোয়ান্টিটি চেঞ্জার বাটন -->
+                                <div class="flex items-center gap-1.5 mt-2.5">
+                                    <button onclick="updateCartQtyAndSize(${item.id}, ${itemQty - 1}, undefined)" class="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">-</button>
                                     <span class="text-xs font-bold px-1.5 min-w-[12px] text-center">${itemQty}</span>
-                                    <button onclick="updateCartQty(${item.id}, ${itemQty + 1})" class="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">+</button>
+                                    <button onclick="updateCartQtyAndSize(${item.id}, ${itemQty + 1}, undefined)" class="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">+</button>
                                 </div>
 
                                 <p class="text-[#D4AF37] font-bold text-xs mt-2.5">৳ ${subtotal.toFixed(2)}</p>
@@ -108,27 +132,42 @@
             }
         }
 
-        // রিয়েল-টাইমে ডাটাবেজে কার্টের কোয়ান্টিটি ডাইনামিক আপডেট করার ফাংশন
-        async function updateCartQty(id, newQty) {
-            if (newQty < 1) {
+        // সাইজ পরিবর্তনের সময় স্টক ও কোয়ান্টিটি ভ্যালিডেশন চেক করার মেকানিজম
+        async function updateCartSize(id, newSize, currentQty, availableStockStr) {
+            const availableStock = parseInt(availableStockStr);
+            if (!isNaN(availableStock) && currentQty > availableStock) {
+                alert(`Sorry, we only have ${availableStock} items in stock for size ${newSize}. Quantity has been adjusted to ${availableStock}.`);
+                await updateCartQtyAndSize(id, availableStock, newSize);
+                return;
+            }
+            await updateCartQtyAndSize(id, currentQty, newSize);
+        }
+
+        // রিয়েল-টাইমে ডাটাবেজে কার্টের কোয়ান্টিটি এবং সাইজ আপডেট করার নিরাপদ ফাংশন
+        async function updateCartQtyAndSize(id, newQty, newSize) {
+            if (newQty !== undefined && newQty < 1) {
                 removeItem(id);
                 return;
             }
 
             try {
+                const payload = { id };
+                if (newQty !== undefined) payload.quantity = newQty;
+                if (newSize !== undefined) payload.size = newSize;
+
                 const res = await fetch('/api/bag', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, quantity: newQty })
+                    body: JSON.stringify(payload)
                 });
 
                 if (res.ok) {
-                    loadBag(); // সফলভাবে আপডেট হলে ডাইনামিক্যালি কার্ট রি-রেন্ডার হবে
+                    loadBag(); // রিয়েল-টাইমে পুনরায় কার্ট রি-রেন্ডার করবে
                 } else {
-                    alert("Failed to update quantity. Try again.");
+                    alert("Failed to update cart. Please try again.");
                 }
             } catch (error) {
-                console.error("Qty Update Error:", error);
+                console.error("Cart Update Error:", error);
             }
         }
 
