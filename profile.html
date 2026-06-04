@@ -35,32 +35,10 @@
             </div>
         </div>
 
-        <!-- কাস্টমারের ৩×২ প্রিমিয়াম ড্যাশবোর্ড গ্রিড -->
-        <div class="grid grid-cols-3 gap-2.5 mb-6 text-center">
-            <div class="bg-white p-3.5 rounded shadow-lg border border-[#C1A44E]/10 flex flex-col justify-between">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Total Orders</p>
-                <p id="stat-total" class="text-base font-extrabold text-black mt-1">0</p>
-            </div>
-            <div class="bg-white p-3.5 rounded shadow-lg border border-[#C1A44E]/10 flex flex-col justify-between">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Pending</p>
-                <p id="stat-pending" class="text-base font-extrabold text-amber-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-3.5 rounded shadow-lg border border-[#C1A44E]/10 flex flex-col justify-between">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Received</p>
-                <p id="stat-delivered" class="text-base font-extrabold text-green-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-3.5 rounded shadow-lg border border-[#C1A44E]/10 flex flex-col justify-between">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Cancelled</p>
-                <p id="stat-cancelled" class="text-base font-extrabold text-red-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-3.5 rounded shadow-lg border border-[#C1A44E]/10 flex flex-col justify-between">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">In Bag</p>
-                <p id="stat-bag" class="text-base font-extrabold text-indigo-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-3.5 rounded shadow-lg border border-[#C1A44E]/10 flex flex-col justify-between">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Wishlist</p>
-                <p id="stat-wishlist" class="text-base font-extrabold text-pink-600 mt-1">0</p>
-            </div>
+        <!-- গ্রাহকের লাইভ ড্যাশবোর্ড উইজেট গ্রিড এরিয়া (ডাইনামিক লোড হবে) -->
+        <div id="user-stats-grid" class="grid grid-cols-2 gap-3 mb-6">
+            <!-- Loading placeholders -->
+            <div class="col-span-2 text-center py-4 text-xs text-gray-400">Loading your stats...</div>
         </div>
 
         <!-- My Orders Section -->
@@ -73,7 +51,7 @@
             </h3>
             
             <div id="user-orders-list" class="space-y-4 max-h-[350px] overflow-y-auto scrollbar-hide">
-                <p class="text-center py-10 text-gray-500 text-sm">Loading your orders...</p>
+                <p class="text-center py-10 text-gray-500 text-sm">Loading your orders history...</p>
             </div>
         </div>
 
@@ -121,28 +99,80 @@
         } else {
             document.getElementById('user-name').innerText = user.username || "Valued Customer";
             document.getElementById('user-email').innerText = user.email;
-            loadUserDashboard(); 
+            loadUserStats();  // ডাইনামিক পরিসংখ্যান উইজেট লোড করা
             loadUserOrders(); 
         }
 
-        // কাস্টমার প্রোফাইলের নতুন ড্যাশবোর্ড ডাটা রেন্ডারিং ফাংশন (auth API-তে একীভূত লিংকটি ব্যবহার করা হয়েছে)
-        async function loadUserDashboard() {
+        // এপিআই থেকে গ্রাহকের লাইভ পরিসংখ্যাম উইজেট লোড করার ফাংশন
+        async function loadUserStats() {
             try {
-                const res = await fetch('/api/auth?action=stats&email=' + user.email);
+                // নতুন মার্জ করা user-hub এপিআই-তে get_stats অ্যাকশন পাঠানো হচ্ছে
+                const res = await fetch(`/api/user-hub?action=get_stats&email=${user.email}`);
                 if (res.ok) {
-                    const data = await res.json();
-                    document.getElementById('stat-total').innerText = data.total;
-                    document.getElementById('stat-pending').innerText = data.pending;
-                    document.getElementById('stat-delivered').innerText = data.delivered;
-                    document.getElementById('stat-cancelled').innerText = data.cancelled;
-                    document.getElementById('stat-bag').innerText = data.bag_count;
-                    document.getElementById('stat-wishlist').innerText = data.wishlist_count;
+                    const stats = await res.json();
+                    const grid = document.getElementById('user-stats-grid');
+                    grid.innerHTML = `
+                        <!-- Delivered Orders Widget -->
+                        <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
+                            <div class="absolute -right-2 -bottom-2 opacity-10 text-[#D4AF37]">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Delivered (সফল)</span>
+                            <span class="text-xl font-extrabold text-green-600 mt-1 leading-none font-sans">${stats.delivered}</span>
+                        </div>
+                        
+                        <!-- Processing Widget (Confirmed + Shipped) -->
+                        <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
+                            <div class="absolute -right-2 -bottom-2 opacity-10 text-[#D4AF37]">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Processing (চলমান)</span>
+                            <span class="text-xl font-extrabold text-[#D4AF37] mt-1 leading-none font-sans">${stats.confirmed + stats.shipped}</span>
+                        </div>
+
+                        <!-- Pending Widget -->
+                        <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
+                            <div class="absolute -right-2 -bottom-2 opacity-10 text-[#D4AF37]">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Pending (পেন্ডিং)</span>
+                            <span class="text-xl font-extrabold text-orange-500 mt-1 leading-none font-sans">${stats.pending}</span>
+                        </div>
+
+                        <!-- Returned/Cancelled Widget -->
+                        <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
+                            <div class="absolute -right-2 -bottom-2 opacity-10 text-red-500">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Cancelled (বাতিল/ফেরত)</span>
+                            <span class="text-xl font-extrabold text-red-500 mt-1 leading-none font-sans">${stats.cancelled + stats.returned}</span>
+                        </div>
+
+                        <!-- Active Cart (Bag) Count Widget -->
+                        <a href="bag.html" class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden hover:border-[#D4AF37] transition">
+                            <div class="absolute -right-2 -bottom-2 opacity-10 text-black">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Bag Items (কার্ট)</span>
+                            <span class="text-xl font-extrabold text-black mt-1 leading-none font-sans">${stats.cart_count}</span>
+                        </a>
+
+                        <!-- Active Wishlist Count Widget -->
+                        <a href="wishlist.html" class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden hover:border-[#D4AF37] transition">
+                            <div class="absolute -right-2 -bottom-2 opacity-10 text-red-500">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Wishlist (পছন্দ)</span>
+                            <span class="text-xl font-extrabold text-red-500 mt-1 leading-none font-sans">${stats.wishlist_count}</span>
+                        </a>
+                    `;
                 }
-            } catch (error) {
-                console.error("Failed to load user statistics:", error);
+            } catch (e) {
+                console.error("Stats Load Error:", e);
             }
         }
 
+        // ভিজ্যুয়াল অর্ডার ট্র্যাকিং প্রোগ্রেস বার জেনারেটর
         function getTimelineHTML(status) {
             if (status === 'Cancelled') {
                 return `
@@ -258,7 +288,6 @@
                 if (res.ok) {
                     alert("Order cancelled successfully.");
                     loadUserOrders(); 
-                    loadUserDashboard(); // রি-লোড ড্যাশবোর্ড কোয়ান্টিটি
                 } else {
                     const data = await res.json();
                     alert(data.error || "Failed to cancel order.");
