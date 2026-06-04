@@ -14,7 +14,7 @@
 <body class="bg-gray-50 p-4 font-sans pb-10">
 
     <div class="max-w-md mx-auto">
-        <!-- Header (মোবাইল ওভারল্যাপ এড়াতে ব্যাক বাটনটি কেবল আইকন করা হয়েছে এবং পারফেক্ট স্পেসিং দেওয়া হয়েছে) -->
+        <!-- Header -->
         <div class="relative flex items-center justify-center mb-6 border-b pb-4 h-12">
             <a href="index.html" class="absolute left-0 p-1 text-gray-600 hover:text-[#D4AF37] transition focus:outline-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,8 @@
             if (!user) { window.location.href = 'login.html'; return; }
 
             try {
-                const res = await fetch('/api/notifications?email=' + user.email);
+                // নতুন ইউজার-হাব এপিআই-তে get_notifications অ্যাকশন পাঠানো হচ্ছে
+                const res = await fetch(`/api/user-hub?action=get_notifications&email=${user.email}`);
                 allNotifications = await res.json();
                 const container = document.getElementById('notif-list');
                 const clearBtn = document.getElementById('clear-all-btn');
@@ -88,27 +89,23 @@
 
                 clearBtn.classList.remove('hidden');
 
-                // গোল্ডেন বর্ডারযুক্ত প্রফেশনাল ব্যানার কার্ড ডিজাইন
                 container.innerHTML = allNotifications.map(n => {
                     const unreadClass = !n.is_read ? 'border-l-4 border-[#D4AF37]' : '';
                     
                     return `
                         <div onclick="openModal(${n.id})" class="bg-white shadow rounded-xl border-2 border-[#D4AF37] flex flex-col overflow-hidden cursor-pointer hover:shadow-md transition duration-300 ${unreadClass}">
-                            <!-- বড় ব্যানার ইমেজ -->
                             ${n.image_url ? `
                                 <div class="w-full h-44 overflow-hidden bg-gray-50">
                                     <img src="${n.image_url.split(',')[0].trim()}" class="w-full h-full object-cover">
                                 </div>
                             ` : ''}
                             
-                            <!-- নিচের ইনফো সেকশন (SEE MORE বাদ দিয়ে অত্যন্ত পরিচ্ছন্ন এলাইনমেন্ট দেওয়া হয়েছে) -->
                             <div class="p-4 flex items-center justify-between gap-4">
                                 <div class="flex-grow">
                                     <h3 class="font-extrabold text-xs text-gray-800 uppercase tracking-widest leading-snug">${n.title}</h3>
                                     <span class="text-[9px] text-gray-400 font-mono block mt-1">${new Date(n.created_at).toLocaleString()}</span>
                                 </div>
                                 
-                                <!-- ডিলিট করার জন্য চমৎকার মিনিমালিস্ট ট্র্যাশ বিন (Trash Bin) আইকন -->
                                 <button onclick="event.stopPropagation(); deleteNotification(${n.id})" class="text-gray-400 hover:text-red-500 transition duration-200 p-1.5 focus:outline-none shrink-0" title="Delete Notification">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -119,7 +116,8 @@
                     `;
                 }).join('');
 
-                await fetch('/api/notifications', {
+                // নোটিফিকেশন পড়া হলে নতুন এপিআই রুটে রিড আপডেট পাঠানো হচ্ছে
+                await fetch('/api/user-hub', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'read_all', email: user.email })
@@ -163,9 +161,10 @@
             modal.classList.remove('flex');
         }
 
+        // নির্দিষ্ট নোটিফিকেশন নতুন এপিআই রুটের মাধ্যমে ডিলিট করা হচ্ছে
         async function deleteNotification(id) {
             try {
-                const res = await fetch('/api/notifications', {
+                const res = await fetch('/api/user-hub', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: id })
@@ -178,11 +177,12 @@
             }
         }
 
+        // সব নোটিফিকেশন এক ক্লিকে ডিলিট করার এপিআই কল
         async function clearAllNotifications() {
             if (!confirm("Are you sure you want to delete all notifications?")) return;
 
             try {
-                const res = await fetch('/api/notifications', {
+                const res = await fetch('/api/user-hub', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'clear_all', email: user.email })
