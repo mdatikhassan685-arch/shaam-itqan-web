@@ -124,9 +124,22 @@
                     <input type="number" id="in_min_amount" placeholder="Minimum Amount to apply coupon" class="w-full p-2 border text-sm rounded">
                 </div>`;
             }
+            // নোটিফিকেশন ও নতুন ইউজার ট্রাস্ট-ইনডেক্স ড্যাশবোর্ড ইন্টিগ্রেশন
             else if (type === 'notification') {
                 f = `
-                <div id="notif-target-wrapper">
+                <!-- ১. ডাইনামিক ইউজার ট্রাস্ট কার্ড কুয়েরি সেকশন -->
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2 mb-4">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b pb-1 mb-2">Customer Trust Card</p>
+                    <div class="flex gap-2">
+                        <input type="email" id="search_user_email" placeholder="Enter Customer Email (e.g. sadek@gmail.com)" class="flex-grow p-2 border text-xs rounded bg-white focus:outline-none focus:border-[#D4AF37]">
+                        <button type="button" onclick="searchUserStats()" class="bg-indigo-600 text-white px-3.5 text-xs font-bold rounded hover:bg-indigo-700 transition shrink-0 select-none">Search</button>
+                    </div>
+                    <!-- কাস্টমার ট্রাস্ট স্কোর ডাইনামিক রেন্ডারিং কার্ড এরিয়া -->
+                    <div id="user-stats-result" class="hidden text-xs leading-relaxed space-y-2.5 pt-2"></div>
+                </div>
+
+                <!-- ২. নোটিফিকেশন পাঠানো অপশন (আগের মতোই সচল থাকবে) -->
+                <div id="notif-target-wrapper" class="border-t pt-3">
                     <label class="text-[9px] font-bold text-gray-500 uppercase">Target Audience</label>
                     <select id="notif_target_type" onchange="toggleNotifEmailField()" class="w-full p-2 border text-sm rounded bg-white">
                         <option value="all">All Registered Users (সবাইকে একসাথে)</option>
@@ -167,6 +180,104 @@
             renderList(type);
         }
 
+        // এপিআই থেকে কাস্টমার ট্রাস্ট কার্ড রেন্ডার করার ডাইনামিক জাভাস্ক্রিপ্ট ফাংশন
+        async function searchUserStats() {
+            const email = document.getElementById('search_user_email').value.trim();
+            const resultDiv = document.getElementById('user-stats-result');
+            
+            if (!email) {
+                alert("Please enter a customer email ID first!");
+                return;
+            }
+
+            const token = sessionStorage.getItem('admin_token');
+            const pin = sessionStorage.getItem('admin_pin');
+
+            resultDiv.innerHTML = `<p class="text-center text-gray-400 py-3 font-semibold">🔍 Loading user analytics...</p>`;
+            resultDiv.classList.remove('hidden');
+
+            try {
+                // নতুন মার্জ হওয়া user-hub এপিআই-তে রিকোয়েস্ট পাঠানো হচ্ছে
+                const res = await fetch(`/api/user-hub?action=get_stats&email=${email}&token=${token}&pin=${pin}`);
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    resultDiv.innerHTML = `<p class="text-red-500 font-bold p-1 bg-red-50 rounded">${err.error || 'User details not found.'}</p>`;
+                    return;
+                }
+
+                const data = await res.json();
+                
+                const metrics = data.admin_metrics || {};
+                const cartList = metrics.abandoned_cart || [];
+                const wishList = metrics.abandoned_wishlist || [];
+
+                // কার্ট রিকভারি আইটেম পার্সিং
+                let cartHtml = cartList.length > 0 
+                    ? cartList.map(item => `• ${item.product_name} (Size: ${item.size}, Qty: ${item.quantity})`).join('<br>')
+                    : 'Empty (ফাঁকা)';
+
+                // উইশলিস্ট রিকভারি আইটেম পার্সিং
+                let wishHtml = wishList.length > 0
+                    ? wishList.map(item => `• ${item.name} (৳${Math.round(item.price)})`).join('<br>')
+                    : 'Empty (ফাঁকা)';
+
+                // ট্রাস্ট ব্যাজ সিএসএস থিমিং
+                let badgeColor = "bg-gray-100 text-gray-800";
+                if (metrics.trust_badge && metrics.trust_badge.includes("VIP")) badgeColor = "bg-green-100 text-green-800 font-bold border border-green-300";
+                if (metrics.trust_badge && metrics.trust_badge.includes("Risk")) badgeColor = "bg-red-100 text-red-800 font-bold border border-red-300 animate-pulse";
+                if (metrics.trust_badge && metrics.trust_badge.includes("Trusted")) badgeColor = "bg-blue-100 text-blue-800 font-bold border border-blue-300";
+
+                resultDiv.innerHTML = `
+                    <div class="space-y-2.5 pt-2">
+                        <!-- ট্রাস্ট ব্যাজ -->
+                        <div class="flex justify-between items-center bg-white p-2.5 border border-gray-200/50 rounded-lg">
+                            <span class="font-bold text-gray-700">Trust Badge:</span>
+                            <span class="px-2.5 py-0.5 rounded text-[10px] tracking-wider uppercase ${badgeColor}">${metrics.trust_badge || 'New'}</span>
+                        </div>
+                        
+                        <!-- পার্সেন্টেজ গ্রিড উইজেট -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-white p-2.5 border border-gray-200/50 rounded-lg">
+                                <p class="text-gray-400 font-bold text-[9px] uppercase tracking-wide">Delivery Success</p>
+                                <p class="text-green-600 font-extrabold text-sm mt-0.5">${metrics.success_rate || '0.00%'}</p>
+                            </div>
+                            <div class="bg-white p-2.5 border border-gray-200/50 rounded-lg">
+                                <p class="text-gray-400 font-bold text-[9px] uppercase tracking-wide">Return/Cancel Rate</p>
+                                <p class="text-red-500 font-extrabold text-sm mt-0.5">${metrics.return_rate || '0.00%'}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- সংখ্যাভিত্তিক বিবরণী -->
+                        <div class="bg-white p-2.5 border border-gray-200/50 rounded-lg space-y-1 font-mono text-[11px] leading-relaxed text-gray-700">
+                            <p class="font-bold text-gray-800 font-sans text-xs border-b pb-1 mb-1">Detailed Log:</p>
+                            <div>• Total Placed (সর্বমোট অর্ডার): <b>${data.total_orders}</b></div>
+                            <div>• Delivered (সফল ডেলিভারি): <b class="text-green-600">${data.delivered}</b></div>
+                            <div>• Returned (কুরিয়ার ফেরত): <b class="text-red-500">${data.returned}</b></div>
+                            <div>• Pending (পেন্ডিং): <b>${data.pending}</b></div>
+                            <div>• Processing (প্রসেসিং): <b>${data.confirmed + data.shipped}</b></div>
+                            <div>• Cancelled (গ্রাহক বাতিল): <b>${data.cancelled}</b></div>
+                        </div>
+                        
+                        <!-- কার্ট রিকভারি প্যানেল -->
+                        <div class="bg-amber-50 p-2.5 border border-amber-200/40 rounded-lg space-y-1 text-[11px] leading-relaxed">
+                            <p class="font-bold text-amber-900 text-xs border-b border-amber-200 pb-1 mb-1">🛒 Abandoned Bag (কার্টে জমা আছে):</p>
+                            <div class="text-amber-800 font-mono font-bold">${cartHtml}</div>
+                        </div>
+                        
+                        <!-- উইশলিস্ট রিকভারি প্যানেল -->
+                        <div class="bg-teal-50 p-2.5 border border-teal-200/40 rounded-lg space-y-1 text-[11px] leading-relaxed">
+                            <p class="font-bold text-teal-900 text-xs border-b border-teal-200 pb-1 mb-1">💖 Wishlist (পছন্দের তালিকায় আছে):</p>
+                            <div class="text-teal-800 font-mono font-bold">${wishHtml}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Search Stats Error:", error);
+                resultDiv.innerHTML = `<p class="text-red-500 font-bold">Network or Server Error occurred.</p>`;
+            }
+        }
+
         function toggleNotifEmailField() {
             const target = document.getElementById('notif_target_type').value;
             const emailDiv = document.getElementById('notif_email_div');
@@ -177,6 +288,7 @@
             }
         }
 
+        // নোটিফিকেশন ব্রডকাস্ট এপিআই কানেক্টর (নতুন api/user-hub এর সাথে লিংক করা হয়েছে)
         async function sendAdminNotification() {
             const targetType = document.getElementById('notif_target_type').value;
             const emailInput = document.getElementById('notif_email');
@@ -200,12 +312,12 @@
             const pin = sessionStorage.getItem('admin_pin');
 
             if (!token || !pin) {
-                alert("⚠️ Security Error: Admin session not verified!\n\nPlease log out and log in again through the Admin Login page to restore your secure session.");
+                alert("⚠️ Security Error: Admin session not verified!\n\nPlease log out and log in again through the Admin Login page.");
                 return;
             }
 
             try {
-                const res = await fetch('/api/notifications', {
+                const res = await fetch('/api/user-hub', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -352,48 +464,6 @@
             }); 
             renderList(currentType); 
         }
-
-        // কাস্টমার ড্যাশবোর্ড লোড করার জন্য একীভূত auth এপিআই রুট ব্যবহার করা হয়েছে
-        async function viewCustomerStats(email, orderId) {
-            const container = document.getElementById(`customer-stats-${orderId}`);
-            container.innerHTML = `<span class="text-xs text-gray-400 font-sans">Loading customer history...</span>`;
-            
-            try {
-                const res = await fetch(`/api/auth?action=stats&email=${email}`);
-                if (res.ok) {
-                    const s = await res.json();
-                    container.innerHTML = `
-                        <div class="mt-2.5 grid grid-cols-4 gap-1.5 text-center font-sans">
-                            <div class="bg-blue-50 p-2 rounded">
-                                <p class="text-gray-400 text-[8px] font-bold uppercase tracking-wider">Total</p>
-                                <p class="font-extrabold text-blue-700 text-xs">${s.total}</p>
-                            </div>
-                            <div class="bg-orange-50 p-2 rounded">
-                                <p class="text-gray-400 text-[8px] font-bold uppercase tracking-wider">Pending</p>
-                                <p class="font-extrabold text-orange-700 text-xs">${s.pending}</p>
-                            </div>
-                            <div class="bg-green-50 p-2 rounded">
-                                <p class="text-gray-400 text-[8px] font-bold uppercase tracking-wider">Delivered</p>
-                                <p class="font-extrabold text-green-700 text-xs">${s.delivered}</p>
-                            </div>
-                            <div class="bg-red-50 p-2 rounded">
-                                <p class="text-gray-400 text-[8px] font-bold uppercase tracking-wider">Cancelled</p>
-                                <p class="font-extrabold text-red-700 text-xs">${s.cancelled}</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-[10px] font-sans text-gray-500 flex justify-between px-1">
-                            <span>🛒 Items in Bag: <b class="text-black">${s.bag_count}</b></span>
-                            <span>❤️ Wishlist Items: <b class="text-black">${s.wishlist_count}</b></span>
-                        </div>
-                    `;
-                } else {
-                    container.innerHTML = `<span class="text-xs text-red-500 font-sans">Failed to load stats.</span>`;
-                }
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = `<span class="text-xs text-red-500 font-sans">Connection error!</span>`;
-            }
-        }
         
         async function loadOrders() {
             document.getElementById('form-title').innerText = "Recent Orders";
@@ -444,13 +514,6 @@
                             <div><b>Name:</b> ${o.customer_name}</div>
                             <div><b>Phones:</b> ${o.phone}</div>
                             <div><b>Email:</b> ${o.email}</div>
-                            
-                            <div class="border-t border-gray-200/50 pt-1.5 mt-1">
-                                <button onclick="viewCustomerStats('${o.email}', ${o.id})" class="text-blue-600 font-bold hover:underline text-[10px] flex items-center gap-1 focus:outline-none">
-                                    📋 View Customer History (ইতিহাস)
-                                </button>
-                                <div id="customer-stats-${o.id}" class="mt-1"></div>
-                            </div>
                         </div>
 
                         <p class="text-[10px] text-gray-400 uppercase font-bold mt-3 tracking-wider">Shipping & Payment</p>
