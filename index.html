@@ -142,9 +142,10 @@
             }
         }
 
+        // হোমপেজের নোটিফিকেশন কাউন্টারটি নতুন ডাইনামিক api/user-hub এর সাথে লিংক করা হলো
         async function updateNotificationCount(email) {
             try {
-                const res = await fetch('/api/notifications?email=' + email);
+                const res = await fetch(`/api/user-hub?action=get_notifications&email=${email}`);
                 if (res.ok) {
                     const notifs = await res.json();
                     const unreadCount = notifs.filter(n => !n.is_read).length;
@@ -203,7 +204,6 @@
                 const countSpan = document.getElementById(`heart-count-${pid}`);
                 let currentCount = parseInt(countSpan.innerText) || 0;
 
-                // কাস্টমার লাইক দিলে রিয়েল-টাইমে ফেসবুুুকের মত সংখ্যা যোগ/বিয়োগ হবে
                 if (data.status === 'Added') {
                     icon.setAttribute('fill', '#EF4444');
                     icon.setAttribute('stroke', '#EF4444');
@@ -220,10 +220,6 @@
             } catch (e) {
                 console.error(e);
             }
-        }
-
-        function showNotifications() {
-            alert("🔔 SHAAM ITQAN Notifications:\n\n1. Welcome to SHAAM ITQAN! Enjoy your shopping.\n2. Use Code: SI10 to get 10% Discount on your first order!");
         }
 
         function renderCategoryGrid() {
@@ -301,12 +297,10 @@
                     <div class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
                         ${badge}
                         
-                        <!-- গোল্ডেন ওভাল লাইভ লাইক উইজেট (wishlist_count সহ) -->
                         <button onclick="event.stopPropagation(); event.preventDefault(); toggleWishlist(${p.id})" class="absolute top-4 left-4 bg-white/85 backdrop-blur-sm p-1.5 rounded-full shadow hover:scale-110 active:scale-95 transition duration-200 z-20 focus:outline-none flex items-center gap-1">
                             <svg id="heart-icon-${p.id}" class="w-4 h-4 text-gray-400 hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
-                            <!-- লাইক কাউন্ট সংখ্যা -->
                             <span id="heart-count-${p.id}" class="text-[9px] font-bold text-gray-500 font-sans">${p.wishlist_count || 0}</span>
                         </button>
 
