@@ -108,9 +108,12 @@
                         <option value="cod">Full Cash on Delivery (COD)</option>
                         <option value="advance_charge">Pay Delivery Charge Advance (Rest COD)</option>
                     </select>
+                    
+                    <!-- ক্যাশ অন ডেলিভারি (COD) পলিসি সর্তকবার্তা ডাইনামিক নোটিশ এরিয়া -->
+                    <div id="cod-restriction-notice" class="mt-2.5 hidden"></div>
                 </div>
 
-                <!-- নতুন মাল্টি-পেমেন্ট (বিকাশ ও নগদ) ইন্টারেক্টিভ কন্টেইনার -->
+                <!-- মাল্টি-পেমেন্ট (বিকাশ ও নগদ) ইন্টারেক্টিভ কন্টেইনার -->
                 <div id="advance-payment-details" class="bg-white border border-gray-100 rounded p-4 space-y-4 hidden shadow-sm">
                     <p class="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-1">Select Payment Provider</p>
                     
@@ -186,12 +189,15 @@
         // =========================================================================
         const BKASH_PERSONAL_NUMBER = "017XXXXXXXX"; // আপনার বিকাশ পার্সোনাল নম্বর দিন
         const NAGAD_PERSONAL_NUMBER = "018XXXXXXXX"; // আপনার নগদ পার্সোনাল নম্বর দিন
+        
+        // 📌 ক্যাশ অন ডেলিভারি (COD) পলিসি ভ্যালু নির্ধারণ (ডিফল্ট ৩টি সফল ডেলিভারি)
+        const COD_REQUIRED_DELIVERIES = 3; 
         // =========================================================================
 
         let subtotal = 0;
         let captchaResult = 0;
-        let discountAmount = 0;     // গ্লোবাল ডিসকাউন্ট ট্র্যাকার
-        let appliedCouponCode = ""; // কাস্টমারের কুপন কোড ট্র্যাকার
+        let discountAmount = 0;     
+        let appliedCouponCode = ""; 
 
         async function loadSummary() {
             const user = JSON.parse(localStorage.getItem('user_session'));
@@ -200,6 +206,47 @@
             // পেমেন্ট নম্বর ইন্টারফেস সিঙ্ক
             document.getElementById('bkash-number-display').innerText = BKASH_PERSONAL_NUMBER;
             document.getElementById('nagad-number-display').innerText = NAGAD_PERSONAL_NUMBER;
+
+            // কাস্টমারের পূর্ববর্তী সফল ডেলিভারি সংখ্যা ডাইনামিক চেক করা হচ্ছে
+            let deliveredCount = 0;
+            try {
+                const orderRes = await fetch('/api/orders?email=' + user.email);
+                if (orderRes.ok) {
+                    const userOrders = await orderRes.json();
+                    // শুধুমাত্র 'Delivered' অর্ডারের মোট সংখ্যা নেওয়া হচ্ছে
+                    deliveredCount = userOrders.filter(o => o.status === 'Delivered').length;
+                }
+            } catch (e) {
+                console.error("Failed to check delivery history:", e);
+            }
+
+            const paymentSelect = document.getElementById('payment-method');
+            const codNoticeDiv = document.getElementById('cod-restriction-notice');
+
+            // যদি পূর্বের সফল ডেলিভারির সংখ্যা নির্ধারিত সীমার চেয়ে কম হয়
+            if (deliveredCount < COD_REQUIRED_DELIVERIES) {
+                // ক্যাশ অন ডেলিভারি (cod) অপশনটি ড্রপডাউন থেকে রিমুভ করে ফেলা হচ্ছে
+                for (let i = 0; i < paymentSelect.options.length; i++) {
+                    if (paymentSelect.options[i].value === 'cod') {
+                        paymentSelect.remove(i);
+                        break;
+                    }
+                }
+                // ডিফল্ট পেমেন্ট মেথড হিসেবে 'Advance Delivery Charge' সিলেক্ট করে দেওয়া হচ্ছে
+                paymentSelect.value = 'advance_charge';
+                togglePaymentMethod();
+
+                // কাস্টমারের স্ক্রিনে সুন্দর এবং নম্র ভাষায় কাস্টম নোটিশ শো করা হচ্ছে
+                codNoticeDiv.innerHTML = `
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-3 mt-2.5 text-xs leading-relaxed text-amber-950 rounded shadow-sm font-sans">
+                        ⚠️ <b>ক্যাশ অন ডেলিভারি (COD) নোটিশ:</b><br>
+                        আমাদের ক্যাশ অন ডেলিভারি সুবিধাটি শুধুমাত্র বিশ্বস্ত গ্রাহকদের জন্য প্রযোজ্য (যারা পূর্বে কমপক্ষে <b>${COD_REQUIRED_DELIVERIES}টি অর্ডার</b> সফলভাবে ডেলিভারি নিয়েছেন)। আপনার বর্তমান সফল ডেলিভারি সংখ্যা: <b>${deliveredCount}</b>। এই অর্ডারটি কনফার্ম করতে অনুগ্রহ করে বিকাশ বা নগদের মাধ্যমে ডেলিভারি চার্জ অগ্রিম পরিশোধ করুন।
+                    </div>
+                `;
+                codNoticeDiv.classList.remove('hidden');
+            } else {
+                codNoticeDiv.classList.add('hidden');
+            }
 
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
             if (checkedIds.length === 0) {
@@ -245,7 +292,6 @@
             }
         }
 
-        // কুপন অ্যাপ্লাই এবং লাইভ রিকোয়েস্ট ভেরিফিকেশন ফাংশন
         async function applyCoupon() {
             const codeInput = document.getElementById('coupon-code').value.trim().toUpperCase();
             if (!codeInput) return alert("Please enter a Coupon Code!");
@@ -275,19 +321,17 @@
             document.getElementById('captcha-question').innerText = `What is ${num1} + ${num2} ?`;
         }
 
-        // পেমেন্ট মেথড টগল লজিক
         function togglePaymentMethod() {
             const method = document.getElementById('payment-method').value;
             const detailsDiv = document.getElementById('advance-payment-details');
             if (method === 'advance_charge') {
                 detailsDiv.classList.remove('hidden');
-                switchProvider('bKash'); // বাই ডিফল্ট বিকাশ একটিভ থাকবে
+                switchProvider('bKash'); 
             } else {
                 detailsDiv.classList.add('hidden');
             }
         }
 
-        // বিকাশ ও নগদ মোবাইল ব্যাংকিং ড্রয়ার পরিবর্তন করার লজিক
         function switchProvider(provider) {
             const bkashLabel = document.getElementById('provider-bkash-label');
             const nagadLabel = document.getElementById('provider-nagad-label');
@@ -309,7 +353,6 @@
             }
         }
 
-        // ওয়ান-ক্লিক কপি এবং প্রিমিয়াম মোবাইল রেসপন্স ফিডব্যাক সিস্টেম
         function copyToClipboard(text, buttonId) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
@@ -361,7 +404,6 @@
             document.getElementById('summary-shipping').innerText = shippingFee.toFixed(2);
             document.getElementById('summary-total').innerText = grandTotal.toFixed(2);
 
-            // সমস্ত ডেলিভারি চার্জের ডাইনামিক নোটিশ আপডেট লুপ
             const chargeNotices = document.querySelectorAll('.notice-charge');
             chargeNotices.forEach(notice => {
                 notice.innerText = '৳' + shippingFee;
@@ -419,7 +461,6 @@
 
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
             
-            // ডাটাবেজে কোন মোবাইল ব্যাংকিং অপারেটর দিয়ে পেমেন্ট করা হয়েছে তা ঠিকানা ফিল্ডে ডাইনামিকালি যুক্ত করার লজিক
             const selectedProvider = document.querySelector('input[name="payment-provider"]:checked')?.value || 'bKash';
             
             const finalAddress = trxid 
@@ -453,7 +494,8 @@
                     localStorage.removeItem('checkout_item_ids');
                     window.location.href = 'index.html'; 
                 } else {
-                    alert('Failed to place order.');
+                    const errData = await res.json();
+                    alert(errData.error || 'Failed to place order.');
                 }
             } catch (error) {
                 alert('Error placing order.');
