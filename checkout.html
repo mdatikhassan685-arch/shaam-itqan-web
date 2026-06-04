@@ -109,14 +109,52 @@
                         <option value="advance_charge">Pay Delivery Charge Advance (Rest COD)</option>
                     </select>
                 </div>
-                <div id="bkash-payment-details" class="bg-[#FDF8EF] p-3 border border-[#C1A44E]/30 rounded text-xs leading-relaxed text-gray-700 hidden">
-                    <p class="font-bold text-black mb-1">📌 bKash Payment Instructions:</p>
-                    অর্ডারটি ভেরিফাই করতে ডেলিভারি চার্জ (<b id="notice-charge">৳৮০</b>) আমাদের বিকাশ পার্সোনাল নম্বরে <b>(০১৭XXXXXXXX)</b> সেন্ড মানি করুন। এরপর নিচে ট্রানজেকশন আইডিটি দিন।
-                    <div class="mt-2">
-                        <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">bKash Transaction ID (TrxID)</label>
+
+                <!-- নতুন মাল্টি-পেমেন্ট (বিকাশ ও নগদ) ইন্টারেক্টিভ কন্টেইনার -->
+                <div id="advance-payment-details" class="bg-white border border-gray-100 rounded p-4 space-y-4 hidden shadow-sm">
+                    <p class="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-1">Select Payment Provider</p>
+                    
+                    <!-- প্রোভাইডার সিলেক্টর বাটন গ্রিড -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer border-2 rounded-lg p-3.5 flex items-center justify-center transition-all duration-300 border-[#E2136E] bg-pink-50/50 select-none" id="provider-bkash-label">
+                            <input type="radio" name="payment-provider" value="bKash" checked class="hidden" onchange="switchProvider('bKash')">
+                            <span class="text-xs font-bold text-[#E2136E] uppercase tracking-widest">bKash (বিকাশ)</span>
+                        </label>
+                        <label class="cursor-pointer border-2 rounded-lg p-3.5 flex items-center justify-center transition-all duration-300 border-gray-200 bg-white select-none" id="provider-nagad-label">
+                            <input type="radio" name="payment-provider" value="Nagad" class="hidden" onchange="switchProvider('Nagad')">
+                            <span class="text-xs font-bold text-[#F57224] uppercase tracking-widest">Nagad (নগদ)</span>
+                        </label>
+                    </div>
+
+                    <!-- বিকাশ পেমেন্ট বিবরণী এবং ওয়ান-ক্লিক কপি -->
+                    <div id="bkash-instructions" class="bg-[#FDF8EF] p-3 border border-[#E2136E]/20 rounded text-xs leading-relaxed text-gray-700 space-y-3">
+                        <p class="font-bold text-black mb-1">📌 bKash Payment Instructions:</p>
+                        অর্ডারটি ভেরিফাই করতে কুরিয়ার ডেলিভারি চার্জ (<b class="notice-charge text-[#E2136E]">৳৮০</b>) আমাদের বিকাশ পার্সোনাল নম্বরে সেন্ড মানি করুন।
+                        
+                        <div class="flex items-center gap-2 mt-2 bg-white p-2 border border-gray-200 rounded">
+                            <span class="text-xs font-mono font-bold tracking-wider text-black flex-grow" id="bkash-number-display">017XXXXXXXX</span>
+                            <button type="button" id="copy-bkash-btn" onclick="copyToClipboard(BKASH_PERSONAL_NUMBER, 'copy-bkash-btn')" class="bg-gray-100 hover:bg-gray-200 text-black border border-gray-300 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded transition shrink-0 select-none">Copy Number</button>
+                        </div>
+                    </div>
+
+                    <!-- নগদ পেমেন্ট বিবরণী এবং ওয়ান-ক্লিক কপি -->
+                    <div id="nagad-instructions" class="bg-[#FDF8EF] p-3 border border-[#F57224]/20 rounded text-xs leading-relaxed text-gray-700 space-y-3 hidden">
+                        <p class="font-bold text-black mb-1">📌 Nagad Payment Instructions:</p>
+                        অর্ডারটি ভেরিফাই করতে কুরিয়ার ডেলিভারি চার্জ (<b class="notice-charge text-[#F57224]">৳৮০</b>) আমাদের নগদ পার্সোনাল নম্বরে সেন্ড মানি করুন।
+                        
+                        <div class="flex items-center gap-2 mt-2 bg-white p-2 border border-gray-200 rounded">
+                            <span class="text-xs font-mono font-bold tracking-wider text-black flex-grow" id="nagad-number-display">018XXXXXXXX</span>
+                            <button type="button" id="copy-nagad-btn" onclick="copyToClipboard(NAGAD_PERSONAL_NUMBER, 'copy-nagad-btn')" class="bg-gray-100 hover:bg-gray-200 text-black border border-gray-300 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded transition shrink-0 select-none">Copy Number</button>
+                        </div>
+                    </div>
+
+                    <!-- ট্রানজেকশন আইডি ইনপুট -->
+                    <div class="mt-3">
+                        <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Transaction ID (TrxID)</label>
                         <input type="text" id="trxid" placeholder="e.g. K9B82HG5" class="w-full p-2.5 border text-sm focus:outline-none focus:border-[#D4AF37] rounded bg-white">
                     </div>
                 </div>
+
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Landmark (চারপাশের পরিচিত স্থান)</label>
                     <input type="text" id="landmark" placeholder="e.g. ল্যাবএইড হাসপাতালের বিপরীতে, হলুদ গেটের বাড়ি" class="w-full p-3 border text-sm focus:outline-none focus:border-[#D4AF37] rounded">
@@ -143,6 +181,13 @@
     </div>
 
     <script>
+        // =========================================================================
+        // 📌 পেমেন্ট নম্বর সেটিংস (মোবাইল অ্যাপের সুবিধার জন্য এখানে এক জায়গায় নম্বর পরিবর্তন করুন)
+        // =========================================================================
+        const BKASH_PERSONAL_NUMBER = "017XXXXXXXX"; // আপনার বিকাশ পার্সোনাল নম্বর দিন
+        const NAGAD_PERSONAL_NUMBER = "018XXXXXXXX"; // আপনার নগদ পার্সোনাল নম্বর দিন
+        // =========================================================================
+
         let subtotal = 0;
         let captchaResult = 0;
         let discountAmount = 0;     // গ্লোবাল ডিসকাউন্ট ট্র্যাকার
@@ -151,6 +196,10 @@
         async function loadSummary() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { window.location.href = 'login.html'; return; }
+
+            // পেমেন্ট নম্বর ইন্টারফেস সিঙ্ক
+            document.getElementById('bkash-number-display').innerText = BKASH_PERSONAL_NUMBER;
+            document.getElementById('nagad-number-display').innerText = NAGAD_PERSONAL_NUMBER;
 
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
             if (checkedIds.length === 0) {
@@ -207,9 +256,9 @@
 
                 if (res.ok) {
                     discountAmount = parseFloat(data.discount_amount) || 0;
-                    appliedCouponCode = codeInput; // কুপন কোড ট্র্যাক করা হলো
+                    appliedCouponCode = codeInput;
                     alert(`Success! Coupon Applied. You got ৳${discountAmount.toFixed(2)} discount!`);
-                    updateShipping(); // কুপন অ্যাড হওয়ার সাথে সাথে গ্র্যান্ড টোটাল লাইভ আপডেট হবে
+                    updateShipping(); 
                 } else {
                     alert(data.error || "Failed to apply coupon.");
                 }
@@ -226,27 +275,97 @@
             document.getElementById('captcha-question').innerText = `What is ${num1} + ${num2} ?`;
         }
 
+        // পেমেন্ট মেথড টগল লজিক
         function togglePaymentMethod() {
             const method = document.getElementById('payment-method').value;
-            const bkashDiv = document.getElementById('bkash-payment-details');
+            const detailsDiv = document.getElementById('advance-payment-details');
             if (method === 'advance_charge') {
-                bkashDiv.classList.remove('hidden');
+                detailsDiv.classList.remove('hidden');
+                switchProvider('bKash'); // বাই ডিফল্ট বিকাশ একটিভ থাকবে
             } else {
-                bkashDiv.classList.add('hidden');
+                detailsDiv.classList.add('hidden');
             }
+        }
+
+        // বিকাশ ও নগদ মোবাইল ব্যাংকিং ড্রয়ার পরিবর্তন করার লজিক
+        function switchProvider(provider) {
+            const bkashLabel = document.getElementById('provider-bkash-label');
+            const nagadLabel = document.getElementById('provider-nagad-label');
+            const bkashInst = document.getElementById('bkash-instructions');
+            const nagadInst = document.getElementById('nagad-instructions');
+
+            if (provider === 'bKash') {
+                bkashLabel.className = "cursor-pointer border-2 rounded-lg p-3.5 flex items-center justify-center transition-all duration-300 border-[#E2136E] bg-pink-50/50 select-none";
+                nagadLabel.className = "cursor-pointer border-2 rounded-lg p-3.5 flex items-center justify-center transition-all duration-300 border-gray-200 bg-white select-none";
+                bkashInst.classList.remove('hidden');
+                nagadInst.classList.add('hidden');
+                document.querySelector('input[name="payment-provider"][value="bKash"]').checked = true;
+            } else {
+                bkashLabel.className = "cursor-pointer border-2 rounded-lg p-3.5 flex items-center justify-center transition-all duration-300 border-gray-200 bg-white select-none";
+                nagadLabel.className = "cursor-pointer border-2 rounded-lg p-3.5 flex items-center justify-center transition-all duration-300 border-[#F57224] bg-orange-50/50 select-none";
+                bkashInst.classList.add('hidden');
+                nagadInst.classList.remove('hidden');
+                document.querySelector('input[name="payment-provider"][value="Nagad"]').checked = true;
+            }
+        }
+
+        // ওয়ান-ক্লিক কপি এবং প্রিমিয়াম মোবাইল রেসপন্স ফিডব্যাক সিস্টেম
+        function copyToClipboard(text, buttonId) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showSuccessFeedback(buttonId);
+                }).catch(err => {
+                    fallbackCopy(text, buttonId);
+                });
+            } else {
+                fallbackCopy(text, buttonId);
+            }
+        }
+
+        function fallbackCopy(text, buttonId) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; 
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showSuccessFeedback(buttonId);
+            } catch (err) {
+                alert("Failed to copy number. Please manually write down: " + text);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showSuccessFeedback(buttonId) {
+            const btn = document.getElementById(buttonId);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Copied! (কপি হয়েছে)";
+            btn.classList.remove('bg-gray-100', 'text-black', 'border-gray-300');
+            btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600', 'text-white', 'border-green-600');
+                btn.classList.add('bg-gray-100', 'text-black', 'border-gray-300');
+            }, 2000);
         }
 
         function updateShipping() {
             const area = document.getElementById('delivery-area').value;
             const shippingFee = area === 'inside_dhaka' ? 80 : 150;
             
-            // সর্বমোট হিসাব: সাবটোটাল - কুপন ডিসকাউন্ট + ডেলিভারি চার্জ
             const grandTotal = subtotal - discountAmount + shippingFee;
 
             document.getElementById('summary-discount').innerText = discountAmount.toFixed(2);
             document.getElementById('summary-shipping').innerText = shippingFee.toFixed(2);
             document.getElementById('summary-total').innerText = grandTotal.toFixed(2);
-            document.getElementById('notice-charge').innerText = '৳' + shippingFee;
+
+            // সমস্ত ডেলিভারি চার্জের ডাইনামিক নোটিশ আপডেট লুপ
+            const chargeNotices = document.querySelectorAll('.notice-charge');
+            chargeNotices.forEach(notice => {
+                notice.innerText = '৳' + shippingFee;
+            });
         }
 
         function isValidBDMobile(phone) {
@@ -288,7 +407,7 @@
             }
 
             if (paymentMethod === 'advance_charge' && !trxid) {
-                alert("Please enter the bKash Transaction ID!");
+                alert("Please enter the Transaction ID!");
                 return;
             }
 
@@ -299,9 +418,12 @@
             }
 
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
-
+            
+            // ডাটাবেজে কোন মোবাইল ব্যাংকিং অপারেটর দিয়ে পেমেন্ট করা হয়েছে তা ঠিকানা ফিল্ডে ডাইনামিকালি যুক্ত করার লজিক
+            const selectedProvider = document.querySelector('input[name="payment-provider"]:checked')?.value || 'bKash';
+            
             const finalAddress = trxid 
-                ? `${address} [TrxID: ${trxid}] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
+                ? `${address} [${selectedProvider} TrxID: ${trxid}] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
                 : `${address} (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
 
             const data = { 
@@ -313,8 +435,10 @@
                 address: finalAddress, 
                 delivery_area: area,
                 checked_item_ids: checkedIds,
-                coupon_code: appliedCouponCode, // এপিআই-তে সফলভাবে প্রোমো কোড পাঠানো হচ্ছে
-                email: user.email
+                coupon_code: appliedCouponCode, 
+                email: user.email,
+                payment_method: paymentMethod,
+                trxid: trxid
             };
             
             try {
