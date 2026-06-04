@@ -28,6 +28,24 @@ export default async function handler(req, res) {
                     return res.status(400).json({ error: "No items selected for checkout" });
                 }
 
+                // ১. ক্যাশ অন ডেলিভারি (COD) সিকিউরিটি চেক
+                if (b.payment_method === 'cod') {
+                    // কাস্টমারের ডাটাবেজ থেকে সফল 'Delivered' অর্ডারের মোট সংখ্যা গণনা করা হচ্ছে
+                    const [deliveredRows] = await db.execute(
+                        "SELECT COUNT(*) as count FROM orders WHERE email = ? AND status = 'Delivered'",
+                        [b.email]
+                    );
+                    const deliveredCount = deliveredRows[0]?.count || 0;
+                    
+                    const COD_THRESHOLD = 3; // ক্যাশ অন ডেলিভারি পাওয়ার ন্যূনতম ডেলিভারি সীমা (আপনি চাইলে বাড়াতে পারেন)
+                    
+                    if (deliveredCount < COD_THRESHOLD) {
+                        return res.status(400).json({ 
+                            error: `Cash on Delivery (COD) is restricted! You must have at least ${COD_THRESHOLD} successful deliveries. (Your current count: ${deliveredCount}). Please pay the delivery charge in advance to confirm your order.` 
+                        });
+                    }
+                }
+
                 const placeholders = checkedIds.map(() => '?').join(',');
 
                 const [cartItems] = await db.execute(
@@ -67,7 +85,7 @@ export default async function handler(req, res) {
                     return `${item.product_name} (Size: ${item.size}, Qty: ${itemQty})`;
                 });
                 
-                // কমা (,) দিয়ে যুক্ত করার বদলে ব্রেক (<br>) দিয়ে যুক্ত করা হলো যাতে প্রোডাক্টের নামের ভেতরের কমা কোড না ভাঙে
+                // কমা পরিবর্তন করে নিরাপদ <br> যুক্ত করা হলো যাতে ডাটা পার্সিং বাগ না হয়
                 const combinedProducts = productDetailsArray.join('<br>');
 
                 const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
@@ -111,17 +129,12 @@ export default async function handler(req, res) {
                             let newStock = currentStock - buyQty;
                             if (newStock < 0) newStock = 0;
                             
-                            // নতুন স্টক মাইনাস আপডেট করা হচ্ছে
                             await db.execute(`UPDATE products SET ${colName} = ? WHERE name = ?`, [newStock, item.product_name]);
 
-                            // স্টক যদি ৫ পিস বা তার নিচে নেমে আসে
                             if (newStock > 0 && newStock <= 5) {
-                                
-                                // ১. উইশলিস্টে থাকা কাস্টমারদের নোটিফিকেশন পাঠানো
                                 const [wishlistUsers] = await db.execute('SELECT email FROM wishlist WHERE product_id = ?', [prodId]);
                                 for (const u of wishlistUsers) {
-                                    if (u.email !== b.email) { // বায়ার এক্সক্লুশন চেক
-                                        
+                                    if (u.email !== b.email) {
                                         const [alreadyNotified] = await db.execute(
                                             'SELECT id FROM notifications WHERE email = ? AND title = ?',
                                              [u.email, "তাড়াতাড়ি করুন! আপনার পছন্দের তালিকার আইটেমটি ফুরিয়ে যাচ্ছে! ⏳"]
@@ -136,11 +149,9 @@ export default async function handler(req, res) {
                                     }
                                 }
 
-                                // ২. ব্যাগে (কার্টে) রেখে দেওয়া কাস্টমারদের নোটিফিকেশন পাঠানো
                                 const [bagUsers] = await db.execute('SELECT DISTINCT email FROM bag WHERE product_name = ? AND size = ?', [item.product_name, item.size]);
                                 for (const u of bagUsers) {
-                                    if (u.email !== b.email) { // বায়ার এক্সক্লুশন চেক
-                                        
+                                    if (u.email !== b.email) {
                                         const [alreadyNotifiedBag] = await db.execute(
                                             'SELECT id FROM notifications WHERE email = ? AND title = ?',
                                             [u.email, "তাড়াতাড়ি করুন! আপনার ব্যাগে থাকা আইটেমটি ফুরিয়ে যাচ্ছে! ⚠️"]
@@ -158,14 +169,12 @@ export default async function handler(req, res) {
                     }
                 }
 
-                // ডাটাবেজ থেকে সিকিউরড ম্যানুয়াল অর্ডার আইডি ক্যালকুলেট করা
                 const [maxRow] = await db.execute('SELECT MAX(id) as max_id FROM orders');
                 let newOrderId = 1001; 
                 if (maxRow.length > 0 && maxRow[0].max_id) {
                     newOrderId = parseInt(maxRow[0].max_id) + 1; 
                 }
 
-                // ডাটাবেজে সফল অর্ডার সেভ করা
                 await db.execute(
                     'INSERT INTO orders (id, customer_name, phone, address, email, products, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                     [newOrderId, b.name, combinedPhones, detailedAddress, b.email, combinedProducts, grandTotal, 'Pending']
@@ -176,7 +185,6 @@ export default async function handler(req, res) {
                     [b.email, ...checkedIds]
                 );
 
-                // অর্ডারের সফল নোটিফিকেশন কাস্টমার প্রোফাইলে পাঠানো হচ্ছে
                 await db.execute(
                     'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
                     [b.email, "Order Placed successfully! 🛍️", `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`]
@@ -185,7 +193,6 @@ export default async function handler(req, res) {
                 return res.status(200).json({ status: "Success" });
             } 
             
-            // অ্যাডমিন স্ট্যাটাস পরিবর্তনের সিকিউরিটি গার্ড (Confirm, Ship, Deliver)
             else if (b.action === 'confirm' || b.action === 'ship' || b.action === 'deliver') {
                 if (b.token !== process.env.ADMIN_TOKEN || b.pin !== process.env.ADMIN_PIN) {
                     return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
@@ -226,7 +233,6 @@ export default async function handler(req, res) {
                 }
             }
             
-            // ক্যানসেলেশন সিকিউরিটি ভেরিফিকেশন (অ্যাডমিন টোকেন অথবা গ্রাহকের নিজের অর্ডারের ইমেইল ভেরিফিকেশন)
             else if (b.action === 'cancel') {
                 const [orderRows] = await db.execute('SELECT * FROM orders WHERE id = ?', [b.id]);
                 
@@ -235,7 +241,6 @@ export default async function handler(req, res) {
                 }
 
                 const order = orderRows[0];
-                
                 const isAdmin = b.token === process.env.ADMIN_TOKEN && b.pin === process.env.ADMIN_PIN;
                 const isOwner = b.email && order.email === b.email;
 
@@ -245,7 +250,6 @@ export default async function handler(req, res) {
 
                 if (order.status === 'Pending' || order.status === 'Confirmed') {
                     
-                    // নতুন ব্রেক (<br>) এবং পুরাতন কমা ডিলিমিটারকে পারফেক্ট সাপোর্ট করার ব্যাকওয়ার্ড কম্প্যাটিবিলিটি মেকানিজম
                     const productParts = order.products.includes('<br>') 
                         ? order.products.split('<br>') 
                         : order.products.split(', ');
