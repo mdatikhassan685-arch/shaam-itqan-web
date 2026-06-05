@@ -16,13 +16,13 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-xl font-bold mb-4 text-center">Master Admin Panel</h1>
         
-        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট -->
+        <!-- ৩×২ কমপ্যাক্ট বাটন গ্রিড লেআউট (NOTIFS বাটনের নাম পরিবর্তন করে PORTAL করা হলো) -->
         <div class="grid grid-cols-3 gap-1 mb-4">
             <button onclick="loadTab('product')" class="bg-blue-600 text-white py-2 text-[10px] rounded font-bold">PRODUCTS</button>
             <button onclick="loadTab('banner')" class="bg-green-600 text-white py-2 text-[10px] rounded font-bold">BANNERS</button>
             <button onclick="loadTab('category')" class="bg-purple-600 text-white py-2 text-[10px] rounded font-bold">CATEGORY</button>
             <button onclick="loadTab('coupon')" class="bg-teal-600 text-white py-2 text-[10px] rounded font-bold">COUPONS</button>
-            <button onclick="loadTab('notification')" class="bg-indigo-600 text-white py-2 text-[10px] rounded font-bold">NOTIFS</button>
+            <button onclick="loadTab('notification')" class="bg-indigo-600 text-white py-2 text-[10px] rounded font-bold">PORTAL</button>
             <button onclick="loadOrders()" class="bg-orange-600 text-white py-2 text-[10px] rounded font-bold">ORDERS</button>
         </div>
 
@@ -36,8 +36,24 @@
         <div id="item-list" class="space-y-3 pb-10"></div>
     </div>
 
+    <!-- অর্ডারের বিস্তারিত তথ্য দেখার জন্য প্রিমিয়াম পপআপ মডাল (Popup Modal) কন্টেইনার -->
+    <div id="order-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-5 rounded-xl border-2 border-[#D4AF37] shadow-2xl relative flex flex-col">
+            <!-- মডাল বন্ধ করার বাটন (X) -->
+            <button onclick="closeOrderModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black transition focus:outline-none z-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <!-- মডাল ডাইনামিক কনটেন্ট এরিয়া -->
+            <div id="order-modal-content" class="space-y-4"></div>
+        </div>
+    </div>
+
     <script>
         let currentType = '';
+        let allOrdersCache = []; // সফল সার্চ এবং স্ট্যাটাস ফিল্টারিং সিঙ্কের জন্য গ্লোবাল ক্যাশ ভেরিয়েবল
+        let currentOrderStatusFilter = 'All'; // ডিফল্ট ফিল্টার স্টেট
         
         async function loadTab(type) {
             currentType = type;
@@ -124,7 +140,6 @@
                     <input type="number" id="in_min_amount" placeholder="Minimum Amount to apply coupon" class="w-full p-2 border text-sm rounded">
                 </div>`;
             }
-            // নোটিফিকেশন ও নতুন ইউজার ট্রাস্ট-ইনডেক্স ড্যাশবোর্ড ইন্টিগ্রেশন
             else if (type === 'notification') {
                 f = `
                 <!-- ১. ডাইনামিক ইউজার ট্রাস্ট কার্ড কুয়েরি সেকশন -->
@@ -138,7 +153,7 @@
                     <div id="user-stats-result" class="hidden text-xs leading-relaxed space-y-2.5 pt-2"></div>
                 </div>
 
-                <!-- ২. নোটিফিকেশন পাঠানো অপশন (আগের মতোই সচল থাকবে) -->
+                <!-- ২. নোটিফিকেশন পাঠানো অপশন (PORTAL এর সাথে সিঙ্ক করা) -->
                 <div id="notif-target-wrapper" class="border-t pt-3">
                     <label class="text-[9px] font-bold text-gray-500 uppercase">Target Audience</label>
                     <select id="notif_target_type" onchange="toggleNotifEmailField()" class="w-full p-2 border text-sm rounded bg-white">
@@ -180,7 +195,6 @@
             renderList(type);
         }
 
-        // এপিআই থেকে কাস্টমার ট্রাস্ট কার্ড রেন্ডার করার ডাইনামিক জাভাস্ক্রিপ্ট ফাংশন
         async function searchUserStats() {
             const email = document.getElementById('search_user_email').value.trim();
             const resultDiv = document.getElementById('user-stats-result');
@@ -197,7 +211,6 @@
             resultDiv.classList.remove('hidden');
 
             try {
-                // নতুন মার্জ হওয়া user-hub এপিআই-তে রিকোয়েস্ট পাঠানো হচ্ছে
                 const res = await fetch(`/api/user-hub?action=get_stats&email=${email}&token=${token}&pin=${pin}`);
                 
                 if (!res.ok) {
@@ -212,17 +225,14 @@
                 const cartList = metrics.abandoned_cart || [];
                 const wishList = metrics.abandoned_wishlist || [];
 
-                // কার্ট রিকভারি আইটেম পার্সিং
                 let cartHtml = cartList.length > 0 
                     ? cartList.map(item => `• ${item.product_name} (Size: ${item.size}, Qty: ${item.quantity})`).join('<br>')
                     : 'Empty (ফাঁকা)';
 
-                // উইশলিস্ট রিকভারি আইটেম পার্সিং
                 let wishHtml = wishList.length > 0
                     ? wishList.map(item => `• ${item.name} (৳${Math.round(item.price)})`).join('<br>')
                     : 'Empty (ফাঁকা)';
 
-                // ট্রাস্ট ব্যাজ সিএসএস থিমিং
                 let badgeColor = "bg-gray-100 text-gray-800";
                 if (metrics.trust_badge && metrics.trust_badge.includes("VIP")) badgeColor = "bg-green-100 text-green-800 font-bold border border-green-300";
                 if (metrics.trust_badge && metrics.trust_badge.includes("Risk")) badgeColor = "bg-red-100 text-red-800 font-bold border border-red-300 animate-pulse";
@@ -230,13 +240,11 @@
 
                 resultDiv.innerHTML = `
                     <div class="space-y-2.5 pt-2">
-                        <!-- ট্রাস্ট ব্যাজ -->
                         <div class="flex justify-between items-center bg-white p-2.5 border border-gray-200/50 rounded-lg">
                             <span class="font-bold text-gray-700">Trust Badge:</span>
                             <span class="px-2.5 py-0.5 rounded text-[10px] tracking-wider uppercase ${badgeColor}">${metrics.trust_badge || 'New'}</span>
                         </div>
                         
-                        <!-- পার্সেন্টেজ গ্রিড উইজেট -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="bg-white p-2.5 border border-gray-200/50 rounded-lg">
                                 <p class="text-gray-400 font-bold text-[9px] uppercase tracking-wide">Delivery Success</p>
@@ -248,7 +256,6 @@
                             </div>
                         </div>
                         
-                        <!-- সংখ্যাভিত্তিক বিবরণী -->
                         <div class="bg-white p-2.5 border border-gray-200/50 rounded-lg space-y-1 font-mono text-[11px] leading-relaxed text-gray-700">
                             <p class="font-bold text-gray-800 font-sans text-xs border-b pb-1 mb-1">Detailed Log:</p>
                             <div>• Total Placed (সর্বমোট অর্ডার): <b>${data.total_orders}</b></div>
@@ -259,13 +266,11 @@
                             <div>• Cancelled (গ্রাহক বাতিল): <b>${data.cancelled}</b></div>
                         </div>
                         
-                        <!-- কার্ট রিকভারি প্যানেল -->
                         <div class="bg-amber-50 p-2.5 border border-amber-200/40 rounded-lg space-y-1 text-[11px] leading-relaxed">
                             <p class="font-bold text-amber-900 text-xs border-b border-amber-200 pb-1 mb-1">🛒 Abandoned Bag (কার্টে জমা আছে):</p>
                             <div class="text-amber-800 font-mono font-bold">${cartHtml}</div>
                         </div>
                         
-                        <!-- উইশলিস্ট রিকভারি প্যানেল -->
                         <div class="bg-teal-50 p-2.5 border border-teal-200/40 rounded-lg space-y-1 text-[11px] leading-relaxed">
                             <p class="font-bold text-teal-900 text-xs border-b border-teal-200 pb-1 mb-1">💖 Wishlist (পছন্দের তালিকায় আছে):</p>
                             <div class="text-teal-800 font-mono font-bold">${wishHtml}</div>
@@ -288,7 +293,6 @@
             }
         }
 
-        // নোটিফিকেশন ব্রডকাস্ট এপিআই কানেক্টর (নতুন api/user-hub এর সাথে লিংক করা হয়েছে)
         async function sendAdminNotification() {
             const targetType = document.getElementById('notif_target_type').value;
             const emailInput = document.getElementById('notif_email');
@@ -465,37 +469,80 @@
             renderList(currentType); 
         }
         
+        // ডাইনামিক লাইভ সার্চ এবং ক্যাটাগরি ফিল্টার সমৃদ্ধ কমপ্যাক্ট অর্ডার ম্যানেজমেন্ট সিস্টেম
         async function loadOrders() {
-            document.getElementById('form-title').innerText = "Recent Orders";
+            document.getElementById('form-title').innerText = "Manage Orders";
             document.getElementById('save-btn').classList.add('hidden');
-            document.getElementById('fields').innerHTML = "";
-            const res = await fetch('/api/orders');
-            const orders = await res.json();
             
-            document.getElementById('item-list').innerHTML = orders.map(o => {
-                const addressParts = o.address.split(' | ');
-                const mainAddress = addressParts[0] || 'N/A';
-                const landmark = addressParts.find(p => p.startsWith('Landmark:')) || 'Landmark: N/A';
-                const area = addressParts.find(p => p.startsWith('Area:')) || 'Area: N/A';
-                const method = addressParts.find(p => p.startsWith('Method:')) || 'Method: COD';
+            // সার্চ বার এবং ফিল্টারিং বাটন গ্রিড রেন্ডার করা হচ্ছে
+            document.getElementById('fields').innerHTML = `
+                <div class="space-y-2.5 pb-2">
+                    <input type="text" id="order-search" oninput="applyOrderFilters()" placeholder="Search by ID, Name, or Phone..." class="w-full p-2.5 border text-xs rounded-lg focus:outline-none focus:border-[#D4AF37] bg-gray-50">
+                    
+                    <!-- স্ট্যাটাস অনুযায়ী ডাইনামিক ফিল্টার ট্যাব সমূহ -->
+                    <div class="flex gap-1 overflow-x-auto pb-1.5 scrollbar-hide text-[9px] font-bold uppercase tracking-wider">
+                        <button onclick="setOrderStatusFilter('All')" id="btn-filter-All" class="order-filter-btn flex-shrink-0 bg-black text-white px-2.5 py-1.5 rounded transition">All</button>
+                        <button onclick="setOrderStatusFilter('Pending')" id="btn-filter-Pending" class="order-filter-btn flex-shrink-0 bg-white border border-gray-200 text-gray-500 px-2.5 py-1.5 rounded transition">Pending</button>
+                        <button onclick="setOrderStatusFilter('Confirmed')" id="btn-filter-Confirmed" class="order-filter-btn flex-shrink-0 bg-white border border-gray-200 text-gray-500 px-2.5 py-1.5 rounded transition">Confirmed</button>
+                        <button onclick="setOrderStatusFilter('Shipped')" id="btn-filter-Shipped" class="order-filter-btn flex-shrink-0 bg-white border border-gray-200 text-gray-500 px-2.5 py-1.5 rounded transition">Shipped</button>
+                        <button onclick="setOrderStatusFilter('Delivered')" id="btn-filter-Delivered" class="order-filter-btn flex-shrink-0 bg-white border border-gray-200 text-gray-500 px-2.5 py-1.5 rounded transition">Delivered</button>
+                        <button onclick="setOrderStatusFilter('Cancelled')" id="btn-filter-Cancelled" class="order-filter-btn flex-shrink-0 bg-white border border-gray-200 text-gray-500 px-2.5 py-1.5 rounded transition">Cancelled</button>
+                    </div>
+                </div>
+            `;
+            
+            const res = await fetch('/api/orders');
+            allOrdersCache = await res.json();
+            currentOrderStatusFilter = 'All'; // ট্যাব ডিফল্ট স্টেট
+            renderOrdersList(allOrdersCache);
+        }
 
-                let actionButtons = '';
-                if (o.status === 'Pending') {
-                    actionButtons = `
-                        <button onclick="updateStatus(${o.id}, 'confirm')" class="mt-3 w-full bg-green-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-green-700 transition">Confirm Order</button>
-                        <button onclick="updateStatus(${o.id}, 'cancel')" class="mt-2 w-full bg-red-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-red-700 transition">Cancel Order</button>
-                    `;
-                } else if (o.status === 'Confirmed') {
-                    actionButtons = `
-                        <button onclick="updateStatus(${o.id}, 'ship')" class="mt-3 w-full bg-purple-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-purple-700 transition">Mark as Shipped</button>
-                        <button onclick="updateStatus(${o.id}, 'cancel')" class="mt-2 w-full bg-red-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-red-700 transition">Cancel Order</button>
-                    `;
-                } else if (o.status === 'Shipped') {
-                    actionButtons = `
-                        <button onclick="updateStatus(${o.id}, 'deliver')" class="mt-3 w-full bg-blue-600 text-white py-2 text-xs uppercase tracking-widest font-bold rounded hover:bg-blue-700 transition">Mark as Delivered</button>
-                    `;
+        // ট্যাব ফিল্টারিং সিএসএস পরিবর্তন করার ফাংশন
+        function setOrderStatusFilter(status) {
+            currentOrderStatusFilter = status;
+            
+            const buttons = document.querySelectorAll('.order-filter-btn');
+            buttons.forEach(btn => {
+                if (btn.id === `btn-filter-${status}`) {
+                    btn.className = "order-filter-btn flex-shrink-0 bg-black text-white px-2.5 py-1.5 rounded transition";
+                } else {
+                    btn.className = "order-filter-btn flex-shrink-0 bg-white border border-gray-200 text-gray-500 px-2.5 py-1.5 rounded transition";
                 }
+            });
+            applyOrderFilters();
+        }
 
+        // সার্চ এবং ট্যাবের সমন্বয়ে রিয়েল-টাইম কুয়েরি ফিল্টারিং
+        function applyOrderFilters() {
+            const query = document.getElementById('order-search').value.trim().toLowerCase();
+            let filtered = allOrdersCache;
+
+            if (currentOrderStatusFilter !== 'All') {
+                filtered = filtered.filter(o => o.status.toLowerCase() === currentOrderStatusFilter.toLowerCase());
+            }
+
+            if (query !== "") {
+                filtered = filtered.filter(o => 
+                    o.id.toString().includes(query) ||
+                    o.customer_name.toLowerCase().includes(query) ||
+                    o.phone.toLowerCase().includes(query)
+                );
+            }
+
+            renderOrdersList(filtered);
+        }
+
+        // কাস্টমার ইনফো সমৃদ্ধ অত্যন্ত কমপ্যাক্ট অর্ডার লিস্ট কার্ড রেন্ডারিং
+        function renderOrdersList(orders) {
+            const list = document.getElementById('item-list');
+            if (orders.length === 0) {
+                list.innerHTML = `<p class="text-center text-gray-400 py-6 text-xs">No matching orders found.</p>`;
+                return;
+            }
+
+            list.innerHTML = orders.map(o => {
+                const primaryPhone = o.phone.split(' | ')[0]?.replace('Primary: ', '') || 'N/A';
+                
                 let badgeColor = "text-orange-600 bg-orange-50";
                 if (o.status === 'Confirmed') badgeColor = "text-blue-600 bg-blue-50";
                 if (o.status === 'Shipped') badgeColor = "text-purple-600 bg-purple-50";
@@ -503,40 +550,106 @@
                 if (o.status === 'Cancelled') badgeColor = "text-red-600 bg-red-50";
 
                 return `
-                    <div class="bg-white p-4 shadow rounded mb-4 border border-gray-200 text-sm leading-relaxed">
-                        <div class="flex justify-between items-center border-b pb-2 mb-2 font-bold">
-                            <span class="text-gray-800">Order ID: #${o.id}</span>
-                            <span class="${badgeColor} px-2 py-0.5 rounded text-[9px] tracking-wider uppercase">${o.status}</span>
+                    <div onclick="showOrderModal(${o.id})" class="bg-white p-3 shadow border border-gray-200/50 rounded-lg flex justify-between items-center cursor-pointer hover:border-[#D4AF37] transition duration-200 select-none">
+                        <div class="space-y-1">
+                            <div class="font-bold text-gray-800 text-xs">Order ID: #${o.id}</div>
+                            <div class="text-[11px] text-gray-600 font-sans">Name: ${o.customer_name}</div>
+                            <div class="text-[10px] text-gray-400 font-mono">Phone: ${primaryPhone}</div>
                         </div>
-                        
-                        <p class="text-[10px] text-gray-400 uppercase font-bold mt-2 tracking-wider">Customer Info</p>
-                        <div class="bg-gray-50 p-2.5 rounded text-xs text-gray-700 mt-1 space-y-1 font-mono">
+                        <span class="${badgeColor} px-2.5 py-0.5 rounded text-[9px] tracking-wider uppercase font-bold shrink-0">${o.status}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // কার্ডে ক্লিক করার পর বিস্তারিত তথ্য ও অ্যাকশন বাটন সহ ব্লার-পপআপ মডাল প্রদর্শন
+        function showOrderModal(id) {
+            const o = allOrdersCache.find(item => item.id === id);
+            if (!o) return;
+
+            const addressParts = o.address.split(' | ');
+            const mainAddress = addressParts[0] || 'N/A';
+            const landmark = addressParts.find(p => p.startsWith('Landmark:')) || 'Landmark: N/A';
+            const area = addressParts.find(p => p.startsWith('Area:')) || 'Area: N/A';
+            const method = addressParts.find(p => p.startsWith('Method:')) || 'Method: COD';
+
+            let actionButtons = '';
+            if (o.status === 'Pending') {
+                actionButtons = `
+                    <button onclick="updateStatus(${o.id}, 'confirm'); closeOrderModal();" class="w-full bg-green-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-green-700 transition">Confirm Order</button>
+                    <button onclick="updateStatus(${o.id}, 'cancel'); closeOrderModal();" class="w-full bg-red-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-red-700 transition">Cancel Order</button>
+                `;
+            } else if (o.status === 'Confirmed') {
+                actionButtons = `
+                    <button onclick="updateStatus(${o.id}, 'ship'); closeOrderModal();" class="w-full bg-purple-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-purple-700 transition">Mark as Shipped</button>
+                    <button onclick="updateStatus(${o.id}, 'cancel'); closeOrderModal();" class="w-full bg-red-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-red-700 transition">Cancel Order</button>
+                `;
+            } else if (o.status === 'Shipped') {
+                actionButtons = `
+                    <button onclick="updateStatus(${o.id}, 'deliver'); closeOrderModal();" class="w-full bg-blue-600 text-white py-2.5 text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-blue-700 transition">Mark as Delivered</button>
+                `;
+            }
+
+            let badgeColor = "text-orange-600 bg-orange-50";
+            if (o.status === 'Confirmed') badgeColor = "text-blue-600 bg-blue-50";
+            if (o.status === 'Shipped') badgeColor = "text-purple-600 bg-purple-50";
+            if (o.status === 'Delivered') badgeColor = "text-green-600 bg-green-50";
+            if (o.status === 'Cancelled') badgeColor = "text-red-600 bg-red-50";
+
+            const modalContent = document.getElementById('order-modal-content');
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-2.5 mb-3 font-bold">
+                    <span class="text-gray-800 text-xs">Order ID: #${o.id}</span>
+                    <span class="${badgeColor} px-2.5 py-0.5 rounded text-[9px] tracking-wider uppercase">${o.status}</span>
+                </div>
+                
+                <div class="space-y-3 max-h-[60vh] overflow-y-auto scrollbar-hide text-xs leading-relaxed">
+                    <div>
+                        <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Customer Info</p>
+                        <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100 font-mono">
                             <div><b>Name:</b> ${o.customer_name}</div>
                             <div><b>Phones:</b> ${o.phone}</div>
                             <div><b>Email:</b> ${o.email}</div>
                         </div>
+                    </div>
 
-                        <p class="text-[10px] text-gray-400 uppercase font-bold mt-3 tracking-wider">Shipping & Payment</p>
-                        <div class="bg-gray-50 p-2.5 rounded text-xs text-gray-700 mt-1 space-y-1 font-mono">
+                    <div>
+                        <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Shipping & Payment</p>
+                        <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100 font-mono">
                             <div><b>Address:</b> ${mainAddress}</div>
                             <div><b>${landmark}</b></div>
                             <div><b>${area}</b></div>
                             <div><b class="text-[#C1A44E]">${method}</b></div>
                         </div>
+                    </div>
 
-                        <p class="text-[10px] text-gray-400 uppercase font-bold mt-3 tracking-wider">Products Ordered</p>
-                        <div class="bg-gray-50 p-2.5 rounded text-xs text-gray-700 mt-1 font-mono">
+                    <div>
+                        <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Products Ordered</p>
+                        <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100 font-mono">
                             ${o.products}
                         </div>
+                    </div>
 
-                        <div class="flex justify-between items-center mt-4 border-t pt-3 font-bold text-gray-800">
-                            <span>Total Price:</span>
-                            <span class="text-base text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
-                        </div>
+                    <div class="flex justify-between items-center border-t border-b py-2.5 font-bold text-gray-800">
+                        <span>Total Price:</span>
+                        <span class="text-sm text-[#D4AF37]">৳ ${parseFloat(o.total_price).toFixed(2)}</span>
+                    </div>
+                </div>
 
-                        ${actionButtons}
-                    </div>`;
-            }).join('');
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    ${actionButtons || '<div class="col-span-2 text-center text-gray-400 text-[10px]">No actions available.</div>'}
+                </div>
+            `;
+
+            const modal = document.getElementById('order-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeOrderModal() {
+            const modal = document.getElementById('order-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         async function updateStatus(id, action) { 
@@ -547,6 +660,7 @@
 
             const res = await fetch('/api/orders', { 
                 method: 'POST', 
+                // headers সংশোধন করা হয়েছে
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({ 
                     action: action, 
