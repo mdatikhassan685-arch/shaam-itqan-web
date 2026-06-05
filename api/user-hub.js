@@ -3,31 +3,42 @@ import { getDb } from './db.js';
 export default async function handler(req, res) {
     const db = await getDb();
     try {
-        // ১. GET মেথড: নোটিফিকেশন লিস্ট এবং ইউজার/অ্যাডমিন স্ট্যাটস লোড করার লজিক
+        // ১. GET মেথড: নোটিফিকেশন, ইউজার স্ট্যাটস এবং কাস্টমার রিভিউ লোড করা
         if (req.method === 'GET') {
             const url = new URL(req.url, `http://${req.headers.host}`);
             const action = url.searchParams.get('action');
             const email = url.searchParams.get('email');
 
+            // ক) কাস্টমার রিভিউ লোড করার কুয়েরি (কোনো ইমেইল বা সেশন রিকোয়ারমেন্ট ছাড়াই সবার জন্য উন্মুক্ত)
+            if (action === 'get_reviews') {
+                const productId = url.searchParams.get('product_id');
+                if (!productId) {
+                    return res.status(400).json({ error: "Product ID is required" });
+                }
+                const [rows] = await db.execute(
+                    'SELECT * FROM product_reviews WHERE product_id = ? ORDER BY id DESC',
+                    [productId]
+                );
+                return res.status(200).json(rows);
+            }
+
             if (!email) {
                 return res.status(400).json({ error: "Email is required" });
             }
 
-            // ক) নোটিফিকেশন লিস্ট লোড করা
+            // খ) নোটিফিকেশন লিস্ট লোড করা
             if (action === 'get_notifications') {
                 const [rows] = await db.execute('SELECT * FROM notifications WHERE email = ? ORDER BY id DESC', [email]);
                 return res.status(200).json(rows);
             } 
             
-            // খ) গ্রাহক ও অ্যাডমিনের জন্য ডাইনামিক স্ট্যাটস/ট্রাস্ট-ইনডেক্স ক্যালকুলেট করা
+            // গ) গ্রাহক ও অ্যাডমিনের জন্য ডাইনামিক স্ট্যাটস/ট্রাস্ট-ইনডেক্স ক্যালকুলেট করা
             else if (action === 'get_stats') {
-                // গ্রাহকের অর্ডার হিস্টোরি গুনে ফেচ করা হচ্ছে
                 const [orderRows] = await db.execute(
                     'SELECT status, COUNT(*) as count FROM orders WHERE email = ? GROUP BY status', 
                     [email]
                 );
 
-                // ডিফল্ট ড্যাশবোর্ড ডাটা স্ট্রাকচার
                 let stats = { 
                     total_orders: 0, 
                     pending: 0, 
@@ -53,15 +64,12 @@ export default async function handler(req, res) {
                     else if (status === 'cancelled') stats.cancelled = count;
                 });
 
-                // গ্রাহকের কার্টে থাকা আইটেম সংখ্যা গণনা
                 const [bagRows] = await db.execute('SELECT COUNT(*) as count FROM bag WHERE email = ?', [email]);
                 stats.cart_count = bagRows[0]?.count || 0;
 
-                // গ্রাহকের উইশলিস্টে থাকা আইটেম সংখ্যা গণনা
                 const [wishRows] = await db.execute('SELECT COUNT(*) as count FROM wishlist WHERE email = ?', [email]);
                 stats.wishlist_count = wishRows[0]?.count || 0;
 
-                // অ্যাডমিন কুয়েরি করছে কি না সিকিউরিটি ভেরিফিকেশন চেক
                 const token = url.searchParams.get('token');
                 const pin = url.searchParams.get('pin');
                 const isAdmin = token === process.env.ADMIN_TOKEN && pin === process.env.ADMIN_PIN;
@@ -71,11 +79,9 @@ export default async function handler(req, res) {
                     const del = stats.delivered;
                     const ret = stats.returned;
                     
-                    // সফল ডেলিভারি এবং রিটার্নের অনুপাত গাণিতিকভাবে হিসাব করা
                     const successRate = total > 0 ? ((del / total) * 100).toFixed(2) : "0.00";
                     const returnRate = total > 0 ? ((ret / total) * 100).toFixed(2) : "0.00";
                     
-                    // কাস্টমারের বিশ্বস্ততার ওপর ভিত্তি করে অটোমেটিক ব্যাজ নির্ধারণ
                     let trustBadge = "New Customer";
                     if (total > 0) {
                         if (del >= 5 && ret === 0) trustBadge = "VIP Customer 🌟";
@@ -84,19 +90,16 @@ export default async function handler(req, res) {
                         else if (stats.cancelled > 2 && del === 0) trustBadge = "Spam Suspicion ⚠️";
                     }
 
-                    // কার্ট রিকভারি ডাটা: গ্রাহক বর্তমানে কার্টে কী ফেলে রেখেছেন
                     const [abandonedCart] = await db.execute(
                         'SELECT product_name, size, quantity FROM bag WHERE email = ?', 
                         [email]
                     );
 
-                    // উইশলিস্ট রিকভারি ডাটা: গ্রাহক বর্তমানে উইশলিস্টে কী রেখেছেন
                     const [abandonedWishlist] = await db.execute(
                         'SELECT p.name, p.price FROM wishlist w JOIN products p ON w.product_id = p.id WHERE w.email = ?', 
                         [email]
                     );
 
-                    // অ্যাডমিন ড্যাশবোর্ডে শো করার জন্য অতিরিক্ত ডাটা যুক্ত করা হলো
                     stats.admin_metrics = {
                         success_rate: successRate + "%",
                         return_rate: returnRate + "%",
@@ -112,12 +115,33 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Invalid GET action specified." });
         } 
         
-        // ২. POST মেথড: নোটিফিকেশন সিঙ্গেল বা ব্রডকাস্ট পাঠানোর লজিক
+        // ২. POST মেথড: নোটিফিকেশন ব্রডকাস্ট এবং নতুন রিভিউ সাবমিট করা
         else if (req.method === 'POST') {
             const b = req.body;
             
-            if (b.action === 'send_admin_notif') {
-                // অ্যাডমিন ভেরিফিকেশন চেক
+            // ক) কাস্টমার দ্বারা নতুন রিভিউ সাবমিট করার কুয়েরি
+            if (b.action === 'add_review') {
+                const { product_id, email, username, rating, comment } = b;
+                
+                if (!product_id || !email || !username || !rating || !comment) {
+                    return res.status(400).json({ error: "All review fields are required!" });
+                }
+
+                const ratingNum = parseInt(rating);
+                if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+                    return res.status(400).json({ error: "Rating must be between 1 and 5 stars!" });
+                }
+
+                await db.execute(
+                    'INSERT INTO product_reviews (product_id, email, username, rating, comment) VALUES (?, ?, ?, ?, ?)',
+                    [product_id, email, username, ratingNum, comment]
+                );
+                
+                return res.status(200).json({ status: "Success" });
+            }
+            
+            // খ) অ্যাডমিন নোটিফিকেশন ব্রডকাস্ট
+            else if (b.action === 'send_admin_notif') {
                 if (b.token !== process.env.ADMIN_TOKEN || b.pin !== process.env.ADMIN_PIN) {
                     return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
                 }
@@ -128,7 +152,6 @@ export default async function handler(req, res) {
                     return res.status(400).json({ error: "Title and Message are required!" });
                 }
 
-                // নির্দিষ্ট ইউজারকে নোটিফিকেশন পাঠানো
                 if (target_type === 'single') {
                     if (!email) return res.status(400).json({ error: "Target email is required!" });
                     await db.execute(
@@ -137,7 +160,6 @@ export default async function handler(req, res) {
                     );
                     return res.status(200).json({ status: "Success" });
                 } 
-                // সব রেজিস্টার্ড ইউজারকে নোটিফিকেশন ব্রডকাস্ট করা
                 else if (target_type === 'all') {
                     const [users] = await db.execute('SELECT email FROM users');
                     if (users.length === 0) {
@@ -159,7 +181,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Invalid POST action specified." });
         }
         
-        // ৩. PUT মেথড: গ্রাহকের নোটিফিকেশন পঠিত (Read) মার্ক করা
+        // ৩. PUT মেথড: নোটিফিকেশন পঠিত (Read) মার্ক করা
         else if (req.method === 'PUT') {
             const b = req.body;
             if (b.action === 'read_all') {
@@ -169,10 +191,24 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Invalid PUT action specified." });
         } 
         
-        // ৪. DELETE মেথড: নোটিফিকেশন ডিলিট বা ক্লিয়ার অল করা
+        // ৪. DELETE মেথড: নোটিফিকেশন ডিলিট এবং কাস্টমার রিভিউ ডিলিট করা
         else if (req.method === 'DELETE') {
             const b = req.body;
-            if (b.action === 'clear_all') {
+            
+            // ক) অ্যাডমিন প্যানেল থেকে স্প্যাম বা বাজে রিভিউ ডিলিট করার এপিআই লজিক (ভেরিফিকেশন সহ)
+            if (b.action === 'delete_review') {
+                if (b.token !== process.env.ADMIN_TOKEN || b.pin !== process.env.ADMIN_PIN) {
+                    return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
+                }
+                if (!b.id) {
+                    return res.status(400).json({ error: "Review ID is required" });
+                }
+                await db.execute('DELETE FROM product_reviews WHERE id = ?', [b.id]);
+                return res.status(200).json({ status: "Success" });
+            }
+            
+            // খ) নোটিফিকেশন রিমুভ্যাল লজিক
+            else if (b.action === 'clear_all') {
                 await db.execute('DELETE FROM notifications WHERE email = ?', [b.email]);
                 return res.status(200).json({ status: "Success" });
             } else if (b.id) {
