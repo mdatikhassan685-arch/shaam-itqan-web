@@ -6,7 +6,7 @@
     <title>SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -96,7 +96,7 @@
         let categoriesData = [];    
         let activeCategory = 'All'; 
         let wishlistIds = [];       
-        let bannerInterval; // অটো-প্লে ব্যানার ট্র্যাকার ভেরিয়েবল
+        let bannerInterval; 
 
         async function loadData() {
             try {
@@ -111,7 +111,6 @@
                 
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 
-                // ব্যানার সফলভাবে লোড হওয়ার পর অটো-প্লে রান করা
                 startBannerAutoPlay();
 
                 renderCategoryGrid();
@@ -126,12 +125,10 @@
             } catch(e) { console.log(e); }
         }
 
-        // ব্যানার ৫ সেকেন্ড পর পর স্বয়ংক্রিয় এবং মসৃণভাবে স্লাইড হওয়ার লজিক
         function startBannerAutoPlay() {
             const slider = document.getElementById('banner-slider');
             if (!slider) return;
 
-            // ডুপ্লিকেট ইন্টারভাল এড়াতে আগে ক্লিয়ার করা হচ্ছে
             if (bannerInterval) clearInterval(bannerInterval);
 
             bannerInterval = setInterval(() => {
@@ -139,13 +136,12 @@
                 const visibleWidth = slider.clientWidth;
                 const currentScroll = slider.scrollLeft;
 
-                // যদি শেষ ব্যানারে পৌঁছায় তবে শুরুতে (০) যাবে, নাহলে পরের ব্যানারে স্ক্রল করবে
                 if (currentScroll + visibleWidth >= totalWidth - 5) {
                     slider.scrollTo({ left: 0, behavior: 'smooth' });
                 } else {
                     slider.scrollTo({ left: currentScroll + visibleWidth, behavior: 'smooth' });
                 }
-            }, 5000); // ৫ সেকেন্ড
+            }, 5000); 
         }
 
         async function updateBagCount(email) {
@@ -278,6 +274,7 @@
             container.innerHTML = catHTML;
         }
 
+        // কাস্টমার রিভিউ এভারেজ স্টার সহ প্রোডাক্ট কার্ড লম্বা করে নিচে স্পেসিং জেনারেট করার ডাইনামিক ফাংশন
         function renderProductGrid(productsToRender) {
             const grid = document.getElementById('product-grid');
             if (productsToRender.length === 0) {
@@ -315,11 +312,36 @@
 
                 const originalPrice = Math.round(parseFloat(p.original_price) || 0);
                 const priceDisplay = originalPrice > 0 
-                    ? `<span class="line-through text-gray-400 text-[11px] mr-1.5">৳ ${originalPrice}</span> <span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`
-                    : `<span class="font-extrabold text-sm text-[#D4AF37]">৳ ${p.price}</span>`;
+                    ? `<span class="line-through text-gray-400 text-[10px] mr-1">৳ ${originalPrice}</span> <span class="font-extrabold text-xs text-[#D4AF37]">৳ ${p.price}</span>`
+                    : `<span class="font-extrabold text-xs text-[#D4AF37]">৳ ${p.price}</span>`;
 
+                // ডাটাবেজের এভারেজ অনুযায়ী রিয়েল-টাইম গোল্ডেন স্টার রেন্ডারিং
+                const avgRating = parseFloat(p.avg_rating) || 0;
+                const reviewCount = parseInt(p.review_count) || 0;
+                let starRatingHtml = '';
+                
+                if (reviewCount > 0) {
+                    const roundedAvg = Math.round(avgRating);
+                    let starStr = '';
+                    for (let i = 0; i < 5; i++) {
+                        starStr += i < roundedAvg ? '★' : '☆';
+                    }
+                    starRatingHtml = `
+                        <div class="flex items-center gap-1 mt-1 text-[9px] leading-none select-none h-3">
+                            <span class="text-amber-500 font-extrabold leading-none">${starStr}</span>
+                            <span class="text-gray-400 font-semibold leading-none">(${reviewCount})</span>
+                        </div>`;
+                } else {
+                    starRatingHtml = `
+                        <div class="flex items-center gap-1 mt-1 text-[9px] leading-none select-none h-3">
+                            <span class="text-gray-300 font-extrabold leading-none">☆☆☆☆☆</span>
+                            <span class="text-gray-400 font-semibold leading-none">(0)</span>
+                        </div>`;
+                }
+
+                // কার্ডটিকে একটু লম্বা (h-[310px]) করে ফ্লেক্সবক্স দিয়ে এলাইনমেন্ট ঠিক করা হলো
                 return `
-                    <div class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white">
+                    <div class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white flex flex-col justify-between h-[310px]">
                         ${badge}
                         
                         <button onclick="event.stopPropagation(); event.preventDefault(); toggleWishlist(${p.id})" class="absolute top-4 left-4 bg-white/85 backdrop-blur-sm p-1.5 rounded-full shadow hover:scale-110 active:scale-95 transition duration-200 z-20 focus:outline-none flex items-center gap-1">
@@ -329,13 +351,18 @@
                             <span id="heart-count-${p.id}" class="text-[9px] font-bold text-gray-500 font-sans">${p.wishlist_count || 0}</span>
                         </button>
 
-                        <a href="${cardLink}" class="block">
-                            <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
-                                <img src="${firstImage}" class="w-full h-full object-cover">
+                        <a href="${cardLink}" class="block flex flex-col justify-between h-full">
+                            <div>
+                                <div class="w-full aspect-[3/4] overflow-hidden rounded bg-gray-50">
+                                    <img src="${firstImage}" class="w-full h-full object-cover">
+                                </div>
+                                <h3 class="text-xs font-bold mt-2 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
                             </div>
-                            <h3 class="text-xs font-bold mt-3 leading-snug text-gray-800 hover:text-[#D4AF37] tracking-wide line-clamp-2 h-8">${p.name}</h3>
-                            <div class="flex items-center gap-2 mt-2 pt-1 border-t border-gray-100">
-                                ${priceDisplay}
+                            <div>
+                                ${starRatingHtml}
+                                <div class="flex items-center gap-2 mt-1.5 pt-1 border-t border-gray-100">
+                                    ${priceDisplay}
+                                </div>
                             </div>
                         </a>
                     </div>`;
