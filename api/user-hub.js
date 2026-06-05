@@ -9,7 +9,26 @@ export default async function handler(req, res) {
             const action = url.searchParams.get('action');
             const email = url.searchParams.get('email');
 
-            // ক) কাস্টমার রিভিউ লোড করার কুয়েরি (কোনো ইমেইল বা সেশন রিকোয়ারমেন্ট ছাড়াই সবার জন্য উন্মুক্ত)
+            // ক) অ্যাডমিনের জন্য সব কাস্টমার রিভিউ একসাথে লোড করার ডাইনামিক কুয়েরি (টোকেন ও পিন ভেরিফিকেশন সহ)
+            if (action === 'get_all_reviews') {
+                const token = url.searchParams.get('token');
+                const pin = url.searchParams.get('pin');
+                
+                if (token !== process.env.ADMIN_TOKEN || pin !== process.env.ADMIN_PIN) {
+                    return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
+                }
+
+                // প্রোডাক্টের নামের সাথে কাস্টমারের রিভিউ জয়েন করে রিট্রিভ করা হচ্ছে
+                const [rows] = await db.execute(`
+                    SELECT r.*, p.name as product_name 
+                    FROM product_reviews r 
+                    JOIN products p ON r.product_id = p.id 
+                    ORDER BY r.id DESC
+                `);
+                return res.status(200).json(rows);
+            }
+
+            // খ) কাস্টমার দ্বারা সিঙ্গেল প্রোডাক্ট রিভিউ লোড করার কুয়েরি
             if (action === 'get_reviews') {
                 const productId = url.searchParams.get('product_id');
                 if (!productId) {
@@ -26,13 +45,13 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: "Email is required" });
             }
 
-            // খ) নোটিফিকেশন লিস্ট লোড করা
+            // গ) নোটিফিকেশন লিস্ট লোড করা
             if (action === 'get_notifications') {
                 const [rows] = await db.execute('SELECT * FROM notifications WHERE email = ? ORDER BY id DESC', [email]);
                 return res.status(200).json(rows);
             } 
             
-            // গ) গ্রাহক ও অ্যাডমিনের জন্য ডাইনামিক স্ট্যাটস/ট্রাস্ট-ইনডেক্স ক্যালকুলেট করা
+            // ঘ) গ্রাহক ও অ্যাডমিনের জন্য ডাইনামিক স্ট্যাটস/ট্রাস্ট-ইনডেক্স ক্যালকুলেট করা
             else if (action === 'get_stats') {
                 const [orderRows] = await db.execute(
                     'SELECT status, COUNT(*) as count FROM orders WHERE email = ? GROUP BY status', 
@@ -119,7 +138,6 @@ export default async function handler(req, res) {
         else if (req.method === 'POST') {
             const b = req.body;
             
-            // ক) কাস্টমার দ্বারা নতুন রিভিউ সাবমিট করার কুয়েরি
             if (b.action === 'add_review') {
                 const { product_id, email, username, rating, comment } = b;
                 
@@ -140,7 +158,6 @@ export default async function handler(req, res) {
                 return res.status(200).json({ status: "Success" });
             }
             
-            // খ) অ্যাডমিন নোটিফিকেশন ব্রডকাস্ট
             else if (b.action === 'send_admin_notif') {
                 if (b.token !== process.env.ADMIN_TOKEN || b.pin !== process.env.ADMIN_PIN) {
                     return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
@@ -181,7 +198,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Invalid POST action specified." });
         }
         
-        // ৩. PUT মেথড: নোটিফিকেশন পঠিত (Read) মার্ক করা
+        // ৩. PUT মেথড: নোটিফিকেশন পঠিত মার্ক করা
         else if (req.method === 'PUT') {
             const b = req.body;
             if (b.action === 'read_all') {
@@ -191,11 +208,10 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Invalid PUT action specified." });
         } 
         
-        // ৪. DELETE মেথড: নোটিফিকেশন ডিলিট এবং কাস্টমার রিভিউ ডিলিট করা
+        // ৪. DELETE মেথড: নোটিফিকেশন এবং কাস্টমার রিভিউ মুছে ফেলা
         else if (req.method === 'DELETE') {
             const b = req.body;
             
-            // ক) অ্যাডমিন প্যানেল থেকে স্প্যাম বা বাজে রিভিউ ডিলিট করার এপিআই লজিক (ভেরিফিকেশন সহ)
             if (b.action === 'delete_review') {
                 if (b.token !== process.env.ADMIN_TOKEN || b.pin !== process.env.ADMIN_PIN) {
                     return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
@@ -207,7 +223,6 @@ export default async function handler(req, res) {
                 return res.status(200).json({ status: "Success" });
             }
             
-            // খ) নোটিফিকেশন রিমুভ্যাল লজিক
             else if (b.action === 'clear_all') {
                 await db.execute('DELETE FROM notifications WHERE email = ?', [b.email]);
                 return res.status(200).json({ status: "Success" });
