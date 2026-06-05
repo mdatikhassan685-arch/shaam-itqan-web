@@ -122,16 +122,19 @@
             } catch(e) { console.log(e); }
         }
 
+        // গ্লোবাল স্ট্যান্ডার্ড অনুযায়ী কার্টের ইউনিক রোর সংখ্যা (লাইন আইটেম) গণনা করার আপডেট লজিক
         async function updateBagCount(email) {
             try {
                 const res = await fetch('/api/bag?email=' + email);
                 if (res.ok) {
                     const cartItems = await res.json();
-                    const totalQty = cartItems.reduce((acc, item) => acc + (parseInt(item.quantity) || 1), 0);
+                    
+                    // কোয়ান্টিটি যোগ না করে কার্টের ইউনিক আইটেম সংখ্যা বা লেন্থ সরাসরি নেওয়া হচ্ছে
+                    const uniqueQty = cartItems.length; 
                     
                     const badge = document.getElementById('bag-count-badge');
-                    if (totalQty > 0) {
-                        badge.innerText = totalQty;
+                    if (uniqueQty > 0) {
+                        badge.innerText = uniqueQty;
                         badge.classList.remove('hidden'); 
                     } else {
                         badge.classList.add('hidden');    
@@ -142,7 +145,7 @@
             }
         }
 
-        // হোমপেজের নোটিফিকেশন কাউন্টারটি নতুন ডাইনামিক api/user-hub এর সাথে লিংক করা হলো
+        // হোমপেজের নোটিফিকেশন কাউন্টার
         async function updateNotificationCount(email) {
             try {
                 const res = await fetch(`/api/user-hub?action=get_notifications&email=${email}`);
