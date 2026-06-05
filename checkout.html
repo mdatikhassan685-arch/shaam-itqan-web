@@ -159,10 +159,16 @@
                         </div>
                     </div>
 
-                    <!-- ট্রানজেকশন আইডি ইনপুট -->
-                    <div class="mt-3">
-                        <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Transaction ID (TrxID)</label>
-                        <input type="text" id="trxid" placeholder="e.g. K9B82HG5" class="w-full p-2.5 border text-sm focus:outline-none focus:border-[#D4AF37] rounded bg-white">
+                    <!-- নতুন পেমেন্ট ট্র্যাকিং গ্রিড (টাকা পাঠানোর নম্বর এবং TrxID এক সাথে ইনপুট হবে) -->
+                    <div class="grid grid-cols-2 gap-2.5 mt-3">
+                        <div>
+                            <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Sender's Mobile No. (টাকা পাঠানোর নম্বর)</label>
+                            <input type="tel" id="sender-number" placeholder="e.g. 01712345678" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#D4AF37] rounded bg-white">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Transaction ID (TrxID)</label>
+                            <input type="text" id="trxid" placeholder="e.g. K9B82HG5" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#D4AF37] rounded bg-white font-sans uppercase">
+                        </div>
                     </div>
                 </div>
 
@@ -290,13 +296,12 @@
                 document.getElementById('summary-subtotal').innerText = subtotal.toFixed(2);
                 updateShipping(); 
                 generateCaptcha();
-                await loadActiveCoupons(); // ডাইনামিক কুপন প্যানেল লোড করা হচ্ছে
+                await loadActiveCoupons(); 
             } catch (e) {
                 console.error(e);
             }
         }
 
-        // ডাটাবেজের সব সচল কুপন নিয়ে এসে চমৎকার সাজেশন বক্স তৈরি করার ফাংশন
         async function loadActiveCoupons() {
             try {
                 const res = await fetch('/api/admin-data?type=coupon');
@@ -332,10 +337,9 @@
             }
         }
 
-        // কুপনে ক্লিক করলে স্বয়ংক্রিয় অ্যাপ্লাই করার লজিক (Auto Apply)
         function selectCoupon(code) {
             document.getElementById('coupon-code').value = code;
-            applyCoupon(); // সিলেক্ট করার সাথে সাথে অটোমেটিক অ্যাপ্লাই হয়ে যাবে
+            applyCoupon(); 
         }
 
         async function applyCoupon() {
@@ -469,7 +473,8 @@
             const relation = document.getElementById('phone-backup-relation').value;
             const area = document.getElementById('delivery-area').value;
             const paymentMethod = document.getElementById('payment-method').value;
-            const trxid = document.getElementById('trxid').value.trim();
+            const trxidInput = document.getElementById('trxid').value.trim();
+            const senderNumber = document.getElementById('sender-number') ? document.getElementById('sender-number').value.trim() : '';
             const landmark = document.getElementById('landmark').value.trim();
             const address = document.getElementById('address').value.trim();
             const captchaInput = parseInt(document.getElementById('captcha-input').value.trim());
@@ -494,9 +499,20 @@
                 return;
             }
 
-            if (paymentMethod === 'advance_charge' && !trxid) {
-                alert("Please enter the Transaction ID!");
-                return;
+            // অগ্রিম পেমেন্টের ক্ষেত্রে ট্রানজেকশন আইডি এবং টাকা পাঠানোর নম্বর ভ্যালিডেশন
+            if (paymentMethod === 'advance_charge') {
+                if (!senderNumber) {
+                    alert("Please enter the mobile number from which you sent the money!");
+                    return;
+                }
+                if (!isValidBDMobile(senderNumber)) {
+                    alert("Please enter a valid 11-digit sender mobile number!");
+                    return;
+                }
+                if (!trxidInput) {
+                    alert("Please enter the Transaction ID (TrxID)!");
+                    return;
+                }
             }
 
             if (captchaInput !== captchaResult) {
@@ -509,8 +525,9 @@
             
             const selectedProvider = document.querySelector('input[name="payment-provider"]:checked')?.value || 'bKash';
             
-            const finalAddress = trxid 
-                ? `${address} [${selectedProvider} TrxID: ${trxid}] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
+            // ডাটাবেজ এপিআই-তে কোনো পরিবর্তন না করেই পেমেন্ট ইনফো ও টাকা পাঠানোর নম্বর ঠিকানা ফিল্ডে ডাইনামিকালি যুক্ত করার উন্নত লজিক
+            const finalAddress = trxidInput 
+                ? `${address} [${selectedProvider} TrxID: ${trxidInput} [Sender: ${senderNumber}]] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
                 : `${address} (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
 
             const data = { 
@@ -525,7 +542,7 @@
                 coupon_code: appliedCouponCode, 
                 email: user.email,
                 payment_method: paymentMethod,
-                trxid: trxid
+                trxid: trxidInput
             };
             
             try {
