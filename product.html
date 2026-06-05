@@ -6,7 +6,7 @@
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -33,7 +33,10 @@
         <div id="p-thumbnails" class="flex gap-2 mt-3 overflow-x-auto scrollbar-hide hidden"></div>
         
         <!-- Title -->
-        <h1 id="p-name" class="text-xl font-bold mt-5 tracking-widest luxury-font uppercase text-gray-800 leading-snug"></h1>
+        <h1 id="p-name" class="text-xl font-bold mt-5 tracking-widest luxury-font uppercase text-gray-800 leading-none"></h1>
+        
+        <!-- লাইভ এভারেজ স্টার কাউন্টার উইজেট -->
+        <div id="title-avg-stars" class="mt-2 flex items-center gap-1.5 select-none leading-none h-4"></div>
         
         <!-- দাম ও স্টক ব্যাজ একই লাইনে পাশাপাশি -->
         <div class="flex justify-between items-center mt-3 border-t pt-3 border-gray-100">
@@ -64,6 +67,44 @@
             <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">Description</p>
             <p id="p-desc" class="text-gray-600 text-sm leading-relaxed"></p>
         </div>
+
+        <!-- ডাইনামিক কাস্টমার রিভিউ ও রেটিংস প্যানেল সেকশন -->
+        <div class="mt-6 border-t pt-4">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-gray-700 mb-3 flex items-center justify-between">
+                <span>Customer Reviews</span>
+                <!-- লাইভ এভারেজ রেটিং ব্যাজ -->
+                <span id="avg-rating-badge" class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 select-none">
+                    ★ <span id="avg-rating-val">0.0</span>
+                </span>
+            </h2>
+
+            <!-- নতুন রিভিউ লেখার প্রিমিয়াম ডাইনামিক ফর্ম -->
+            <div id="add-review-form" class="bg-gray-50/70 border border-gray-200/50 rounded-lg p-3.5 mb-4 hidden space-y-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Write a Review</p>
+                
+                <!-- ৫ স্টার ওয়ান-ক্লিক সিলেক্টর বাটন -->
+                <div class="flex items-center gap-1.5" id="star-selector">
+                    <span class="text-amber-500 text-xl cursor-pointer star select-none" onclick="selectReviewStars(1)">★</span>
+                    <span class="text-amber-500 text-xl cursor-pointer star select-none" onclick="selectReviewStars(2)">★</span>
+                    <span class="text-amber-500 text-xl cursor-pointer star select-none" onclick="selectReviewStars(3)">★</span>
+                    <span class="text-amber-500 text-xl cursor-pointer star select-none" onclick="selectReviewStars(4)">★</span>
+                    <span class="text-amber-500 text-xl cursor-pointer star select-none" onclick="selectReviewStars(5)">★</span>
+                </div>
+                
+                <textarea id="review-comment" placeholder="Share your experience with this product..." rows="2" class="w-full p-2.5 text-xs border rounded-lg bg-white focus:outline-none focus:border-[#D4AF37] font-sans"></textarea>
+                <button onclick="submitReview()" class="bg-[#333333] hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 rounded transition">Submit Review</button>
+            </div>
+            
+            <!-- লগইন না করা থাকলে নোটিশ প্রদর্শন করা হবে -->
+            <div id="login-to-review" class="text-center bg-gray-50 p-3 rounded-lg border text-xs text-gray-500 mb-4 font-sans">
+                Please <a href="login.html" class="text-[#D4AF37] font-bold hover:underline">login</a> to write a review.
+            </div>
+
+            <!-- রিভিউ লিস্ট ইনবক্স কনটেইনার -->
+            <div id="reviews-list" class="space-y-3 max-h-60 overflow-y-auto scrollbar-hide">
+                <p class="text-center text-gray-400 text-xs py-4">No reviews yet. Be the first to review!</p>
+            </div>
+        </div>
         
         <!-- Action Buttons -->
         <div class="mt-8 space-y-3">
@@ -85,6 +126,7 @@
         let quantity = 1;
         let productData = null;
         let stockMap = {};
+        let chosenRating = 5; // ডিফল্ট রেটিং ৫ স্টার নির্ধারণ করা হলো
 
         async function loadProduct() {
             try {
@@ -104,7 +146,7 @@
                     const thumbContainer = document.getElementById('p-thumbnails');
                     if (images.length > 1) {
                         thumbContainer.innerHTML = images.map((img, index) => `
-                            <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-[#D4AF37] border-2 opacity-100' : 'opacity-50 border-gray-200'}">
+                            <button onclick="scrollToSlide(${index})" class="thumb-btn flex-shrink-0 w-14 h-14 border rounded overflow-hidden transition-all duration-200 ${index === 0 ? 'border-[#D4AF37]' : 'border-gray-200'}">
                                 <img src="${img.trim()}" class="w-full h-full object-cover">
                             </button>
                         `).join('');
@@ -141,16 +183,131 @@
                     renderSizeSelector();
                     updateStockBadge();
                     setupSwipeListener();
-                    await checkProductWishlist(); // উইশলিস্ট ও লাইক সংখ্যা চেক করা হচ্ছে
+                    await checkProductWishlist(); 
+                    await loadReviews(); // কাস্টমার রিভিউ ও রেটিংস ডাইনামিক লোড করা হচ্ছে
                 }
             } catch (error) {
                 console.error("Failed to load product details:", error);
             }
         }
 
-        // ডিটেইলস পেজের ডাইনামিক লাইক কাউন্ট চেক করার লজিক
+        // স্টার রেটিং সিলেকশন ও গোল্ডেন কালার সিএসএস ট্র্যাকার
+        function selectReviewStars(rating) {
+            chosenRating = rating;
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, idx) => {
+                if (idx < rating) {
+                    star.className = "text-amber-500 text-xl cursor-pointer star select-none";
+                } else {
+                    star.className = "text-gray-300 text-xl cursor-pointer star select-none";
+                }
+            });
+        }
+
+        // ডাটাবেজ থেকে কাস্টমার রিভিউ ডাইনামিক ফেচ ও এভারেজ ক্যালকুলেশন লজিক
+        async function loadReviews() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const formDiv = document.getElementById('add-review-form');
+            const loginDiv = document.getElementById('login-to-review');
+            
+            if (user) {
+                formDiv.classList.remove('hidden');
+                loginDiv.classList.add('hidden');
+            } else {
+                formDiv.classList.add('hidden');
+                loginDiv.classList.remove('hidden');
+            }
+
+            try {
+                const res = await fetch(`/api/user-hub?action=get_reviews&product_id=${pid}`);
+                if (res.ok) {
+                    const reviews = await res.json();
+                    const list = document.getElementById('reviews-list');
+                    const avgVal = document.getElementById('avg-rating-val');
+                    const titleStars = document.getElementById('title-avg-stars');
+
+                    if (reviews.length === 0) {
+                        list.innerHTML = `<p class="text-center text-gray-400 text-xs py-4">No reviews yet. Be the first to review!</p>`;
+                        avgVal.innerText = "0.0";
+                        if (titleStars) titleStars.innerHTML = "";
+                        return;
+                    }
+
+                    // এভারেজ স্টার রেটিং ম্যাথমেটিকাল ক্যালকুলেশন
+                    const total = reviews.reduce((acc, r) => acc + parseInt(r.rating), 0);
+                    const avg = (total / reviews.length).toFixed(1);
+                    avgVal.innerText = avg;
+
+                    // টাইটেলের নিচে এভারেজ স্টার ইন্ডিকেটর রেন্ডার করা
+                    if (titleStars) {
+                        const roundedAvg = Math.round(avg);
+                        let starStr = '';
+                        for (let i = 0; i < 5; i++) {
+                            starStr += i < roundedAvg ? '★' : '☆';
+                        }
+                        titleStars.innerHTML = `<span class="text-amber-500 font-extrabold text-sm">${starStr}</span> <span class="text-gray-400 font-semibold text-[10px]">(${reviews.length} reviews)</span>`;
+                    }
+
+                    list.innerHTML = reviews.map(r => {
+                        let stars = '';
+                        for (let i = 0; i < 5; i++) {
+                            stars += i < r.rating ? '★' : '☆';
+                        }
+                        return `
+                            <div class="bg-gray-50/70 p-3 rounded-lg border border-gray-200/50 text-[11px] leading-relaxed">
+                                <div class="flex justify-between items-center mb-1 font-sans">
+                                    <span class="font-extrabold text-gray-800">${r.username}</span>
+                                    <span class="text-amber-500 font-extrabold text-xs select-none">${stars}</span>
+                                </div>
+                                <p class="text-gray-600 font-sans">${r.comment}</p>
+                                <span class="text-[9px] text-gray-400 font-mono mt-1.5 block">${new Date(r.created_at).toLocaleDateString()}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error("Load Reviews Error:", e);
+            }
+        }
+
+        // কাস্টমার রিভিউ সাবমিশন লজিক
+        async function submitReview() {
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (!user) return alert("Please login first!");
+
+            const comment = document.getElementById('review-comment').value.trim();
+            if (!comment) return alert("Please write a comment!");
+
+            try {
+                const res = await fetch('/api/user-hub', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add_review',
+                        product_id: pid,
+                        email: user.email,
+                        username: user.username || "Valued Customer",
+                        rating: chosenRating,
+                        comment: comment
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Review submitted successfully!");
+                    document.getElementById('review-comment').value = "";
+                    selectReviewStars(5); // রেটিং ৫ স্টারে রিসেট করা হচ্ছে
+                    loadReviews(); // লাইভ রিলোড
+                } else {
+                    const err = await res.json();
+                    alert(err.error || "Failed to submit review.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error submitting review.");
+            }
+        }
+
         async function checkProductWishlist() {
-            // লাইক সংখ্যা ডাইনামিক্যালি আপডেট করা হচ্ছে (database wishlist count থেকে)
             const countSpan = document.getElementById('detail-heart-count');
             countSpan.innerText = productData.wishlist_count || 0;
 
@@ -173,7 +330,6 @@
             }
         }
 
-        // ডিটেইলস পেজের ডাইনামিক হার্ট বাটন টগল এবং ফেসবুুুকের মত লাইভ সংখ্যা বৃদ্ধি/হ্রাস
         async function toggleProductWishlist() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) { alert("Please login first!"); window.location.href = 'login.html'; return; }
