@@ -6,7 +6,7 @@
     <title>Checkout | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -159,11 +159,11 @@
                         </div>
                     </div>
 
-                    <!-- নতুন পেমেন্ট ট্র্যাকিং গ্রিড (টাকা পাঠানোর নম্বর এবং TrxID এক সাথে ইনপুট হবে) -->
+                    <!-- ট্র্যাকিং গ্রিড (টাকা পাঠানোর নম্বর এবং TrxID) -->
                     <div class="grid grid-cols-2 gap-2.5 mt-3">
                         <div>
                             <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Sender's Mobile No. (টাকা পাঠানোর নম্বর)</label>
-                            <input type="tel" id="sender-number" placeholder="e.g. 01712345678" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#D4AF37] rounded bg-white">
+                            <input type="tel" id="sender-number" placeholder="e.g. 01712345678" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#D4AF37] rounded bg-white font-sans">
                         </div>
                         <div>
                             <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Transaction ID (TrxID)</label>
@@ -525,7 +525,7 @@
             
             const selectedProvider = document.querySelector('input[name="payment-provider"]:checked')?.value || 'bKash';
             
-            // ডাটাবেজ এপিআই-তে কোনো পরিবর্তন না করেই পেমেন্ট ইনফো ও টাকা পাঠানোর নম্বর ঠিকানা ফিল্ডে ডাইনামিকালি যুক্ত করার উন্নত লজিক
+            // ডাটাবেজ এপিআই-তে কোনো পরিবর্তন না করেই ল্যান্ডমার্ক এবং টাকা পাঠানোর নম্বর সম্পূর্ণ পেলোড হিসেবে ঠিকানা ফিল্ডে ডাইনামিকালি যুক্ত করার লজিক
             const finalAddress = trxidInput 
                 ? `${address} [${selectedProvider} TrxID: ${trxidInput} [Sender: ${senderNumber}]] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
                 : `${address} (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
@@ -537,6 +537,7 @@
                 phone_backup: phoneBackup,
                 phone_backup_relation: relation,
                 address: finalAddress, 
+                landmark: landmark, // ল্যান্ডমার্ক ডাটা ব্যাকএন্ডে সাবমিট করার জন্য এখানে যুক্ত করা হলো
                 delivery_area: area,
                 checked_item_ids: checkedIds,
                 coupon_code: appliedCouponCode, 
