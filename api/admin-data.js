@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
     try {
         if (req.method === 'GET') {
-            // প্রোডাক্টের ক্ষেত্রে উইশলিস্টের পাশাপাশি কাস্টমারদের এভারেজ রেটিং ও রিভিউ সংখ্যা ডাইনামিকালি হিসাব করা হচ্ছে
+            // প্রোডাক্টের ক্ষেত্রে ডাইনামিক্যালি উইশলিস্ট ও রেটিং সাবকুয়েরি
             if (type === 'product') {
                 const [rows] = await db.execute(
                     `SELECT p.*, 
@@ -20,53 +20,81 @@ export default async function handler(req, res) {
                      ORDER BY p.id DESC`
                 );
                 return res.status(200).json(rows);
-            } else {
+            } 
+            // নোটিফিকেশন ড্যাশবোর্ড ফিল্টার: অর্ডারের সব অটোমেটিক নোটিফিকেশন অ্যাডমিন প্যানেল থেকে হাইড রাখা হচ্ছে
+            else if (type === 'notification') {
+                const [rows] = await db.execute(`
+                    SELECT * FROM notifications 
+                    WHERE title NOT LIKE 'Order Placed%' 
+                      AND title NOT LIKE 'Order Confirmed%' 
+                      AND title NOT LIKE 'Order Shipped%' 
+                      AND title NOT LIKE 'Order Delivered%' 
+                      AND title NOT LIKE 'Order Cancelled%' 
+                      AND title NOT LIKE 'তাড়াতাড়ি করুন!%'
+                    ORDER BY id DESC
+                `);
+                return res.status(200).json(rows);
+            }
+            else {
                 const [rows] = await db.execute(`SELECT * FROM ${tableName} ORDER BY id DESC`);
                 return res.status(200).json(rows);
             }
-        } else if (req.method === 'POST') {
+        } 
+        
+        // POST, PUT, DELETE মেথডের অ্যাডমিন সিকিউরিটি গেটওয়ে
+        else if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
             const b = req.body;
-            if (type === 'product') {
-                await db.execute(
-                    'INSERT INTO products (name, price, original_price, tag, category, stock_s, stock_m, stock_l, stock_xl, stock_xxl, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-                    [b.name, b.price, b.original_price, b.tag, b.category, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description]
-                );
+
+            if (!b || b.token !== process.env.ADMIN_TOKEN || b.pin !== process.env.ADMIN_PIN) {
+                return res.status(401).json({ error: "Unauthorized access! Admin Verification failed." });
             }
-            else if (type === 'banner') await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
-            else if (type === 'category') await db.execute('INSERT INTO categories (name, image_url) VALUES (?, ?)', [b.name, b.image_url]);
-            else if (type === 'coupon') {
-                await db.execute(
-                    'INSERT INTO coupons (code, discount_type, discount_value, min_order_amount) VALUES (?, ?, ?, ?)', 
-                    [b.name, b.discount_type, b.discount_value, b.min_order_amount]
-                );
+
+            if (req.method === 'POST') {
+                if (type === 'product') {
+                    await db.execute(
+                        'INSERT INTO products (name, price, original_price, tag, category, stock_s, stock_m, stock_l, stock_xl, stock_xxl, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+                        [b.name, b.price, b.original_price, b.tag, b.category, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description]
+                    );
+                }
+                else if (type === 'banner') await db.execute('INSERT INTO banners (name, image_url, link_url) VALUES (?, ?, ?)', [b.name, b.image_url, b.link_url]);
+                else if (type === 'category') await db.execute('INSERT INTO categories (name, image_url) VALUES (?, ?)', [b.name, b.image_url]);
+                else if (type === 'coupon') {
+                    await db.execute(
+                        'INSERT INTO coupons (code, discount_type, discount_value, min_order_amount) VALUES (?, ?, ?, ?)', 
+                        [b.name, b.discount_type, b.discount_value, b.min_order_amount]
+                    );
+                }
+                return res.status(200).json({ status: "Success" });
+            } 
+            
+            else if (req.method === 'PUT') {
+                if (type === 'product') {
+                    await db.execute(
+                        'UPDATE products SET name=?, price=?, original_price=?, tag=?, category=?, stock_s=?, stock_m=?, stock_l=?, stock_xl=?, stock_xxl=?, image_url=?, description=? WHERE id=?', 
+                        [b.name, b.price, b.original_price, b.tag, b.category, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description, b.id]
+                    );
+                }
+                else if (type === 'banner') await db.execute('UPDATE banners SET name=?, image_url=?, link_url=? WHERE id=?', [b.name, b.image_url, b.link_url, b.id]);
+                else if (type === 'category') await db.execute('UPDATE categories SET name=?, image_url=? WHERE id=?', [b.name, b.image_url, b.id]);
+                else if (type === 'coupon') {
+                    await db.execute(
+                        'UPDATE coupons SET code=?, discount_type=?, discount_value=?, min_order_amount=? WHERE id=?', 
+                        [b.name, b.discount_type, b.discount_value, b.min_order_amount, b.id]
+                    );
+                }
+                else if (type === 'notification') {
+                    await db.execute(
+                        'UPDATE notifications SET title=?, message=?, image_url=?, link_url=? WHERE id=?', 
+                        [b.title, b.message, b.image_url, b.link_url, b.id]
+                    );
+                }
+                return res.status(200).json({ status: "Updated" });
+            } 
+            
+            else if (req.method === 'DELETE') {
+                await db.execute(`DELETE FROM ${tableName} WHERE id = ?`, [b.id]);
+                return res.status(200).json({ status: "Deleted" });
             }
-            res.status(200).json({ status: "Success" });
-        } else if (req.method === 'PUT') {
-            const b = req.body;
-            if (type === 'product') {
-                await db.execute(
-                    'UPDATE products SET name=?, price=?, original_price=?, tag=?, category=?, stock_s=?, stock_m=?, stock_l=?, stock_xl=?, stock_xxl=?, image_url=?, description=? WHERE id=?', 
-                    [b.name, b.price, b.original_price, b.tag, b.category, b.stock_s, b.stock_m, b.stock_l, b.stock_xl, b.stock_xxl, b.image_url, b.description, b.id]
-                );
-            }
-            else if (type === 'banner') await db.execute('UPDATE banners SET name=?, image_url=?, link_url=? WHERE id=?', [b.name, b.image_url, b.link_url, b.id]);
-            else if (type === 'category') await db.execute('UPDATE categories SET name=?, image_url=? WHERE id=?', [b.name, b.image_url, b.id]);
-            else if (type === 'coupon') {
-                await db.execute(
-                    'UPDATE coupons SET code=?, discount_type=?, discount_value=?, min_order_amount=? WHERE id=?', 
-                    [b.name, b.discount_type, b.discount_value, b.min_order_amount, b.id]
-                );
-            }
-            else if (type === 'notification') {
-                await db.execute(
-                    'UPDATE notifications SET title=?, message=?, image_url=?, link_url=? WHERE id=?', 
-                    [b.title, b.message, b.image_url, b.link_url, b.id]
-                );
-            }
-            res.status(200).json({ status: "Updated" });
-        } else if (req.method === 'DELETE') {
-            await db.execute(`DELETE FROM ${tableName} WHERE id = ?`, [req.body.id]);
-            res.status(200).json({ status: "Deleted" });
         }
     } catch (e) { 
         res.status(500).json({ error: e.message }); 
