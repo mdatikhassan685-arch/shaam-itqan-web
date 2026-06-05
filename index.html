@@ -310,12 +310,13 @@
                     badge = `<span class="absolute top-0 right-0 ${badgeBg} text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider rounded-tr-[2px] rounded-bl shadow-sm z-10">${p.tag}</span>`;
                 }
 
+                // দামের ফন্ট সাইজ এবং স্পেসিং বাড়িয়ে বড় ও বোল্ড করা হয়েছে
                 const originalPrice = Math.round(parseFloat(p.original_price) || 0);
                 const priceDisplay = originalPrice > 0 
-                    ? `<span class="line-through text-gray-400 text-[10px] mr-1">৳ ${originalPrice}</span> <span class="font-extrabold text-xs text-[#D4AF37]">৳ ${p.price}</span>`
-                    : `<span class="font-extrabold text-xs text-[#D4AF37]">৳ ${p.price}</span>`;
+                    ? `<span class="line-through text-gray-400 text-xs mr-2">৳ ${originalPrice}</span> <span class="font-extrabold text-sm text-[#C1A44E]">৳ ${p.price}</span>`
+                    : `<span class="font-extrabold text-sm text-[#C1A44E]">৳ ${p.price}</span>`;
 
-                // ডাটাবেজের এভারেজ অনুযায়ী রিয়েল-টাইম গোল্ডেন স্টার রেন্ডারিং
+                // ডাটাবেজের এভারেজ অনুযায়ী রিয়েল-টাইম গোল্ডেন স্টার রেন্ডারিং এবং ফন্ট সাইজ বৃদ্ধি (text-xs)
                 const avgRating = parseFloat(p.avg_rating) || 0;
                 const reviewCount = parseInt(p.review_count) || 0;
                 let starRatingHtml = '';
@@ -327,21 +328,21 @@
                         starStr += i < roundedAvg ? '★' : '☆';
                     }
                     starRatingHtml = `
-                        <div class="flex items-center gap-1 mt-1 text-[9px] leading-none select-none h-3">
-                            <span class="text-amber-500 font-extrabold leading-none">${starStr}</span>
-                            <span class="text-gray-400 font-semibold leading-none">(${reviewCount})</span>
+                        <div class="flex items-center gap-1 mt-1 text-xs leading-none select-none h-4">
+                            <span class="text-amber-500 font-extrabold tracking-wider leading-none">${starStr}</span>
+                            <span class="text-gray-400 font-bold leading-none">(${reviewCount})</span>
                         </div>`;
                 } else {
                     starRatingHtml = `
-                        <div class="flex items-center gap-1 mt-1 text-[9px] leading-none select-none h-3">
+                        <div class="flex items-center gap-1 mt-1 text-xs leading-none select-none h-4">
                             <span class="text-gray-300 font-extrabold leading-none">☆☆☆☆☆</span>
-                            <span class="text-gray-400 font-semibold leading-none">(0)</span>
+                            <span class="text-gray-400 font-bold leading-none">(0)</span>
                         </div>`;
                 }
 
-                // কার্ডটিকে একটু লম্বা (h-[310px]) করে ফ্লেক্সবক্স দিয়ে এলাইনমেন্ট ঠিক করা হলো
+                // কার্ডের উচ্চতা বাড়িয়ে (h-[345px]) এবং নিচের প্যাডিং (pb-3.5) যুক্ত করে ওভারল্যাপ সম্পূর্ণ ফিক্স করা হয়েছে
                 return `
-                    <div class="relative block p-2 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white flex flex-col justify-between h-[310px]">
+                    <div class="relative block p-2.5 pb-3.5 border-2 border-[#D4AF37] hover:shadow-md transition rounded bg-white flex flex-col justify-between h-[345px]">
                         ${badge}
                         
                         <button onclick="event.stopPropagation(); event.preventDefault(); toggleWishlist(${p.id})" class="absolute top-4 left-4 bg-white/85 backdrop-blur-sm p-1.5 rounded-full shadow hover:scale-110 active:scale-95 transition duration-200 z-20 focus:outline-none flex items-center gap-1">
@@ -360,7 +361,7 @@
                             </div>
                             <div>
                                 ${starRatingHtml}
-                                <div class="flex items-center gap-2 mt-1.5 pt-1 border-t border-gray-100">
+                                <div class="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-gray-100">
                                     ${priceDisplay}
                                 </div>
                             </div>
