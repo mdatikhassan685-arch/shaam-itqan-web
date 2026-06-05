@@ -96,6 +96,7 @@
         let categoriesData = [];    
         let activeCategory = 'All'; 
         let wishlistIds = [];       
+        let bannerInterval; // অটো-প্লে ব্যানার ট্র্যাকার ভেরিয়েবল
 
         async function loadData() {
             try {
@@ -110,6 +111,9 @@
                 
                 document.getElementById('banner-slider').innerHTML = banners.map(b => `<a href="${b.link_url}" class="flex-shrink-0 w-full h-full snap-center"><img src="${b.image_url}" class="w-full h-full object-cover"></a>`).join('');
                 
+                // ব্যানার সফলভাবে লোড হওয়ার পর অটো-প্লে রান করা
+                startBannerAutoPlay();
+
                 renderCategoryGrid();
                 renderProductGrid(allProducts);
 
@@ -122,14 +126,33 @@
             } catch(e) { console.log(e); }
         }
 
-        // গ্লোবাল স্ট্যান্ডার্ড অনুযায়ী কার্টের ইউনিক রোর সংখ্যা (লাইন আইটেম) গণনা করার আপডেট লজিক
+        // ব্যানার ৫ সেকেন্ড পর পর স্বয়ংক্রিয় এবং মসৃণভাবে স্লাইড হওয়ার লজিক
+        function startBannerAutoPlay() {
+            const slider = document.getElementById('banner-slider');
+            if (!slider) return;
+
+            // ডুপ্লিকেট ইন্টারভাল এড়াতে আগে ক্লিয়ার করা হচ্ছে
+            if (bannerInterval) clearInterval(bannerInterval);
+
+            bannerInterval = setInterval(() => {
+                const totalWidth = slider.scrollWidth;
+                const visibleWidth = slider.clientWidth;
+                const currentScroll = slider.scrollLeft;
+
+                // যদি শেষ ব্যানারে পৌঁছায় তবে শুরুতে (০) যাবে, নাহলে পরের ব্যানারে স্ক্রল করবে
+                if (currentScroll + visibleWidth >= totalWidth - 5) {
+                    slider.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    slider.scrollTo({ left: currentScroll + visibleWidth, behavior: 'smooth' });
+                }
+            }, 5000); // ৫ সেকেন্ড
+        }
+
         async function updateBagCount(email) {
             try {
                 const res = await fetch('/api/bag?email=' + email);
                 if (res.ok) {
                     const cartItems = await res.json();
-                    
-                    // কোয়ান্টিটি যোগ না করে কার্টের ইউনিক আইটেম সংখ্যা বা লেন্থ সরাসরি নেওয়া হচ্ছে
                     const uniqueQty = cartItems.length; 
                     
                     const badge = document.getElementById('bag-count-badge');
@@ -145,7 +168,6 @@
             }
         }
 
-        // হোমপেজের নোটিফিকেশন কাউন্টার
         async function updateNotificationCount(email) {
             try {
                 const res = await fetch(`/api/user-hub?action=get_notifications&email=${email}`);
