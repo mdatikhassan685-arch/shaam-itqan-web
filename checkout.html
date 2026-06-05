@@ -6,7 +6,7 @@
     <title>Checkout | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -61,6 +61,14 @@
             <div class="mt-4 pt-3 border-t flex gap-2">
                 <input type="text" id="coupon-code" placeholder="PROMO CODE (e.g. SHAAM10)" class="flex-grow p-2.5 border text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-[#D4AF37] rounded bg-gray-50">
                 <button onclick="applyCoupon()" class="bg-black text-white px-4 text-xs font-bold uppercase tracking-widest rounded hover:bg-[#D4AF37] transition duration-300">Apply</button>
+            </div>
+
+            <!-- ডাইনামিক কুপন সাজেশন কার্ড এরিয়া (ক্লিক করলে অটো-অ্যাপ্লাই হবে) -->
+            <div class="mt-3">
+                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Available Coupons (ক্লিক করে সিলেক্ট করুন):</p>
+                <div id="active-coupons-container" class="flex gap-2 overflow-x-auto pb-1.5 scrollbar-hide">
+                    <!-- সচল কুপন কার্ডগুলো লোড হবে -->
+                </div>
             </div>
         </div>
 
@@ -213,7 +221,6 @@
                 const orderRes = await fetch('/api/orders?email=' + user.email);
                 if (orderRes.ok) {
                     const userOrders = await orderRes.json();
-                    // শুধুমাত্র 'Delivered' অর্ডারের মোট সংখ্যা নেওয়া হচ্ছে
                     deliveredCount = userOrders.filter(o => o.status === 'Delivered').length;
                 }
             } catch (e) {
@@ -223,20 +230,16 @@
             const paymentSelect = document.getElementById('payment-method');
             const codNoticeDiv = document.getElementById('cod-restriction-notice');
 
-            // যদি পূর্বের সফল ডেলিভারির সংখ্যা নির্ধারিত সীমার চেয়ে কম হয়
             if (deliveredCount < COD_REQUIRED_DELIVERIES) {
-                // ক্যাশ অন ডেলিভারি (cod) অপশনটি ড্রপডাউন থেকে রিমুভ করে ফেলা হচ্ছে
                 for (let i = 0; i < paymentSelect.options.length; i++) {
                     if (paymentSelect.options[i].value === 'cod') {
                         paymentSelect.remove(i);
                         break;
                     }
                 }
-                // ডিফল্ট পেমেন্ট মেথড হিসেবে 'Advance Delivery Charge' সিলেক্ট করে দেওয়া হচ্ছে
                 paymentSelect.value = 'advance_charge';
                 togglePaymentMethod();
 
-                // কাস্টমারের স্ক্রিনে সুন্দর এবং নম্র ভাষায় কাস্টম নোটিশ শো করা হচ্ছে
                 codNoticeDiv.innerHTML = `
                     <div class="bg-amber-50 border-l-4 border-amber-500 p-3 mt-2.5 text-xs leading-relaxed text-amber-950 rounded shadow-sm font-sans">
                         ⚠️ <b>ক্যাশ অন ডেলিভারি (COD) নোটিশ:</b><br>
@@ -287,9 +290,52 @@
                 document.getElementById('summary-subtotal').innerText = subtotal.toFixed(2);
                 updateShipping(); 
                 generateCaptcha();
+                await loadActiveCoupons(); // ডাইনামিক কুপন প্যানেল লোড করা হচ্ছে
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        // ডাটাবেজের সব সচল কুপন নিয়ে এসে চমৎকার সাজেশন বক্স তৈরি করার ফাংশন
+        async function loadActiveCoupons() {
+            try {
+                const res = await fetch('/api/admin-data?type=coupon');
+                if (res.ok) {
+                    const coupons = await res.json();
+                    const container = document.getElementById('active-coupons-container');
+                    
+                    if (coupons.length === 0) {
+                        container.innerHTML = `<p class="text-gray-400 text-[10px] py-1">No active coupons available right now.</p>`;
+                        return;
+                    }
+
+                    container.innerHTML = coupons.map(cp => {
+                        const discountLabel = cp.discount_type === 'percentage' 
+                            ? `${Math.round(cp.discount_value)}% Off` 
+                            : `৳${Math.round(cp.discount_value)} Off`;
+                            
+                        const minOrderLabel = parseFloat(cp.min_order_amount) > 0 
+                            ? `Min Order: ৳${Math.round(cp.min_order_amount)}` 
+                            : `No Min Order`;
+                            
+                        return `
+                            <button type="button" onclick="selectCoupon('${cp.code}')" class="flex-shrink-0 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 rounded px-2.5 py-1.5 text-left text-[10px] space-y-0.5 transition select-none">
+                                <div class="font-extrabold text-[#D4AF37] uppercase tracking-wider">${cp.code}</div>
+                                <div class="text-amber-900 font-bold leading-none">${discountLabel}</div>
+                                <div class="text-amber-700/80 leading-none">${minOrderLabel}</div>
+                            </button>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error("Failed to load coupons:", e);
+            }
+        }
+
+        // কুপনে ক্লিক করলে স্বয়ংক্রিয় অ্যাপ্লাই করার লজিক (Auto Apply)
+        function selectCoupon(code) {
+            document.getElementById('coupon-code').value = code;
+            applyCoupon(); // সিলেক্ট করার সাথে সাথে অটোমেটিক অ্যাপ্লাই হয়ে যাবে
         }
 
         async function applyCoupon() {
