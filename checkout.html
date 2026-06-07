@@ -6,7 +6,7 @@
     <title>Checkout | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -191,7 +191,8 @@
                 </div>
             </div>
             
-            <button onclick="submitOrder()" class="w-full bg-black text-white py-3.5 mt-6 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded">
+            <!-- ওয়ান-ক্লিক মাইক্রো-লোডার এবং প্রফেশনাল ডাইনামিক স্ট্যাটাস বাটন -->
+            <button id="place-order-btn" onclick="submitOrder()" class="w-full bg-black text-white py-3.5 mt-6 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded">
                 PLACE ORDER (CONFIRM)
             </button>
         </div>
@@ -424,9 +425,9 @@
             textArea.select();
             try {
                 document.execCommand('copy');
-                showSuccessFeedback(buttonId);
+                alert("Recovery Code copied successfully! Save it.");
             } catch (err) {
-                alert("Failed to copy number. Please manually write down: " + text);
+                alert("Failed to copy. Please manually write down: " + text);
             }
             document.body.removeChild(textArea);
         }
@@ -499,7 +500,6 @@
                 return;
             }
 
-            // অগ্রিম পেমেন্টের ক্ষেত্রে ট্রানজেকশন আইডি এবং টাকা পাঠানোর নম্বর ভ্যালিডেশন
             if (paymentMethod === 'advance_charge') {
                 if (!senderNumber) {
                     alert("Please enter the mobile number from which you sent the money!");
@@ -521,11 +521,17 @@
                 return;
             }
 
+            // ডাবল-ক্লিক প্রতিরোধ করতে বোতামটি ডিজেবল করা এবং টেক্সট পরিবর্তন করা হচ্ছে
+            const btn = document.getElementById('place-order-btn');
+            const originalBtnText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = "Placing Order... (সাবমিট হচ্ছে)";
+            btn.className = "w-full bg-gray-400 text-gray-200 py-3.5 mt-6 uppercase tracking-widest text-xs font-bold rounded cursor-not-allowed select-none";
+
             const checkedIds = JSON.parse(localStorage.getItem('checkout_item_ids')) || [];
             
             const selectedProvider = document.querySelector('input[name="payment-provider"]:checked')?.value || 'bKash';
             
-            // ডাটাবেজ এপিআই-তে কোনো পরিবর্তন না করেই ল্যান্ডমার্ক এবং টাকা পাঠানোর নম্বর সম্পূর্ণ পেলোড হিসেবে ঠিকানা ফিল্ডে ডাইনামিকালি যুক্ত করার লজিক
             const finalAddress = trxidInput 
                 ? `${address} [${selectedProvider} TrxID: ${trxidInput} [Sender: ${senderNumber}]] (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`
                 : `${address} (${area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})`;
@@ -537,7 +543,7 @@
                 phone_backup: phoneBackup,
                 phone_backup_relation: relation,
                 address: finalAddress, 
-                landmark: landmark, // ল্যান্ডমার্ক ডাটা ব্যাকএন্ডে সাবমিট করার জন্য এখানে যুক্ত করা হলো
+                landmark: landmark, 
                 delivery_area: area,
                 checked_item_ids: checkedIds,
                 coupon_code: appliedCouponCode, 
@@ -560,10 +566,20 @@
                 } else {
                     const errData = await res.json();
                     alert(errData.error || 'Failed to place order.');
+                    
+                    // এরর আসলে বোতামটি পুনরায় সচল করার রিস্টোর স্ক্রিপ্ট
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnText;
+                    btn.className = "w-full bg-black text-white py-3.5 mt-6 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded";
                 }
             } catch (error) {
                 alert('Error placing order.');
                 console.error(error);
+                
+                // নেটওয়ার্ক ফেইলিউর আসলে বোতামটি পুনরায় সচল করার রিস্টোর স্ক্রিপ্ট
+                btn.disabled = false;
+                btn.innerHTML = originalBtnText;
+                btn.className = "w-full bg-black text-white py-3.5 mt-6 uppercase tracking-widest text-xs font-bold hover:bg-[#D4AF37] transition duration-300 rounded";
             }
         }
 
