@@ -6,7 +6,7 @@
     <title>Menu | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -23,79 +23,116 @@
             <p class="text-[9px] uppercase tracking-widest text-[#C1A44E] font-bold mt-1">Perfection • Excellence • Tradition</p>
         </div>
 
-        <!-- Quick Links List (প্রিমিয়াম লিংক গ্রিল - অ্যাডমিন লিংকটি সম্পূর্ণ মুছে দেওয়া হয়েছে) -->
+        <!-- কুইক লিংক গ্রিড কার্ড -->
         <div class="bg-white rounded-xl shadow-xl border border-gray-100 divide-y divide-gray-100 overflow-hidden mt-8 text-sm">
-            
+            <!-- সকল প্রোডাক্ট ক্যাটালগ লিংক -->
+            <a href="index.html" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">All Products (সকল প্রোডাক্ট)</span>
+                <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <!-- সরাসরি অর্ডার ট্র্যাকিং ও প্রোফাইল শর্টকাট লিংক -->
+            <a href="profile.html" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">Track My Order (অর্ডার ট্র্যাক করুন)</span>
+                <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <!-- আমাদের লক্ষ্য ও সম্পর্কে তথ্য লিংক -->
             <a href="about.html" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
-                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">About Us (আমাদের সম্পর্কে)</span>
+                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">Our Story (আমাদের সম্পর্কে)</span>
                 <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
             
-            <a href="policy.html#shipping" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
-                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">Shipping & Delivery (শিপিং তথ্য)</span>
-                <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-            
-            <a href="policy.html#refund" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
-                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">Return & Refund Policy (রিটার্ন পলিসি)</span>
-                <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-            
-            <a href="policy.html#terms" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
-                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">Terms & Conditions (শর্তাবলী)</span>
+            <!-- ৩টি কাস্টমার পলিসি একীভূত বাটন -->
+            <a href="policy.html" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <span class="font-bold tracking-wide uppercase text-xs text-gray-700">Policies & Terms (নীতিমালা ও শর্তাবলী)</span>
                 <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
 
-        <!-- Social Media Links (ব্র্যান্ড সোশাল আইকন গ্রিল) -->
-        <div class="mt-8 text-center">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-[#C1A44E] mb-4">Follow Us</p>
-            <div class="flex justify-center gap-6">
-                <!-- Facebook -->
-                <a href="https://facebook.com" target="_blank" class="text-gray-600 hover:text-blue-600 transition duration-300">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 8H7v3h2v9h4v-9h3.6l.4-3H13V6c0-.5.5-1 1-1h3V1h-4c-2.8 0-5 2.2-5 5v2z"/>
+        <!-- নতুন ৪টি সোশ্যাল মিডিয়া চ্যানেল কার্ড প্যানেল -->
+        <p class="text-[10px] font-bold uppercase tracking-widest text-[#C1A44E] mt-8 mb-3 text-center">Follow Our Social Channels</p>
+        <div class="bg-white rounded-xl shadow-xl border border-gray-100 divide-y divide-gray-100 overflow-hidden text-sm">
+            <!-- Facebook Page -->
+            <a href="https://facebook.com" id="menu-fb-link" target="_blank" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                     </svg>
-                </a>
-                <!-- Instagram -->
-                <a href="https://instagram.com" target="_blank" class="text-gray-600 hover:text-pink-600 transition duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <span class="font-bold text-xs text-gray-700">Facebook Page (ফেসবুক পেজ)</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <!-- YouTube Channel -->
+            <a href="https://youtube.com" id="menu-yt-link" target="_blank" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-[#FF0000]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.53 3.406 12 3.406 12 3.406s-7.53 0-9.388.649a3.003 3.003 0 0 0-2.11 2.108C0 8.024 0 12 0 12s0 3.976.617 5.837a3.003 3.003 0 0 0 2.11 2.108c1.858.649 9.388.649 9.388.649s7.53 0 9.388-.649a3.003 3.003 0 0 0 2.11-2.108C24 15.976 24 12 24 12s0-3.976-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <span class="font-bold text-xs text-gray-700">YouTube Channel (ইউটিউব চ্যানেল)</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <!-- Instagram Profile -->
+            <a href="https://instagram.com" id="menu-ig-link" target="_blank" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-[#E1306C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                         <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"></path>
                         <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                     </svg>
-                </a>
-                <!-- TikTok -->
-                <a href="https://tiktok.com" target="_blank" class="text-gray-600 hover:text-black transition duration-300">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <span class="font-bold text-xs text-gray-700">Instagram Profile (ইনস্টাগ্রাম)</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <!-- TikTok Profile -->
+            <a href="https://tiktok.com" id="menu-tt-link" target="_blank" class="flex justify-between items-center p-4 hover:bg-gray-50 transition duration-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-[#000000]" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12.53.07C13.82.02 15.1.04 16.37.04c.1 1.63.74 3.1 1.83 4.22 1.03.95 2.37 1.48 3.8 1.51v3.13a8.1 8.1 0 01-4.81-1.6c-.1-.08-.19-.17-.28-.26v6.23c0 4.14-3.36 7.5-7.5 7.5-4.14 0-7.5-3.36-7.5-7.5 0-4.03 3.19-7.31 7.2-7.48V9.1A4.31 4.31 0 005.11 13.3c0 2.38 1.93 4.31 4.31 4.31 2.3 0 4.17-1.8 4.29-4.07.01-.15.02-.31.02-.46V.07h-1.2z"/>
                     </svg>
-                </a>
-            </div>
+                    <span class="font-bold text-xs text-gray-700">TikTok Account (টিকটক)</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
         </div>
     </div>
 
-    <!-- Bottom Nav -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[10px] uppercase font-bold text-black z-[100]">
-        <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+    <!-- ৫ টি বাটনের ডাইনামিক বটম মেনুবার (মাঝখানে প্রোফাইল এবং পাশে সাপোর্ট বাটন সিঙ্ক করা হয়েছে) -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 text-[9px] uppercase font-bold text-black z-[100] select-none">
+        <!-- ১. HOME -->
+        <a href="index.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition duration-200">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
             HOME
         </a>
-        <a href="wishlist.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+        <!-- ২. WISHLIST -->
+        <a href="wishlist.html" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition duration-200">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
             WISHLIST
         </a>
-        <a href="login.html" id="auth-link" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition">
+        <!-- ৩. PROFILE (মাঝখানে এলাইন) -->
+        <a href="login.html" id="auth-link" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition duration-200">
             <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
             <span id="auth-text">ACCOUNT</span>
         </a>
-        <a href="menu.html" class="text-[#D4AF37] flex flex-col items-center">
+        <!-- ৪. SUPPORT (নতুন সাপোর্ট ড্রয়ার বাটন) -->
+        <button onclick="openSupportModal()" class="text-black hover:text-[#D4AF37] flex flex-col items-center transition duration-200 focus:outline-none font-bold uppercase">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            SUPPORT
+        </button>
+        <!-- ৫. MENU (অ্যাক্টিভ গোল্ডেন কালার হাইলাইটেড থাকবে) -->
+        <a href="menu.html" class="text-[#D4AF37] flex flex-col items-center transition duration-200">
             <svg class="w-5 h-5 mb-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
@@ -103,17 +140,32 @@
         </a>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => { 
-            if (localStorage.getItem('user_session')) {
-                const authLink = document.getElementById('auth-link');
-                const authText = document.getElementById('auth-text');
-                if (authLink && authText) {
-                    authText.innerText = 'PROFILE';
-                    authLink.href = 'profile.html';
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+    <!-- SHAAM ITQAN কাস্টমার সার্ভিস ও লাইভ সাপোর্ট মডাল উইন্ডো -->
+    <div id="support-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-xl border-2 border-[#D4AF37] shadow-2xl relative flex flex-col space-y-4">
+            <button onclick="closeSupportModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black transition focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <div class="text-center pb-2 border-b border-gray-100">
+                <h2 class="text-base font-bold tracking-widest luxury-font uppercase text-gray-800">SHAAM ITQAN Support</h2>
+                <p class="text-[9px] uppercase tracking-widest text-[#C1A44E] font-bold mt-0.5">Helpline & Live Assistance</p>
+            </div>
+
+            <p class="text-gray-500 text-xs leading-relaxed text-center font-sans">
+                আসসালামু আলাইকুম! SHAAM ITQAN কাস্টমার কেয়ারে আপনাকে স্বাগতম। আপনার যেকোনো জিজ্ঞাসা বা অর্ডারে সহযোগিতার জন্য আমাদের সাথে সরাসরি যোগাযোগ করুন:
+            </p>
+
+            <div class="space-y-3 pt-2">
+                <!-- ১. সরাসরি কল বাটন -->
+                <a href="tel:017XXXXXXXX" id="support-call-link" class="w-full bg-[#333333] hover:bg-black text-white py-3 rounded-lg flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider font-bold transition shadow-sm select-none">
+                    <svg class="w-4 h-4 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 011.94.315l-1.14 4.83a1 1 0 01-.527.657l-1.9 1.2a12.04 12.04 0 005.449 5.449l1.2-1.9a1 1 0 01.657-.527l4.83 1.14a1 1 0 01.315 1.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    <span>Call Helpline (সরাসরি কল)</span>
+                </a>
+
+                <!-- ২. ডাইনামিক হোয়াটসঅ্যাপ চ্যাট বাটন (মেনু পেজ রিলেটেড কাস্টম মেসেজ টেমপ্লেট) -->
+                <button onclick="openWhatsAppChat()" class="w-full bg-[#25D366] hover:bg-[#1ebd54] text-white py-3 rounded-lg flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider font-bold transition shadow-sm
