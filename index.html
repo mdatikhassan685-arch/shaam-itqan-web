@@ -25,6 +25,13 @@
         </div>
     </div>
 
+    <!-- ⚡ স্প্লিট-সেকেন্ড লোডার ফ্ল্যাশ (FOUC) এড়াতে তাৎক্ষণিকভাবে লোডার হাইড করার সিঙ্ক স্ক্রিপ্ট -->
+    <script>
+        if (sessionStorage.getItem('initial_loaded') === 'true') {
+            document.getElementById('global-loader').style.display = 'none';
+        }
+    </script>
+
     <!-- Navbar -->
     <nav class="sticky top-0 bg-white p-4 flex justify-between items-center z-[100] border-b border-gray-100">
         <div class="w-10"><img src="https://i.ibb.co.com/69gkNgD/IMG-20260425-161202.png" class="w-full"></div>
@@ -196,15 +203,17 @@
 
             } catch(e) { 
                 console.log(e); 
-                // কোনো এরর আসলেও লোডার বন্ধ হবে যাতে ইউজার স্ক্রিন লক হয়ে না থাকে
                 hideGlobalLoader();
             }
         }
 
-        // মসৃণ ফিড-আউট (Fade-out) লোডার ক্লোজিং মেকানিজম
+        // মসৃণ ফিড-আউট (Fade-out) লোডার ক্লোজিং মেকানিজম (সেশন ডাটা রাইট সহ)
         function hideGlobalLoader() {
             const loader = document.getElementById('global-loader');
             if (loader) {
+                // ব্রাউজারের সেশন স্টোরেজে প্রথম ভিজিট সফল ট্র্যাকার সেট করা হচ্ছে
+                sessionStorage.setItem('initial_loaded', 'true');
+                
                 loader.classList.add('opacity-0');
                 setTimeout(() => {
                     loader.classList.add('hidden');
