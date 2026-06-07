@@ -5,24 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Login | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
+        .luxury-font { font-family: 'Playfair Display', serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
 </head>
 <body class="bg-[#FDF8EF] min-h-screen flex items-center justify-center p-4">
 
     <!-- Invisible Admin Trigger -->
     <div id="hidden-trigger" class="fixed top-0 left-0 w-16 h-16 z-[9999]"></div>
 
-    <div class="w-full max-w-[320px] bg-white p-6 border border-[#C1A44E]/30 shadow-xl">
-        <h2 id="auth-title" class="text-xl font-bold mb-5 text-center uppercase tracking-widest">Login</h2>
-        <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border mb-3 text-sm hidden">
-        <input type="email" id="email" placeholder="Email" class="w-full p-2 border mb-3 text-sm">
-        <input type="password" id="pass" placeholder="Password" class="w-full p-2 border mb-5 text-sm">
-        <button onclick="handleAuth()" id="auth-btn" class="w-full bg-[#333333] text-white py-2 text-sm uppercase tracking-widest">Sign In</button>
+    <!-- Main Auth Box -->
+    <div class="w-full max-w-[320px] bg-white p-6 border border-[#C1A44E]/30 shadow-xl rounded">
+        <h2 id="auth-title" class="text-xl font-bold mb-5 text-center uppercase tracking-widest luxury-font">Login</h2>
+        
+        <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border mb-3 text-sm hidden rounded focus:outline-none focus:border-[#C1A44E]">
+        <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border mb-3 text-sm rounded focus:outline-none focus:border-[#C1A44E]">
+        <input type="password" id="pass" placeholder="Password" class="w-full p-3 border mb-3 text-sm rounded focus:outline-none focus:border-[#C1A44E]">
+        
+        <!-- পাসওয়ার্ড ভুলে গেলে কাস্টমার রিকভারি লিংক (লগইন মোডে এটি দেখাবে) -->
+        <div id="forgot-password-link-div" class="text-right mb-4">
+            <span onclick="openForgotPasswordModal()" class="text-[10px] text-[#C1A44E] hover:underline cursor-pointer font-sans font-semibold">Forgot Password? (পাসওয়ার্ড ভুলে গেছেন?)</span>
+        </div>
+
+        <button onclick="handleAuth()" id="auth-btn" class="w-full bg-[#333333] text-white py-3 text-sm uppercase tracking-widest font-bold hover:bg-[#C1A44E] transition duration-300 rounded">Sign In</button>
+        
         <p class="mt-4 text-center text-xs" onclick="toggleMode()">
             <span id="toggle-text" class="cursor-pointer">Don't have an account? <b class="text-[#C1A44E]">Sign Up</b></span>
         </p>
     </div>
 
+    <!-- সাইনআপ সফল হওয়ার পর ওয়ান-টাইম রিকভারি কোড দেখানোর প্রিমিয়াম মডাল -->
+    <div id="recovery-code-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-xl border-2 border-[#C1A44E] shadow-2xl relative flex flex-col space-y-4">
+            <h2 class="text-base font-bold tracking-widest luxury-font uppercase text-gray-800 border-b pb-2 text-center">Save Your Recovery Code</h2>
+            
+            <p class="text-gray-500 text-xs leading-relaxed text-center font-sans">
+                ভবিষ্যতে আপনার পাসওয়ার্ড ভুলে গেলে অ্যাকাউন্ট রিসেট করতে এই কোডটির প্রয়োজন হবে। অনুগ্রহ করে এটি নিরাপদ স্থানে সংরক্ষণ করুন:
+            </p>
+            
+            <!-- ওয়ান-ক্লিক কপি সহ রিকভারি কোড বক্স -->
+            <div class="bg-gray-100 p-3 rounded-lg border border-gray-200 text-center relative flex items-center justify-between">
+                <span id="display-recovery-code" class="text-lg font-mono font-extrabold tracking-widest text-[#C1A44E] flex-grow text-center">------</span>
+                <button type="button" id="copy-recovery-btn" class="bg-white border text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded transition shrink-0 select-none">Copy</button>
+            </div>
+
+            <button onclick="closeRecoveryCodeModal()" class="w-full bg-black text-white py-3 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition rounded-lg">
+                I Saved the Code (লগইন করুন)
+            </button>
+        </div>
+    </div>
+
+    <!-- পাসওয়ার্ড ভুলে গেলে স্বয়ংক্রিয় রিকভারি ফর্ম মডাল (Forgot Password Modal) -->
+    <div id="forgot-password-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-xl border-2 border-[#C1A44E] shadow-2xl relative flex flex-col space-y-4">
+            <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black transition focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <h2 class="text-base font-bold tracking-widest luxury-font uppercase text-gray-800 border-b pb-2 text-center">Reset Password</h2>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Registered Email Address</label>
+                    <input type="email" id="forgot-email" placeholder="e.g. sadek@gmail.com" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#C1A44E] rounded bg-white font-sans">
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">6-Digit Recovery Code (রিকভারি কোড)</label>
+                    <input type="number" id="forgot-code" placeholder="e.g. 849201" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#C1A44E] rounded bg-white font-mono tracking-widest text-center">
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">New Password (নতুন পাসওয়ার্ড)</label>
+                    <input type="password" id="forgot-new-pass" placeholder="Enter new password" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#C1A44E] rounded bg-white">
+                </div>
+            </div>
+
+            <button onclick="submitForgotPassword()" class="w-full bg-black text-white py-3 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition rounded-lg">
+                Update Password
+            </button>
+
+            <!-- কোড হারিয়ে ফেললে সরাসরি হোয়াটসঅ্যাপে কন্টাক্ট সাপোর্ট ব্যাকআপ বাটন -->
+            <div class="text-center pt-2 border-t">
+                <span onclick="contactWhatsAppSupport()" class="text-[10px] text-green-600 hover:underline cursor-pointer font-sans font-bold flex items-center justify-center gap-1">
+                    💬 Lost Code? Contact WhatsApp Support (সাহায্য নিন)
+                </span>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // =========================================================================
+        // 📌 হোয়াটসঅ্যাপ কাস্টমার সাপোর্ট সেটিংস (এখানে আপনার হোয়াটসঅ্যাপ নাম্বার দিন)
+        // =========================================================================
+        const SUPPORT_WHATSAPP_NUMBER = "88017XXXXXXXX"; // আন্তর্জাতিক ফরম্যাটে হোয়াটসঅ্যাপ নাম্বার দিন
+        // =========================================================================
+
         let clicks = 0;
         document.getElementById('hidden-trigger').addEventListener('click', () => {
             clicks++;
@@ -35,22 +115,157 @@
             document.getElementById('auth-title').innerText = isLogin ? 'Login' : 'Sign Up';
             document.getElementById('name').classList.toggle('hidden', isLogin);
             document.getElementById('auth-btn').innerText = isLogin ? 'Sign In' : 'Sign Up';
+            
+            const forgotLink = document.getElementById('forgot-password-link-div');
+            if (isLogin) {
+                forgotLink.classList.remove('hidden');
+            } else {
+                forgotLink.classList.add('hidden');
+            }
         }
 
         async function handleAuth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('pass').value;
-            const name = document.getElementById('name').value;
-            const res = await fetch('/api/auth', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: isLogin ? 'login' : 'signup', email, password, name })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                if (isLogin) { localStorage.setItem('user_session', JSON.stringify(data.user)); window.location.href = 'index.html'; }
-                else { alert("Signup Successful"); toggleMode(); }
-            } else alert(data.message);
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('pass').value.trim();
+            const name = document.getElementById('name').value.trim();
+
+            if (!email || !password || (!isLogin && !name)) {
+                alert("Please fill in all fields!");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: isLogin ? 'login' : 'signup', email, password, name })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    if (isLogin) { 
+                        localStorage.setItem('user_session', JSON.stringify(data.user)); 
+                        window.location.href = 'index.html'; 
+                    } else {
+                        // সাইনআপ সফল হলে জেনারেট হওয়া রিকভারি কোড মডালে শো করা হবে
+                        showRecoveryCodeModal(data.recovery_code);
+                    }
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("An error occurred during authentication.");
+            }
+        }
+
+        // রিকভারি কোড মডাল শো করার লজিক
+        function showRecoveryCodeModal(code) {
+            document.getElementById('display-recovery-code').innerText = code;
+            const modal = document.getElementById('recovery-code-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeRecoveryCodeModal() {
+            const modal = document.getElementById('recovery-code-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            // অটোমেটিক লগইন স্ক্রিনে পরিবর্তন
+            isLogin = true;
+            document.getElementById('auth-title').innerText = 'Login';
+            document.getElementById('name').classList.add('hidden');
+            document.getElementById('auth-btn').innerText = 'Sign In';
+            document.getElementById('forgot-password-link-div').classList.remove('hidden');
+            document.getElementById('toggle-text').innerHTML = "Don't have an account? <b class='text-[#C1A44E]'>Sign Up</b>";
+        }
+
+        function openForgotPasswordModal() {
+            const modal = document.getElementById('forgot-password-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeForgotPasswordModal() {
+            const modal = document.getElementById('forgot-password-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // কাস্টমার ফরগট পাসওয়ার্ড সাবমিট লজিক
+        async function submitForgotPassword() {
+            const email = document.getElementById('forgot-email').value.trim();
+            const code = document.getElementById('forgot-code').value.trim();
+            const newPass = document.getElementById('forgot-new-pass').value.trim();
+
+            if (!email || !code || !newPass) {
+                alert("Please fill in all recovery fields!");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'forgot_password',
+                        email: email,
+                        recovery_code: code,
+                        new_password: newPass
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Password updated successfully! You can now log in.");
+                    document.getElementById('forgot-email').value = "";
+                    document.getElementById('forgot-code').value = "";
+                    document.getElementById('forgot-new-pass').value = "";
+                    closeForgotPasswordModal();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || "Failed to recover account.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error recovering password.");
+            }
+        }
+
+        // ওয়ান-ক্লিক কপি স্ক্রিপ্ট
+        function copyToClipboard(text, buttonId) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("Recovery Code copied successfully! Save it.");
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; 
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert("Recovery Code copied successfully! Save it.");
+            } catch (err) {
+                alert("Failed to copy. Please manually write down: " + text);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // কোড হারিয়ে ফেললে সরাসরি কাস্টমারের জন্য হোয়াটসঅ্যাপ মেসেজ সিঙ্ক বাটন
+        function contactWhatsAppSupport() {
+            const email = document.getElementById('forgot-email').value.trim() || 'customer@email.com';
+            const message = `Hello SHAAM ITQAN, I forgot my password and lost my recovery code. My registered email is: ${email}. Please help me reset it.`;
+            const encoded = encodeURIComponent(message);
+            window.open(`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
         }
     </script>
 </body>
