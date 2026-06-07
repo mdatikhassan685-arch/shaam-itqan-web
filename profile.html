@@ -20,7 +20,14 @@
         <h2 class="text-2xl font-bold mb-6 text-center luxury-font uppercase tracking-widest text-gray-800 border-b pb-3 border-[#C1A44E]/20">Profile</h2>
         
         <!-- Luxury User Card -->
-        <div class="bg-white p-5 rounded shadow-xl border-t-4 border-[#C1A44E] mb-6">
+        <div class="bg-white p-5 rounded shadow-xl border-t-4 border-[#C1A44E] mb-6 relative">
+            <!-- ওয়ান-ক্লিক প্রোফাইল এডিট/আপডেট বাটন -->
+            <button onclick="openEditProfileModal()" class="absolute top-4 right-4 bg-gray-50 border border-gray-200 p-2 rounded-full hover:bg-gray-100 transition duration-200" title="Edit Profile">
+                <svg class="w-4 h-4 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            </button>
+
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center border border-[#C1A44E]/30">
                     <svg class="w-6 h-6 text-[#C1A44E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,9 +42,8 @@
             </div>
         </div>
 
-        <!-- গ্রাহকের লাইভ ড্যাশবোর্ড উইজেট গ্রিড এরিয়া (ডাইনামিক লোড হবে) -->
+        <!-- গ্রাহকের লাইভ ড্যাশবোর্ড উইজেট গ্রিড এরিয়া -->
         <div id="user-stats-grid" class="grid grid-cols-2 gap-3 mb-6">
-            <!-- Loading placeholders -->
             <div class="col-span-2 text-center py-4 text-xs text-gray-400">Loading your stats...</div>
         </div>
 
@@ -59,6 +65,44 @@
         <div class="space-y-3">
             <button onclick="logout()" class="w-full border border-red-500 text-red-500 py-3 rounded uppercase text-xs tracking-widest font-bold hover:bg-red-500 hover:text-white transition duration-300">
                 Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- কাস্টমার প্রোফাইল সংশোধন ও পাসওয়ার্ড পরিবর্তনের প্রিমিয়াম মডাল (Popup Modal) -->
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-xl border-2 border-[#C1A44E] shadow-2xl relative flex flex-col space-y-4">
+            <button onclick="closeEditProfileModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black transition focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <h2 class="text-base font-bold tracking-widest luxury-font uppercase text-gray-800 border-b pb-2 text-center">Edit Profile</h2>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Full Name (নাম পরিবর্তন)</label>
+                    <input type="text" id="edit-name" placeholder="Enter your full name" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#C1A44E] rounded bg-white">
+                </div>
+                
+                <div class="border-t pt-3">
+                    <p class="text-[9px] font-bold uppercase tracking-wider text-red-400 mb-2">Change Password (ঐচ্ছিক)</p>
+                    <div class="space-y-2.5">
+                        <div>
+                            <label class="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Old Password (পুরাতন পাসওয়ার্ড)</label>
+                            <input type="password" id="edit-old-pass" placeholder="Enter old password" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#C1A44E] rounded bg-white">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-1">New Password (নতুন পাসওয়ার্ড)</label>
+                            <input type="password" id="edit-new-pass" placeholder="Enter new password" class="w-full p-2.5 border text-xs focus:outline-none focus:border-[#C1A44E] rounded bg-white">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="submitUpdateProfile()" class="w-full bg-black text-white py-3 uppercase tracking-widest text-xs font-bold hover:bg-[#C1A44E] transition rounded-lg">
+                Save Changes
             </button>
         </div>
     </div>
@@ -99,29 +143,25 @@
         } else {
             document.getElementById('user-name').innerText = user.username || "Valued Customer";
             document.getElementById('user-email').innerText = user.email;
-            loadUserStats();  // ডাইনামিক পরিসংখ্যান উইজেট লোড করা
+            loadUserStats();  
             loadUserOrders(); 
         }
 
-        // এপিআই থেকে গ্রাহকের লাইভ পরিসংখ্যাম উইজেট লোড করার ফাংশন
         async function loadUserStats() {
             try {
-                // নতুন মার্জ করা user-hub এপিআই-তে get_stats অ্যাকশন পাঠানো হচ্ছে
                 const res = await fetch(`/api/user-hub?action=get_stats&email=${user.email}`);
                 if (res.ok) {
                     const stats = await res.json();
                     const grid = document.getElementById('user-stats-grid');
                     grid.innerHTML = `
-                        <!-- Delivered Orders Widget -->
                         <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
                             <div class="absolute -right-2 -bottom-2 opacity-10 text-[#D4AF37]">
-                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
                             </div>
                             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none font-sans">Delivered (সফল)</span>
                             <span class="text-xl font-extrabold text-green-600 mt-1 leading-none font-sans">${stats.delivered}</span>
                         </div>
                         
-                        <!-- Processing Widget (Confirmed + Shipped) -->
                         <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
                             <div class="absolute -right-2 -bottom-2 opacity-10 text-[#D4AF37]">
                                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -130,7 +170,6 @@
                             <span class="text-xl font-extrabold text-[#D4AF37] mt-1 leading-none font-sans">${stats.confirmed + stats.shipped}</span>
                         </div>
 
-                        <!-- Pending Widget -->
                         <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
                             <div class="absolute -right-2 -bottom-2 opacity-10 text-[#D4AF37]">
                                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -139,7 +178,6 @@
                             <span class="text-xl font-extrabold text-orange-500 mt-1 leading-none font-sans">${stats.pending}</span>
                         </div>
 
-                        <!-- Returned/Cancelled Widget -->
                         <div class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden select-none">
                             <div class="absolute -right-2 -bottom-2 opacity-10 text-red-500">
                                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -148,7 +186,6 @@
                             <span class="text-xl font-extrabold text-red-500 mt-1 leading-none font-sans">${stats.cancelled + stats.returned}</span>
                         </div>
 
-                        <!-- Active Cart (Bag) Count Widget -->
                         <a href="bag.html" class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden hover:border-[#D4AF37] transition">
                             <div class="absolute -right-2 -bottom-2 opacity-10 text-black">
                                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
@@ -157,7 +194,6 @@
                             <span class="text-xl font-extrabold text-black mt-1 leading-none font-sans">${stats.cart_count}</span>
                         </a>
 
-                        <!-- Active Wishlist Count Widget -->
                         <a href="wishlist.html" class="bg-white p-3 rounded border border-gray-100 shadow-sm flex flex-col justify-between h-20 relative overflow-hidden hover:border-[#D4AF37] transition">
                             <div class="absolute -right-2 -bottom-2 opacity-10 text-red-500">
                                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
@@ -172,7 +208,6 @@
             }
         }
 
-        // ভিজ্যুয়াল অর্ডার ট্র্যাকিং প্রোগ্রেস বার জেনারেটর
         function getTimelineHTML(status) {
             if (status === 'Cancelled') {
                 return `
@@ -301,6 +336,76 @@
             localStorage.removeItem('user_session');
             alert("You have been logged out.");
             window.location.href = 'index.html';
+        }
+
+        // প্রোফাইল এডিট মডাল ওপেন করার ফাংশন (পুরনো নাম ফিল্ডে অটো-ইনপুট হবে)
+        function openEditProfileModal() {
+            document.getElementById('edit-name').value = user.username || "";
+            document.getElementById('edit-old-pass').value = "";
+            document.getElementById('edit-new-pass').value = "";
+            
+            const modal = document.getElementById('edit-profile-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditProfileModal() {
+            const modal = document.getElementById('edit-profile-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // প্রোফাইল নাম ও পাসওয়ার্ড আপডেট সাবমিট লজিক
+        async function submitUpdateProfile() {
+            const name = document.getElementById('edit-name').value.trim();
+            const oldPass = document.getElementById('edit-old-pass').value;
+            const newPass = document.getElementById('edit-new-pass').value;
+
+            if (!name) {
+                alert("Please enter your name!");
+                return;
+            }
+
+            // পাসওয়ার্ড চেঞ্জ অপশন ইনপুট দিলে ভ্যালিডেশন চেক
+            if (newPass && !oldPass) {
+                alert("Please enter your old password to set a new password!");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update_profile',
+                        email: user.email,
+                        name: name,
+                        old_password: oldPass,
+                        new_password: newPass
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert("Profile updated successfully!");
+                    
+                    // ব্রাউজার লোকাল সেশনে নতুন ইউজার ডাটা সিঙ্ক করা হচ্ছে
+                    localStorage.setItem('user_session', JSON.stringify(data.user));
+                    
+                    // লাইভ স্ক্রিন টেক্সট রি-আপডেট
+                    document.getElementById('user-name').innerText = data.user.username;
+                    user.username = data.user.username; // লোকাল ট্র্যাকার ভেরিয়েবল সিঙ্ক
+                    
+                    closeEditProfileModal();
+                    loadUserStats(); // পরিসংখ্যান কার্ডগুলো লাইভ রি-আপডেট
+                } else {
+                    alert(data.message || "Failed to update profile.");
+                }
+            } catch (error) {
+                console.error("Profile Update Error:", error);
+                alert("An error occurred while updating profile.");
+            }
         }
     </script>
 </body>
