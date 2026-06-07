@@ -168,4 +168,82 @@
                 </a>
 
                 <!-- ২. ডাইনামিক হোয়াটসঅ্যাপ চ্যাট বাটন (মেনু পেজ রিলেটেড কাস্টম মেসেজ টেমপ্লেট) -->
-                <button onclick="openWhatsAppChat()" class="w-full bg-[#25D366] hover:bg-[#1ebd54] text-white py-3 rounded-lg flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider font-bold transition shadow-sm
+                <button onclick="openWhatsAppChat()" class="w-full bg-[#25D366] hover:bg-[#1ebd54] text-white py-3 rounded-lg flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider font-bold transition shadow-sm select-none">
+                    <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.057 11.93.057c3.17.001 6.15 1.234 8.39 3.473a11.8 11.8 0 0 1 3.475 8.39c-.004 6.59-5.34 11.882-11.876 11.882-2.002-.001-3.972-.51-5.753-1.48L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45 5.336 0 9.69-4.32 9.693-9.627a9.55 9.55 0 0 0-2.836-6.83 9.6 9.6 0 0 0-6.84-2.825C6.012 1.122 1.657 5.442 1.654 10.75a9.5 9.5 0 0 0 1.488 4.96l-.994 3.63 3.734-.975c1.554.85 3.09 1.278 4.755 1.279z"/>
+                    </svg>
+                    <span>WhatsApp Support (চ্যাট করুন)</span>
+                </button>
+
+                <!-- ৩. ফেসবুক মেসেঞ্জার চ্যাট বাটন -->
+                <button onclick="openMessengerChat()" class="w-full bg-[#0084FF] hover:bg-[#0074E4] text-white py-3 rounded-lg flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider font-bold transition shadow-sm select-none">
+                    <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
+                        <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.743 6.613 4.469 8.654V24l4.032-2.214c1.113.308 2.293.475 3.499.475 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.285 14.86l-2.915-3.111-5.694 3.111 6.264-6.657 2.915 3.111 5.694-3.111-6.264 6.657z"/>
+                    </svg>
+                    <span>Messenger Support (মেসেঞ্জার)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 📌 কাস্টমার সার্ভিস ও হেল্পলাইন সেটিংস (এখানে আপনার নম্বর ও সোশ্যাল লিংক দিন)
+        // =========================================================================
+        const SUPPORT_HELPLINE_NUMBER = "017XXXXXXXX"; // আপনার হেল্পলাইন কল করার নম্বর
+        const SUPPORT_WHATSAPP_NUMBER = "88017XXXXXXXX"; // আন্তর্জাতিক ফরম্যাটে হোয়াটসঅ্যাপ নম্বর
+        const SUPPORT_MESSENGER_PAGE = "yourpageusername"; // আপনার ফেসবুক পেজের ইউজারনেম (m.me/username)
+        
+        // 📌 সোশ্যাল মিডিয়া লিংক সেটিংস
+        const SOCIAL_FACEBOOK_URL = "https://facebook.com/yourpage"; // আপনার ফেসবুক পেজের লিংক
+        const SOCIAL_YOUTUBE_URL = "https://youtube.com/@yourchannel"; // আপনার ইউটিউব চ্যানেলের লিংক
+        const SOCIAL_INSTAGRAM_URL = "https://instagram.com/yourprofile"; // আপনার ইনস্টাগ্রাম প্রোফাইলের লিংক
+        const SOCIAL_TIKTOK_URL = "https://tiktok.com/@yourusername"; // আপনার টিকটক অ্যাকাউন্টের লিংক
+        // =========================================================================
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            // সাপোর্ট সরাসরি ডায়াল প্যাড লিংক সিঙ্ক
+            document.getElementById('support-call-link').href = `tel:${SUPPORT_HELPLINE_NUMBER}`;
+
+            // ডাইনামিক সোশ্যাল মিডিয়া লিংক সিঙ্ক
+            document.getElementById('menu-fb-link').href = SOCIAL_FACEBOOK_URL;
+            document.getElementById('menu-yt-link').href = SOCIAL_YOUTUBE_URL;
+            document.getElementById('menu-ig-link').href = SOCIAL_INSTAGRAM_URL;
+            document.getElementById('menu-tt-link').href = SOCIAL_TIKTOK_URL;
+
+            if (localStorage.getItem('user_session')) {
+                const authLink = document.getElementById('auth-link');
+                const authText = document.getElementById('auth-text');
+                if (authLink && authText) {
+                    authText.innerText = 'PROFILE';
+                    authLink.href = 'profile.html';
+                }
+            }
+        });
+
+        // সাপোর্ট ড্রয়ার মডাল টগল স্ক্রিপ্ট
+        function openSupportModal() {
+            const modal = document.getElementById('support-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSupportModal() {
+            const modal = document.getElementById('support-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // কাস্টম কন্টেন্ট ভিত্তিক হোয়াটসঅ্যাপ মেসেজ (মেসেঞ্জার পেজ রিলেটেড)
+        function openWhatsAppChat() {
+            const message = "আসসালামু আলাইকুম SHAAM ITQAN, আমার একটু হেল্প প্রয়োজন আছে।";
+            const encoded = encodeURIComponent(message);
+            window.open(`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
+        }
+
+        function openMessengerChat() {
+            window.open(`https://m.me/${SUPPORT_MESSENGER_PAGE}`, '_blank');
+        }
+    </script>
+</body>
+</html>
