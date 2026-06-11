@@ -1,5 +1,44 @@
 import { getDb } from './db.js';
 
+// ওয়ানসিগন্যাল এপিআই-এর মাধ্যমে রিয়েল-টাইম পুশ নোটিফিকেশন পাঠানোর কোর হেল্পার ফাংশন
+async function sendPushNotification(emails, title, message, url = '') {
+    const appId = process.env.ONESIGNAL_APP_ID;
+    const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+    if (!appId || !apiKey) return;
+
+    const payload = {
+        app_id: appId,
+        headings: { en: title },
+        contents: { en: message },
+        target_channel: "push"
+    };
+
+    if (url) {
+        payload.web_url = url;
+    }
+
+    if (emails && emails.length > 0) {
+        payload.include_aliases = {
+            external_id: emails.map(e => e.trim().toLowerCase())
+        };
+    } else {
+        payload.included_segments = ["Subscribed Users"];
+    }
+
+    try {
+        await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Key ${apiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.error("OneSignal push error:", e);
+    }
+}
+
 export default async function handler(req, res) {
     const db = await getDb();
     try {
@@ -28,16 +67,15 @@ export default async function handler(req, res) {
                     return res.status(400).json({ error: "No items selected for checkout" });
                 }
 
-                // ১. ক্যাশ অন ডেলিভারি (COD) সিকিউরিটি চেক
+                // ক্যাশ অন ডেলিভারি (COD) সিকিউরিটি চেক
                 if (b.payment_method === 'cod') {
-                    // কাস্টমারের ডাটাবেজ থেকে সফল 'Delivered' অর্ডারের মোট সংখ্যা গণনা করা হচ্ছে
                     const [deliveredRows] = await db.execute(
                         "SELECT COUNT(*) as count FROM orders WHERE email = ? AND status = 'Delivered'",
                         [b.email]
                     );
                     const deliveredCount = deliveredRows[0]?.count || 0;
                     
-                    const COD_THRESHOLD = 3; // ক্যাশ অন ডেলিভারি পাওয়ার ন্যূনতম ডেলিভারি সীমা (আপনি চাইলে বাড়াতে পারেন)
+                    const COD_THRESHOLD = 3; 
                     
                     if (deliveredCount < COD_THRESHOLD) {
                         return res.status(400).json({ 
@@ -85,7 +123,6 @@ export default async function handler(req, res) {
                     return `${item.product_name} (Size: ${item.size}, Qty: ${itemQty})`;
                 });
                 
-                // কমা পরিবর্তন করে নিরাপদ <br> যুক্ত করা হলো যাতে ডাটা পার্সিং বাগ না হয়
                 const combinedProducts = productDetailsArray.join('<br>');
 
                 const shippingFee = b.delivery_area === 'inside_dhaka' ? 80 : 150;
@@ -134,33 +171,47 @@ export default async function handler(req, res) {
                             if (newStock > 0 && newStock <= 5) {
                                 const [wishlistUsers] = await db.execute('SELECT email FROM wishlist WHERE product_id = ?', [prodId]);
                                 for (const u of wishlistUsers) {
-                                    if (u.email !== b.email) {
+                                    if (u.email !== b.email) { 
+                                        
                                         const [alreadyNotified] = await db.execute(
                                             'SELECT id FROM notifications WHERE email = ? AND title = ?',
                                              [u.email, "তাড়াতাড়ি করুন! আপনার পছন্দের তালিকার আইটেমটি ফুরিয়ে যাচ্ছে! ⏳"]
                                         );
 
                                         if (alreadyNotified.length === 0) {
+                                            const notifTitle = "তাড়াতাড়ি করুন! আপনার পছন্দের তালিকার আইটেমটি ফুরিয়ে যাচ্ছে! ⏳";
+                                            const notifMsg = `আপনার পছন্দের তালিকায় থাকা "${item.product_name}" (Size: ${item.size})-এর স্টক ফুরিয়ে আসছে! স্টকে মাত্র ${newStock}টি আইটেম বাকি আছে। ফুরিয়ে যাওয়ার আগেই নিয়ে নিন!`;
+                                            
                                             await db.execute(
                                                 'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                                                [u.email, "তাড়াতাড়ি করুন! আপনার পছন্দের তালিকার আইটেমটি ফুরিয়ে যাচ্ছে! ⏳", `আপনার পছন্দের তালিকায় থাকা "${item.product_name}" (Size: ${item.size})-এর স্টক ফুরিয়ে আসছে! স্টকে মাত্র ${newStock}টি আইটেম বাকি আছে। ফুরিয়ে যাওয়ার আগেই নিয়ে নিন!`]
+                                                [u.email, notifTitle, notifMsg]
                                             );
+
+                                            // উইশলিস্ট কম-স্টক ওয়ানসিগন্যাল পুশ নোটিফিকেশন ট্রিগার
+                                            await sendPushNotification([u.email], notifTitle, notifMsg, `https://${req.headers.host}/notifications.html`);
                                         }
                                     }
                                 }
 
                                 const [bagUsers] = await db.execute('SELECT DISTINCT email FROM bag WHERE product_name = ? AND size = ?', [item.product_name, item.size]);
                                 for (const u of bagUsers) {
-                                    if (u.email !== b.email) {
+                                    if (u.email !== b.email) { 
+                                        
                                         const [alreadyNotifiedBag] = await db.execute(
                                             'SELECT id FROM notifications WHERE email = ? AND title = ?',
                                             [u.email, "তাড়াতাড়ি করুন! আপনার ব্যাগে থাকা আইটেমটি ফুরিয়ে যাচ্ছে! ⚠️"]
                                         );
                                         if (alreadyNotifiedBag.length === 0) {
+                                            const notifTitle = "তাড়াতাড়ি করুন! আপনার ব্যাগে থাকা আইটেমটি ফুরিয়ে যাচ্ছে! ⚠️";
+                                            const notifMsg = `আপনার ব্যাগে (কার্টে) থাকা "${item.product_name}" (Size: ${item.size})-এর স্টক ফুরিয়ে আসছে! স্টকে মাত্র ${newStock}টি আইটেম বাকি আছে। অন্য কেউ কেনার আগেই নিয়ে নিন!`;
+                                            
                                             await db.execute(
                                                 'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                                                [u.email, "তাড়াতাড়ি করুন! আপনার ব্যাগে থাকা আইটেমটি ফুরিয়ে যাচ্ছে! ⚠️", `আপনার ব্যাগে (কার্টে) থাকা "${item.product_name}" (Size: ${item.size})-এর স্টক ফুরিয়ে আসছে! স্টকে মাত্র ${newStock}টি আইটেম বাকি আছে। অন্য কেউ কেনার আগেই নিয়ে নিন!`]
+                                                [u.email, notifTitle, notifMsg]
                                             );
+
+                                            // কার্ট কম-স্টক ওয়ানসিগন্যাল পুশ নোটিফিকেশন ট্রিগার
+                                            await sendPushNotification([u.email], notifTitle, notifMsg, `https://${req.headers.host}/notifications.html`);
                                         }
                                     }
                                 }
@@ -185,10 +236,16 @@ export default async function handler(req, res) {
                     [b.email, ...checkedIds]
                 );
 
+                const clientNotifTitle = "Order Placed successfully! 🛍️";
+                const clientNotifMsg = `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`;
+
                 await db.execute(
                     'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                    [b.email, "Order Placed successfully! 🛍️", `Your order #${newOrderId} has been received and is currently Pending confirmation. (Total: ৳${grandTotal.toFixed(2)})`]
+                    [b.email, clientNotifTitle, clientNotifMsg]
                 );
+
+                // সফল অর্ডার চেকআউট ওয়ানসিগন্যাল লাইভ পুশ নোটিফিকেশন ট্রিগার (কাস্টমার ইনবক্স লিংকে ডিপ-লিঙ্ক সহ)
+                await sendPushNotification([b.email], clientNotifTitle, clientNotifMsg, `https://${req.headers.host}/notifications.html`);
 
                 return res.status(200).json({ status: "Success" });
             } 
@@ -202,10 +259,17 @@ export default async function handler(req, res) {
                     await db.execute('UPDATE orders SET status = "Confirmed" WHERE id = ?', [b.id]);
                     const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
                     if (ord.length > 0) {
+                        const customerEmail = ord[0].email;
+                        const clientNotifTitle = "Order Confirmed! 🚚";
+                        const clientNotifMsg = `Great news! Your order #${b.id} has been confirmed by the admin and is being packed.`;
+
                         await db.execute(
                             'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                            [ord[0].email, "Order Confirmed! 🚚", `Great news! Your order #${b.id} has been confirmed by the admin and is being packed.`]
+                            [customerEmail, clientNotifTitle, clientNotifMsg]
                         );
+
+                        // অর্ডার কনফার্ম ওয়ানসিগন্যাল লাইভ পুশ নোটিফিকেশন ট্রিগার
+                        await sendPushNotification([customerEmail], clientNotifTitle, clientNotifMsg, `https://${req.headers.host}/notifications.html`);
                     }
                     return res.status(200).json({ status: "Success" });
                 }
@@ -213,10 +277,17 @@ export default async function handler(req, res) {
                     await db.execute('UPDATE orders SET status = "Shipped" WHERE id = ?', [b.id]);
                     const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
                     if (ord.length > 0) {
+                        const customerEmail = ord[0].email;
+                        const clientNotifTitle = "Order Shipped! 📦";
+                        const clientNotifMsg = `Your order #${b.id} has been handed over to the courier. Please keep your phone active!`;
+
                         await db.execute(
                             'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                            [ord[0].email, "Order Shipped! 📦", `Your order #${b.id} has been handed over to the courier. Please keep your phone active!`]
+                            [customerEmail, clientNotifTitle, clientNotifMsg]
                         );
+
+                        // অর্ডার শিফট ওয়ানসিগন্যাল লাইভ পুশ নোটিফিকেশন ট্রিগার
+                        await sendPushNotification([customerEmail], clientNotifTitle, clientNotifMsg, `https://${req.headers.host}/notifications.html`);
                     }
                     return res.status(200).json({ status: "Success" });
                 }
@@ -224,10 +295,17 @@ export default async function handler(req, res) {
                     await db.execute('UPDATE orders SET status = "Delivered" WHERE id = ?', [b.id]);
                     const [ord] = await db.execute('SELECT email FROM orders WHERE id = ?', [b.id]);
                     if (ord.length > 0) {
+                        const customerEmail = ord[0].email;
+                        const clientNotifTitle = "Order Delivered! 🎉";
+                        const clientNotifMsg = `Your order #${b.id} has been delivered. Thank you so much for shopping with SHAAM ITQAN!`;
+
                         await db.execute(
                             'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                            [ord[0].email, "Order Delivered! 🎉", `Your order #${b.id} has been delivered. Thank you so much for shopping with SHAAM ITQAN!`]
+                            [customerEmail, clientNotifTitle, clientNotifMsg]
                         );
+
+                        // অর্ডার ডেলিভারড ওয়ানসিগন্যাল লাইভ পুশ নোটিফিকেশন ট্রিগার
+                        await sendPushNotification([customerEmail], clientNotifTitle, clientNotifMsg, `https://${req.headers.host}/notifications.html`);
                     }
                     return res.status(200).json({ status: "Success" });
                 }
@@ -271,10 +349,18 @@ export default async function handler(req, res) {
                     }
 
                     await db.execute('UPDATE orders SET status = "Cancelled" WHERE id = ?', [b.id]);
+                    
+                    const clientNotifTitle = "Order Cancelled! ❌";
+                    const clientNotifMsg = `Your order #${b.id} has been cancelled. Your cart stock has been successfully restored.`;
+
                     await db.execute(
                         'INSERT INTO notifications (email, title, message) VALUES (?, ?, ?)',
-                        [order.email, "Order Cancelled! ❌", `Your order #${b.id} has been cancelled. Your cart stock has been successfully restored.`]
+                        [order.email, clientNotifTitle, clientNotifMsg]
                     );
+
+                    // অর্ডার ক্যানসেল ওয়ানসিগন্যাল লাইভ পুশ নোটিফিকেশন ট্রিগার
+                    await sendPushNotification([order.email], clientNotifTitle, clientNotifMsg, `https://${req.headers.host}/notifications.html`);
+
                     return res.status(200).json({ status: "Success" });
                 } else {
                     return res.status(400).json({ error: "Cannot cancel order. It has already shipped!" });
