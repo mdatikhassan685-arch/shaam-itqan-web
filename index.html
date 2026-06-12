@@ -12,11 +12,11 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 
-    <!-- 🔔 OneSignal Web Push SDK এবং ফোর্স স্লাইড প্রম্পট স্ক্রিপ্ট ইন্টিগ্রেশন -->
+    <!-- 🔔 OneSignal Web Push SDK এবং ফোর্স স্লাইড প্রম্পট স্ক্রিপ্ট ইন্টিগ্রেশন (সংশোধিত OneSignalDeferred ভেরিয়েবল সহ) -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-      window.OneSignalPageDeferred = window.OneSignalPageDeferred || [];
-      OneSignalPageDeferred.push(async function(OneSignal) {
+      window.OneSignalDeferred = window.OneSignalDeferred || []; // ওয়ানসিগন্যাল v16 গ্লোবাল কিউ সিঙ্ক
+      OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "5fe42a58-4674-4a17-8ade-7a3be8a9c6b8", // ওয়ানসিগন্যাল অ্যাপ আইডি
           notifyButton: {
@@ -24,7 +24,7 @@
           },
         });
 
-        // ওয়ানসিগন্যালের স্লাইড-ডাউন প্রম্পট জোরপূর্বক ফায়ার করার মেকানিজম (টেস্টিংয়ের সময় backoff এড়াতে {force: true} দেওয়া হলো)
+        // টেস্টিংয়ের সময় ওয়ানসিগন্যালের স্লাইড-ডাউন প্রম্পট জোরপূর্বক ফায়ার করার মেকানিজম
         try {
             await OneSignal.Slidedown.promptPush({ force: true });
         } catch (err) {
@@ -281,6 +281,7 @@
 
         async function updateNotificationCount(email) {
             try {
+                // OneSignal-সংবলিত নতুন এপিআই রুট হিট করা হচ্ছে
                 const res = await fetch(`/api/user-hub?action=get_notifications&email=${email}`);
                 if (res.ok) {
                     const notifs = await res.json();
