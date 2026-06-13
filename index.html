@@ -11,33 +11,6 @@
         .gold-border { border: 2px solid #D4AF37; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
-
-    <!-- 🔔 OneSignal Web Push SDK এবং ফোর্স স্লাইড প্রম্পট স্ক্রিপ্ট ইন্টিগ্রেশন (সংশোধিত OneSignalDeferred ভেরিয়েবল সহ) -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || []; // ওয়ানসিগন্যাল v16 গ্লোবাল কিউ সিঙ্ক
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "5fe42a58-4674-4a17-8ade-7a3be8a9c6b8", // ওয়ানসিগন্যাল অ্যাপ আইডি
-          notifyButton: {
-            enable: false, 
-          },
-        });
-
-        // টেস্টিংয়ের সময় ওয়ানসিগন্যালের স্লাইড-ডাউন প্রম্পট জোরপূর্বক ফায়ার করার মেকানিজম
-        try {
-            await OneSignal.Slidedown.promptPush({ force: true });
-        } catch (err) {
-            console.error("OneSignal Prompt Error:", err);
-        }
-
-        // কাস্টমার লগইন করা থাকলে তার ইমেইল আইডি ওয়ানসিগন্যালে সিঙ্ক করা হচ্ছে
-        const userObj = JSON.parse(localStorage.getItem('user_session'));
-        if (userObj && userObj.email) {
-            await OneSignal.login(userObj.email.trim().toLowerCase());
-        }
-      });
-    </script>
 </head>
 <body class="bg-white text-black font-sans pb-24">
 
@@ -52,7 +25,7 @@
         </div>
     </div>
 
-    <!-- ⚡ স্প্লিট-সেকেন্ড লোডার ফ্ল্যাশ (FOUC) এড়াতে hise করার সিঙ্ক স্ক্রিপ্ট -->
+    <!-- ⚡ স্প্লিট-সেকেন্ড লোডার ফ্ল্যাশ (FOUC) এড়াতে তাৎক্ষণিকভাবে লোডার হাইড করার সিঙ্ক স্ক্রিপ্ট -->
     <script>
         if (sessionStorage.getItem('initial_loaded') === 'true') {
             document.getElementById('global-loader').style.display = 'none';
@@ -186,9 +159,13 @@
     </div>
 
     <script>
+        // =========================================================================
+        // 📌 কাস্টমার সার্ভিস ও হেল্পলাইন সেটিংস (এখানে আপনার নম্বর ও সোশ্যাল লিংক দিন)
+        // =========================================================================
         const SUPPORT_HELPLINE_NUMBER = "017XXXXXXXX"; 
         const SUPPORT_WHATSAPP_NUMBER = "88017XXXXXXXX"; 
         const SUPPORT_MESSENGER_PAGE = "yourpageusername"; 
+        // =========================================================================
 
         let allProducts = [];       
         let categoriesData = [];    
@@ -221,6 +198,7 @@
                     await loadWishlistIds(user.email); 
                 }
 
+                // ডাইনামিক ডাটা সফলভাবে লোড হওয়া মাত্রই লোডিং ওভারলে বন্ধ করার স্ক্রিপ্ট
                 hideGlobalLoader();
 
             } catch(e) { 
@@ -229,14 +207,17 @@
             }
         }
 
+        // মসৃণ ফিড-আউট (Fade-out) লোডার ক্লোজিং মেকানিজম (সেশন ডাটা রাইট সহ)
         function hideGlobalLoader() {
             const loader = document.getElementById('global-loader');
             if (loader) {
+                // ব্রাউজারের সেশন স্টোরেজে প্রথম ভিজিট সফল ট্র্যাকার সেট করা হচ্ছে
                 sessionStorage.setItem('initial_loaded', 'true');
+                
                 loader.classList.add('opacity-0');
                 setTimeout(() => {
                     loader.classList.add('hidden');
-                }, 500); 
+                }, 500); // ৫০০ মিলি-সেকেন্ড ট্রানজিশন টাইমার
             }
         }
 
@@ -281,7 +262,6 @@
 
         async function updateNotificationCount(email) {
             try {
-                // OneSignal-সংবলিত নতুন এপিআই রুট হিট করা হচ্ছে
                 const res = await fetch(`/api/user-hub?action=get_notifications&email=${email}`);
                 if (res.ok) {
                     const notifs = await res.json();
@@ -517,31 +497,6 @@
                 renderProductGrid(filtered);
             }
             updateHeartIcons(); 
-        }
-
-        // কাস্টমার সাপোর্ট ড্রয়ার টগল স্ক্রিপ্ট
-        function openSupportModal() {
-            const modal = document.getElementById('support-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeSupportModal() {
-            const modal = document.getElementById('support-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        // কাস্টম কন্টেন্ট ভিত্তিক হোয়াটসঅ্যাপ মেসেজ
-        function openWhatsAppChat() {
-            const message = "আসসালামু আলাইকুম SHAAM ITQAN, আমি আপনাদের প্রোডাক্ট সম্পর্কে জানতে চাই।";
-            const encoded = encodeURIComponent(message);
-            window.open(`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
-        }
-
-        // ওয়ান-ক্লিক ফেসবুক মেসেঞ্জার রিডাইরেকশন
-        function openMessengerChat() {
-            window.open(`https://m.me/${SUPPORT_MESSENGER_PAGE}`, '_blank');
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
