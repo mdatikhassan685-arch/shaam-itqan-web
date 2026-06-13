@@ -6,7 +6,7 @@
     <title>Product Details | SHAAM ITQAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         .luxury-font { font-family: 'Playfair Display', serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -36,7 +36,7 @@
         <h1 id="p-name" class="text-xl font-bold mt-5 tracking-widest luxury-font uppercase text-gray-800 leading-none"></h1>
         
         <!-- লাইভ এভারেজ স্টার কাউন্টার উইজেট -->
-        <div id="title-avg-stars" class="mt-2 flex items-center gap-1.5 select-none leading-none h-4"></div>
+        <div id="title-avg-stars" class="mt-2 flex items-center gap-1.5 leading-none h-4"></div>
         
         <!-- দাম ও স্টক ব্যাজ একই লাইনে পাশাপাশি -->
         <div class="flex justify-between items-center mt-3 border-t pt-3 border-gray-100">
@@ -126,7 +126,7 @@
         let quantity = 1;
         let productData = null;
         let stockMap = {};
-        let chosenRating = 5; // ডিফল্ট রেটিং ৫ স্টার নির্ধারণ করা হলো
+        let chosenRating = 5; 
 
         async function loadProduct() {
             try {
@@ -155,10 +155,20 @@
 
                     document.getElementById('p-name').innerText = productData.name;
                     
-                    const originalPriceVal = parseFloat(productData.original_price) || 0;
+                    // ডিটেইলস পেজে বড় এবং সুন্দর করে ডাইনামিক লাল রঙের ডিসকাউন্ট পার্সেন্টেজ ট্যাগ রেন্ডার করার আপডেট লজিক
+                    const originalPriceVal = Math.round(parseFloat(productData.original_price) || 0);
+                    const sellingPriceVal = parseFloat(productData.price);
                     const priceContainer = document.getElementById('price-container');
-                    if (originalPriceVal > 0) {
-                        priceContainer.innerHTML = `<span class="line-through text-gray-400 text-sm mr-2 font-normal">৳ ${Math.round(originalPriceVal)}</span> <span class="text-lg text-[#C1A44E] font-bold">৳ ${productData.price}</span>`;
+                    
+                    if (originalPriceVal > sellingPriceVal) {
+                        const discountPercent = Math.round(((originalPriceVal - sellingPriceVal) / originalPriceVal) * 100);
+                        priceContainer.innerHTML = `
+                            <span class="line-through text-gray-400 text-sm mr-2 font-normal">৳ ${originalPriceVal}</span> 
+                            <span class="text-lg text-[#C1A44E] font-bold mr-2">৳ ${productData.price}</span>
+                            <span class="bg-red-50 text-red-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded border border-red-200 uppercase tracking-wider select-none align-middle inline-block">${discountPercent}% OFF</span>
+                        `;
+                    } else if (originalPriceVal > 0) {
+                        priceContainer.innerHTML = `<span class="line-through text-gray-400 text-sm mr-2 font-normal">৳ ${originalPriceVal}</span> <span class="text-lg text-[#C1A44E] font-bold">৳ ${productData.price}</span>`;
                     } else {
                         priceContainer.innerHTML = `<span class="text-lg text-[#C1A44E] font-bold">৳ ${productData.price}</span>`;
                     }
@@ -184,14 +194,13 @@
                     updateStockBadge();
                     setupSwipeListener();
                     await checkProductWishlist(); 
-                    await loadReviews(); // কাস্টমার রিভিউ ও রেটিংস ডাইনামিক লোড করা হচ্ছে
+                    await loadReviews(); 
                 }
             } catch (error) {
                 console.error("Failed to load product details:", error);
             }
         }
 
-        // স্টার রেটিং সিলেকশন ও গোল্ডেন কালার সিএসএস ট্র্যাকার
         function selectReviewStars(rating) {
             chosenRating = rating;
             const stars = document.querySelectorAll('.star');
@@ -204,7 +213,6 @@
             });
         }
 
-        // ডাটাবেজ থেকে কাস্টমার রিভিউ ডাইনামিক ফেচ ও এভারেজ ক্যালকুলেশন লজিক
         async function loadReviews() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             const formDiv = document.getElementById('add-review-form');
@@ -233,12 +241,10 @@
                         return;
                     }
 
-                    // এভারেজ স্টার রেটিং ম্যাথমেটিকাল ক্যালকুলেশন
                     const total = reviews.reduce((acc, r) => acc + parseInt(r.rating), 0);
                     const avg = (total / reviews.length).toFixed(1);
                     avgVal.innerText = avg;
 
-                    // টাইটেলের নিচে এভারেজ স্টার ইন্ডিকেটর রেন্ডার করা
                     if (titleStars) {
                         const roundedAvg = Math.round(avg);
                         let starStr = '';
@@ -270,7 +276,6 @@
             }
         }
 
-        // কাস্টমার রিভিউ সাবমিশন লজিক
         async function submitReview() {
             const user = JSON.parse(localStorage.getItem('user_session'));
             if (!user) return alert("Please login first!");
@@ -295,8 +300,8 @@
                 if (res.ok) {
                     alert("Review submitted successfully!");
                     document.getElementById('review-comment').value = "";
-                    selectReviewStars(5); // রেটিং ৫ স্টারে রিসেট করা হচ্ছে
-                    loadReviews(); // লাইভ রিলোড
+                    selectReviewStars(5); 
+                    loadReviews(); 
                 } else {
                     const err = await res.json();
                     alert(err.error || "Failed to submit review.");
